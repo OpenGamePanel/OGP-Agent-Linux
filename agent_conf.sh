@@ -78,8 +78,8 @@ then
 	
 	while [ -z "${key}" ]
 	do 
-	echo -n "Set encryption key: "
-	read key
+		echo -n "Set encryption key: "
+		read key
 	done
 	
 	echo
