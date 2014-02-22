@@ -43,7 +43,6 @@ bashprefsfile=${agent_home}/Cfg/bash_prefs.cfg
 overwrite_config=1
 
 if [ -z "$opType" ]; then
-
 	if [ -e ${cfgfile} ]; then
 		while [ 1 ]
 		do
@@ -62,7 +61,6 @@ if [ -z "$opType" ]; then
 			fi
 		done
 	fi
-
 else
 	overwrite_config=0
 fi
@@ -75,35 +73,35 @@ then
 	echo "Enter a string of alpha-numeric characters for example 'abcd12345'"
 	echo "**** NOTE - Use the same key in your Open Game Panel webpage config file - they must match *****"
 	echo ""
-	
+
 	while [ -z "${key}" ]
 	do 
 		echo -n "Set encryption key: "
 		read key
 	done
-	
+
 	echo
 	echo "Set the listen port for the agent. The default should be fine for everyone."
 	echo "However, if you want to change it that can be done here, otherwise just press Enter."
 	echo -n "Set listen port [Default ${DEFAULT_PORT}]: "
 	read port
-	
+
 	if [ -z "${port}" ]
 	then 
 		port=$DEFAULT_PORT
 	fi
-	
+
 	echo 
 	echo "Set the listen IP for the agent."
 	echo "Use ${DEFAULT_IP} to bind on all interfaces."
 	echo -n "Set listen IP [Default ${DEFAULT_IP}]: "
 	read ip
-	
+
 	if [ -z "${ip}" ]  
 	then 
 		ip=$DEFAULT_IP
 	fi 
-	
+
 	while [ 1 ]
 	do
 		echo
@@ -122,9 +120,9 @@ then
 		
 		echo "You need to type either 'Accept' or 'Reject'.";
 	done
-	
+
 	echo "Writing Config file - $cfgfile"
-	
+
 	echo "%Cfg::Config = (
 	logfile => '${agent_home}/ogp_agent.log',
 	listen_port  => '${port}',
@@ -139,7 +137,7 @@ then
 	then
 		failed "Failed to write config file."
 	fi 
-	
+
 	echo;
 	while [ 1 ]
 	do
@@ -161,7 +159,7 @@ then
 		fi
 		echo "You need to type 'yes', 'no' or leave empty for default value [yes].";
 	done
-	
+
 	echo;
 	while [ 1 ]
 	do
@@ -183,8 +181,8 @@ then
 		fi
 		echo "You need to type 'yes', 'no' or leave empty for default value [yes].";
 	done
-	
-	echo;	
+
+	echo;
 	echo "After how many days should be deleted the old backups of server's logs?"
 	echo -n "[Default 30]: "
 	read delete_logs_after
@@ -192,7 +190,7 @@ then
 		''|*[!0-9]*) deleteLogsAfter=30 ;;
 		*) deleteLogsAfter=${delete_logs_after} ;;
 	esac
-    
+
 	echo;
 	while [ 1 ]
 	do
@@ -214,7 +212,7 @@ then
 		fi
 		echo "You need to type 'yes', 'no' or leave empty for default value [yes].";
 	done
-	
+
 	echo;
 	echo "What mirror you want to use for updating the agent?: "
 	echo;
@@ -274,7 +272,7 @@ then
 		*) mirror="master"
 		;;
 	esac
-	
+
 	if [ "$(uname -o)" != "Cygwin" ]; then
 		echo;
 		while [ 1 ]
@@ -399,22 +397,22 @@ then
 	else
 		ftpMethod="PureFTPd"
 	fi
-	
+
 	echo "Writing Preferences file - $prefsfile"
-	
+
 	echo "%Cfg::Preferences = (
-    	screen_log_local => '${logLocalCopy}',
-    	delete_logs_after => '${deleteLogsAfter}',
-    	ogp_manages_ftp => '${ogpManagesFTP}',
-    	ftp_method => '${ftpMethod}',
-    	ogp_autorestart_server => '${autoRestart}',
-    	);" > $prefsfile 
-	
-    	if [ $? != 0 ]
-    	then
-        	failed "Failed to write preferences file."
-    	fi
-    
+		screen_log_local => '${logLocalCopy}',
+		delete_logs_after => '${deleteLogsAfter}',
+		ogp_manages_ftp => '${ogpManagesFTP}',
+		ftp_method => '${ftpMethod}',
+		ogp_autorestart_server => '${autoRestart}',
+		);" > $prefsfile 
+
+		if [ $? != 0 ]
+		then
+			failed "Failed to write preferences file."
+		fi
+
 	echo "Writing bash script preferences file - $bashprefsfile"
 	
 	echo -e "agent_auto_update=${autoUpdate}\nsf_update_mirror=${mirror}" > $bashprefsfile
