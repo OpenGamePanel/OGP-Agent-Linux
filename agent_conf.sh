@@ -30,8 +30,8 @@ readonly AGENT_VERSION='v1.0'
 
 failed()
 {
-    echo "ERROR: ${1}"
-    exit 1
+	echo "ERROR: ${1}"
+	exit 1
 }
 
 agent_home="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )" 
@@ -69,79 +69,80 @@ fi
 
 if [ "X${overwrite_config}" == "X1" ]
 then
-    echo "#######################################################################"
-    echo ""
-    echo "OGP agent uses basic encryption to prevent unauthorized users from connecting"
-    echo "Enter a string of alpha-numeric characters for example 'abcd12345'"
-    echo "**** NOTE - Use the same key in your Open Game Panel webpage config file - they must match *****"
-    echo ""
-
-    while [ -z "${key}" ]
-    do 
-        echo -n "Set encryption key: "
-        read key
-    done
-
-    echo
-    echo "Set the listen port for the agent. The default should be fine for everyone."
-    echo "However, if you want to change it that can be done here, otherwise just press Enter."
-    echo -n "Set listen port [Default ${DEFAULT_PORT}]: "
-    read port
-
-    if [ -z "${port}" ]
-    then 
-        port=$DEFAULT_PORT
-    fi
-
-    echo 
-    echo "Set the listen IP for the agent."
-    echo "Use ${DEFAULT_IP} to bind on all interfaces."
-    echo -n "Set listen IP [Default ${DEFAULT_IP}]: "
-    read ip
-
-    if [ -z "${ip}" ]  
-    then 
-        ip=$DEFAULT_IP
-    fi 
-
-    while [ 1 ]
-    do
-        echo
-        echo "For some games the OGP panel is using Steam client."
-        echo "This client has its own license that you need to agree before continuing."
-        echo "This agreement is available at http://store.steampowered.com/subscriber_agreement/"
-        echo;
+	echo "#######################################################################"
+	echo ""
+	echo "OGP agent uses basic encryption to prevent unauthorized users from connecting"
+	echo "Enter a string of alpha-numeric characters for example 'abcd12345'"
+	echo "**** NOTE - Use the same key in your Open Game Panel webpage config file - they must match *****"
+	echo ""
+	
+	while [ -z "${key}" ]
+	do 
+	echo -n "Set encryption key: "
+	read key
+	done
+	
+	echo
+	echo "Set the listen port for the agent. The default should be fine for everyone."
+	echo "However, if you want to change it that can be done here, otherwise just press Enter."
+	echo -n "Set listen port [Default ${DEFAULT_PORT}]: "
+	read port
+	
+	if [ -z "${port}" ]
+	then 
+	port=$DEFAULT_PORT
+	fi
+	
+	echo 
+	echo "Set the listen IP for the agent."
+	echo "Use ${DEFAULT_IP} to bind on all interfaces."
+	echo -n "Set listen IP [Default ${DEFAULT_IP}]: "
+	read ip
+	
+	if [ -z "${ip}" ]  
+	then 
+	ip=$DEFAULT_IP
+	fi 
+	
+	while [ 1 ]
+	do
+		echo
+		echo "For some games the OGP panel is using Steam client."
+		echo "This client has its own license that you need to agree before continuing."
+		echo "This agreement is available at http://store.steampowered.com/subscriber_agreement/"
+		echo;
 		echo "Do you accept the terms of Steam(tm) Subscriber Agreement?"
 		echo -n "(Accept|Reject): "
-        read steam_license
-        if [ "$steam_license" == "Accept" -o "$steam_license" == "Reject" ]
-        then 
-            break;
-        fi
-
-        echo "You need to type either 'Accept' or 'Reject'.";
-    done
-    
-    echo "Writing Config file - $cfgfile"
-
-    echo "%Cfg::Config = (
-    logfile => '${agent_home}/ogp_agent.log',
-    listen_port  => '${port}',
-    listen_ip => '${ip}',
-    version => '${AGENT_VERSION}',
-    key => '${key}',
-    steam_license => '${steam_license}',
-    sudo_password => '${sudo_password}',
-    );" > $cfgfile
+		read steam_license
+		
+		if [ "$steam_license" == "Accept" -o "$steam_license" == "Reject" ]
+		then	 
+			break;
+		fi
+		
+		echo "You need to type either 'Accept' or 'Reject'.";
+	done
+	
+	echo "Writing Config file - $cfgfile"
+	
+	echo "%Cfg::Config = (
+	logfile => '${agent_home}/ogp_agent.log',
+	listen_port  => '${port}',
+	listen_ip => '${ip}',
+	version => '${AGENT_VERSION}',
+	key => '${key}',
+	steam_license => '${steam_license}',
+	sudo_password => '${sudo_password}',
+	);" > $cfgfile
 	
 	if [ $? != 0 ]
-    then
-        failed "Failed to write config file."
-    fi 
-    
-    echo;
+	then
+	failed "Failed to write config file."
+	fi 
+	
+	echo;
 	while [ 1 ]
-    do
+	do
 		echo "The agent should be updated when the service is restarted or started?"
 		echo -n "(yes|no) [Default yes]: "
 		read auto_update
@@ -158,12 +159,12 @@ then
 			fi
 			break;
 		fi
-        echo "You need to type 'yes', 'no' or leave empty for default value [yes].";
-    done
+		echo "You need to type 'yes', 'no' or leave empty for default value [yes].";
+	done
 	
-    echo;
+	echo;
 	while [ 1 ]
-    do
+	do
 		echo "The agent should backup the server log files in the game server directory?"
 		echo -n "(yes|no) [Default yes]: "
 		read log_local_copy
@@ -181,20 +182,20 @@ then
 			break;
 		fi
 		echo "You need to type 'yes', 'no' or leave empty for default value [yes].";
-    done
+	done
 	
 	echo;	
-    echo "After how many days should be deleted the old backups of server's logs?"
+	echo "After how many days should be deleted the old backups of server's logs?"
 	echo -n "[Default 30]: "
-    read delete_logs_after
-    case ${delete_logs_after} in
-    	''|*[!0-9]*) deleteLogsAfter=30 ;;
-    	*) deleteLogsAfter=${delete_logs_after} ;;
-    esac
+	read delete_logs_after
+	case ${delete_logs_after} in
+		''|*[!0-9]*) deleteLogsAfter=30 ;;
+		*) deleteLogsAfter=${delete_logs_after} ;;
+	esac
     
-    echo;
+	echo;
 	while [ 1 ]
-    do
+	do
 		echo "The agent should automatically restart game servers if they crash?"
 		echo -n "(yes|no) [Default yes]: "
 		read auto_restart
@@ -212,7 +213,7 @@ then
 			break;
 		fi
 		echo "You need to type 'yes', 'no' or leave empty for default value [yes].";
-    done
+	done
 	
 	echo;
 	echo "What mirror you want to use for updating the agent?: "
@@ -274,7 +275,6 @@ then
 		;;
 	esac
 	
-    
 	if [ "$(uname -o)" != "Cygwin" ]; then
 		echo;
 		while [ 1 ]
@@ -402,25 +402,25 @@ then
 	
 	echo "Writing Preferences file - $prefsfile"
 	
-    echo "%Cfg::Preferences = (
-    screen_log_local => '${logLocalCopy}',
-    delete_logs_after => '${deleteLogsAfter}',
-    ogp_manages_ftp => '${ogpManagesFTP}',
-    ftp_method => '${ftpMethod}',
-    ogp_autorestart_server => '${autoRestart}',
-    );" > $prefsfile 
+	echo "%Cfg::Preferences = (
+    	screen_log_local => '${logLocalCopy}',
+    	delete_logs_after => '${deleteLogsAfter}',
+    	ogp_manages_ftp => '${ogpManagesFTP}',
+    	ftp_method => '${ftpMethod}',
+    	ogp_autorestart_server => '${autoRestart}',
+    	);" > $prefsfile 
 	
-	if [ $? != 0 ]
-    then
-        failed "Failed to write preferences file."
-    fi
+    	if [ $? != 0 ]
+    	then
+        	failed "Failed to write preferences file."
+    	fi
     
-    echo "Writing bash script preferences file - $bashprefsfile"
+	echo "Writing bash script preferences file - $bashprefsfile"
 	
-    echo -e "agent_auto_update=${autoUpdate}\nsf_update_mirror=${mirror}" > $bashprefsfile
+	echo -e "agent_auto_update=${autoUpdate}\nsf_update_mirror=${mirror}" > $bashprefsfile
 	
 	if [ $? != 0 ]
-    then
-        failed "Failed to write MISC configuration file used by bash scripts."
-    fi
+	then
+		failed "Failed to write MISC configuration file used by bash scripts."
+	fi
 fi
