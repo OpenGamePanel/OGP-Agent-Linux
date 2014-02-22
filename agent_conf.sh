@@ -90,7 +90,7 @@ then
 	
 	if [ -z "${port}" ]
 	then 
-	port=$DEFAULT_PORT
+		port=$DEFAULT_PORT
 	fi
 	
 	echo 
@@ -101,7 +101,7 @@ then
 	
 	if [ -z "${ip}" ]  
 	then 
-	ip=$DEFAULT_IP
+		ip=$DEFAULT_IP
 	fi 
 	
 	while [ 1 ]
@@ -137,7 +137,7 @@ then
 	
 	if [ $? != 0 ]
 	then
-	failed "Failed to write config file."
+		failed "Failed to write config file."
 	fi 
 	
 	echo;
