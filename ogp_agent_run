@@ -8,16 +8,20 @@
 # The ogp_agent_run script should be at the top level of the agent tree
 # Make sure we are in that directory since the script assumes this is the case
 AGENTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-AUTO_UPDATE_CONF="$AGENTDIR/Cfg/bash_prefs.cfg" 
+BASH_PREFS_CONF="$AGENTDIR/Cfg/bash_prefs.cfg" 
+chmod -Rf 770 $AGENTDIR
+find $AGENTDIR -type f -print | xargs chmod ug=rw 
+chmod +x $AGENTDIR/ogp_agent.pl
+chmod +x $AGENTDIR/ogp_agent_run
 
 if test `id -u` -eq 0; then
 	echo
 	echo
 	echo "************** WARNING ***************"
-	echo "Running the OGP agent as root  "
+	echo "Running OGP's agent as root  "
 	echo "is highly discouraged. It is generally"
 	echo "unnecessary to use root privileges to "
-	echo "execute a dedicated server.         "
+	echo "execute the agent.         "
 	echo "**************************************"
 	echo
 	echo
@@ -36,9 +40,9 @@ init() {
 	PID_FILE=""
 	
 	# Should we perform an automatic update?
-	if [ -e $AUTO_UPDATE_CONF ]
+	if [ -e $BASH_PREFS_CONF ]
 	then
-		source "$AUTO_UPDATE_CONF"
+		source "$BASH_PREFS_CONF"
 		
 		if [ "$agent_auto_update" -eq "1" ]
 		then
@@ -117,71 +121,72 @@ update() {
 				URL=http://${MIRROR}.dl.sourceforge.net/project/ogpextras/Alternative-Snapshot/linux-agent-${REVISION}.zip
 				HEAD=$(curl -Os --head -w "%{http_code}" "$URL")
 				if [ "$HEAD" == "200" ]; then
-					echo "Updating server using curl."
+					echo "Updating agent using curl."
 					curl -Os $URL
-					unzip -q linux-agent-${REVISION}.zip
-					sed -i "s/version.*/version => 'v${REVISION}',/" $AGENTDIR/Cfg/Config.pm
 					if test $? -ne 0; then
-						echo "`date`: Wget update failed, ignoring."
-						return 0
-					fi
-					cd linux-agent-${REVISION}
-					cp -avf Crypt File Frontier KKrcon ogp_agent.pl ogp_screenrc ogp_agent_run $AGENTDIR &> /dev/null
-					if test ! -e "$AGENTDIR/IspConfig"; then
-						cp -avf IspConfig $AGENTDIR &> /dev/null
+						echo "`date`: curl failed to download the update package."
 					else
-						cp -avf IspConfig/sites_ftp_user_* $AGENTDIR/IspConfig &> /dev/null
+						unzip -oq linux-agent-${REVISION}.zip
+						if test $? -ne 0; then
+							echo "`date`: Unable to unzip the update package."
+							echo "cleaning up..."
+							rm -Rf linux-agent-* &> /dev/null
+						else
+							cd linux-agent-${REVISION}
+							cp -avf Crypt File Frontier KKrcon ogp_agent.pl ogp_screenrc ogp_agent_run agent_conf.sh $AGENTDIR &> /dev/null
+							if test $? -ne 0; then
+								echo "`date`: The agent files cannot be overwritten."
+								echo "Cleaning up..."
+								cd ..
+								rm -Rf linux-agent-* &> /dev/null
+								echo "Agent update failed."
+							else
+								if test ! -d "$AGENTDIR/IspConfig"; then
+									cp -Rf IspConfig $AGENTDIR/IspConfig &> /dev/null
+								fi
+								if test ! -d "$AGENTDIR/EHCP"; then
+									cp -Rf EHCP $AGENTDIR/EHCP &> /dev/null
+								fi
+								if test ! -f "$AGENTDIR/Cfg/Preferences.pm"; then
+									cp -f Cfg/Preferences.pm $AGENTDIR/Cfg/Preferences.pm &> /dev/null
+								fi
+								echo "Fixing permissions..."
+								chmod ug+x $AGENTDIR/ogp_agent.pl &> /dev/null
+								chmod ug+x $AGENTDIR/ogp_agent_run &> /dev/null
+								echo "Cleaning up..."
+								cd ..
+								rm -Rf linux-agent-* &> /dev/null
+								sed -i "s/version.*/version => 'v${REVISION}',/" $AGENTDIR/Cfg/Config.pm
+								echo "Agent updated successfully."
+							fi
+						fi
 					fi
-					if test ! -e "$AGENTDIR/Cfg/Preferences.pm"; then
-						cd Cfg
-						cp -avf Preferences.pm $AGENTDIR/Cfg &> /dev/null
-						cd ..
-					fi
-					cd ..
-					rm -Rf linux-agent-${REVISION} &> /dev/null
-					chmod +x $AGENTDIR/ogp_agent.pl &> /dev/null
-					chmod +x $AGENTDIR/ogp_agent_run &> /dev/null
 				else
 					echo "There is a update available (${REVISION}) but the download source is not ready.";
 					echo "Try again later."
 				fi
 			fi
 		else
-			if [ !-f "$CURL" ]; then
-				echo "WARNING: Could not locate curl binary: ${CURL}."
-			fi
-			if [ !-f "$UNZIP" ]; then
-				echo "WARNING: Could not locate unzip binary: ${UNZIP}."
-			fi
 			echo "Update failed."
 		fi
 	fi
-	
 	return 0
 }
 	
 run() {
-	# Runs the subversion update and server
+	update
 	if test -n "$RESTART" ; then
-		echo "Server will auto-restart if there is a crash."
-
+		echo "Agent will auto-restart if there is a crash."
 		#loop forever
 		while true
 		do
-			# Update
-			update
 			# Run
 			$CMD
-			retval=$?
-			if test $retval -eq 0 && test -z "$AUTO_UPDATE"; then
-				break; # if 0 is returned then just quit
-			fi
-			echo "`date`: Server restart in $TIMEOUT seconds"
-			# don't thrash the hard disk if the server dies, wait a little
+			echo "`date`: Agent restart in $TIMEOUT seconds"
+			# don't thrash the hard disk if the agent dies, wait a little
 			sleep $TIMEOUT
 		done # while true
 	else
-		update
 		$CMD
 	fi
 }
