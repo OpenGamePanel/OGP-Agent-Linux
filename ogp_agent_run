@@ -15,6 +15,9 @@ if [ -d "$AGENTDIR/steamcmd" ]; then
 	chmod +x $AGENTDIR/steamcmd/linux32/*
 	chmod +x $AGENTDIR/steamcmd/*.sh
 fi
+if [ -d "$AGENTDIR/screenlogs" ]; then
+	chmod -Rf ugo=rw $AGENTDIR/screenlogs
+fi
 chmod +x $AGENTDIR/ogp_agent.pl
 chmod +x $AGENTDIR/ogp_agent_run
 
