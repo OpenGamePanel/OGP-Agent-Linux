@@ -11,6 +11,10 @@ AGENTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 BASH_PREFS_CONF="$AGENTDIR/Cfg/bash_prefs.cfg" 
 chmod -Rf 770 $AGENTDIR
 find $AGENTDIR -type f -print | xargs chmod ug=rw 
+if [ -d "$AGENTDIR/steamcmd" ]; then
+	chmod +x $AGENTDIR/steamcmd/linux32/*
+	chmod +x $AGENTDIR/steamcmd/*.sh
+fi
 chmod +x $AGENTDIR/ogp_agent.pl
 chmod +x $AGENTDIR/ogp_agent_run
 
