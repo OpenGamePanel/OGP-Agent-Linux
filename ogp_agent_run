@@ -20,6 +20,7 @@ if [ -d "$AGENTDIR/screenlogs" ]; then
 fi
 chmod +x $AGENTDIR/ogp_agent.pl
 chmod +x $AGENTDIR/ogp_agent_run
+chmod +x $AGENTDIR/agent_conf.sh
 
 if test `id -u` -eq 0; then
 	echo
@@ -160,6 +161,7 @@ update() {
 								echo "Fixing permissions..."
 								chmod ug+x $AGENTDIR/ogp_agent.pl &> /dev/null
 								chmod ug+x $AGENTDIR/ogp_agent_run &> /dev/null
+								chmod ug+x $AGENTDIR/agent_conf.sh &> /dev/null
 								echo "Cleaning up..."
 								cd ..
 								rm -Rf linux-agent-* &> /dev/null
