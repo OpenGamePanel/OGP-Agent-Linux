@@ -37,78 +37,127 @@ then
 	fi
 fi
 
-case "${1:-''}" in
-    'start')
+start() {
+	if [ -e "$agent_dir/ogp_agent_run.pid" ]; then
+		PID=`cat $agent_dir/ogp_agent_run.pid`
+		RET=$(kill -s 0 $PID &> /dev/null; echo $?)
+		if [ $RET -eq 0 ]; then
+			log_failure_msg "OGP Agent already running."
+			return 1
+		fi
+	fi
+
 	# Lets the agent user to use sudo to enable FTP accounts and use renice and taskset.
 	if [ "$( groups $agent_user | grep "\bsudo\b" )" == "" ]
 	then
-		adduser $agent_user sudo &> /dev/null
+		if [ "$( egrep -i "^sudo" /etc/group )" == "" ]
+		then
+			groupadd sudo &> /dev/null
+		fi
+		usermod -aG sudo $agent_user &> /dev/null
 	fi
 	
-	group=`groups $agent_user | awk '{ print $3 }'`; 
+	group=`groups $agent_user | awk '{ print $3 }'`
 	chown -Rf $agent_user:$group $agent_dir &> /dev/null
 
 	# Lets the agent user to attach screens.
 	if [ "$( groups $agent_user | grep "\btty\b" )" == "" ]
 	then
-		adduser $agent_user tty &> /dev/null
+		usermod -aG tty $agent_user &> /dev/null
 	fi
+	
 	chmod g+rw /dev/pts/* &> /dev/null
 	chmod g+rw /dev/tty* &> /dev/null
 	
 	# Check the FTP status
 	if [ -f "/etc/init.d/pure-ftpd" ]
-    then
-		if [ "$( service pure-ftpd status | grep "* pure-ftpd is not running" )" == "" ]
+	then
+		if [ -f "/var/run/pure-ftpd/pure-ftpd.pid" ]
 		then
 			service pure-ftpd stop &> /dev/null
-			if [ "$( service pure-ftpd start | grep "pureftpd.pdb" )" == "" ]
+		fi
+		
+		if [ "$( service pure-ftpd start | grep "pureftpd.pdb" )" != "" ]
+		then
+			service pure-ftpd stop &> /dev/null
+			TEST_COMMON_INSTALLED=`dpkg -s pure-ftpd-common &> /dev/null`
+			if test $? -ne 0
 			then
-				service pure-ftpd stop &> /dev/null
-				echo no > /etc/pure-ftpd/conf/PAMAuthentication
-				echo no > /etc/pure-ftpd/conf/UnixAuthentication
-				echo yes > /etc/pure-ftpd/conf/CreateHomeDir
-				touch /etc/pure-ftpd/pureftpd.passwd
-				ln -s /etc/pure-ftpd/pureftpd.passwd /etc/pureftpd.passwd
-				ln -s /etc/pure-ftpd/conf/PureDB /etc/pure-ftpd/auth/50pure
-				ln -s /etc/pure-ftpd/pureftpd.pdb /etc/pureftpd.pdb
-				pure-pw mkdb &> /dev/null
-				service pure-ftpd start &> /dev/null
+				apt-get -y install pure-ftpd-common &> /dev/null
 			fi
-		elif [ "$( service pure-ftpd start | grep "pureftpd.pdb" )" == "" ]
-		then
-			service pure-ftpd stop &> /dev/null
+			
 			echo no > /etc/pure-ftpd/conf/PAMAuthentication
 			echo no > /etc/pure-ftpd/conf/UnixAuthentication
 			echo yes > /etc/pure-ftpd/conf/CreateHomeDir
-			touch /etc/pure-ftpd/pureftpd.passwd
-			ln -s /etc/pure-ftpd/pureftpd.passwd /etc/pureftpd.passwd
-			ln -s /etc/pure-ftpd/conf/PureDB /etc/pure-ftpd/auth/50pure
-			ln -s /etc/pure-ftpd/pureftpd.pdb /etc/pureftpd.pdb
+			
+			if [ ! -f /etc/pure-ftpd/pureftpd.passwd ]
+			then
+				touch /etc/pure-ftpd/pureftpd.passwd
+			fi
+			
+			if [ ! -f /etc/pureftpd.passwd ]
+			then
+				ln -s /etc/pure-ftpd/pureftpd.passwd /etc/pureftpd.passwd
+			fi
+			
+			if [ ! -f /etc/pure-ftpd/auth/50pure ]
+			then
+				ln -s /etc/pure-ftpd/conf/PureDB /etc/pure-ftpd/auth/50pure
+			fi
+			
+			if [ ! -f /etc/pureftpd.pdb ]
+			then
+				ln -s /etc/pure-ftpd/pureftpd.pdb /etc/pureftpd.pdb
+			fi
+			
 			pure-pw mkdb &> /dev/null
-			service pure-ftpd start &> /dev/null		
+			service pure-ftpd start &> /dev/null
 		fi
 	fi
 	
-    cd $agent_dir
-    su -c "screen -d -m -t ogp_agent -c ogp_screenrc -S ogp_agent ./ogp_agent_run -pidfile ogp_agent_run.pid" $agent_user &> $agent_dir/ogp_agent.svc &
-    log_daemon_msg "Starting OGP Agent" "ogp_agent_run -pidfile ogp_agent_run.pid"
-    ;;
+	cd $agent_dir
+	su -c "screen -d -m -t ogp_agent -c ogp_screenrc -S ogp_agent ./ogp_agent_run -pidfile ogp_agent_run.pid" $agent_user &> $agent_dir/ogp_agent.svc &
+	log_success_msg "OGP Agent started successfully."
+	bold=`tput bold`
+	normal=`tput sgr0`
+	echo "Use ${bold}sudo su -c 'screen -S ogp_agent -r' $agent_user${normal} to attach the agent screen,"
+	echo "and ${bold}ctrl+A+D${normal} to detach it."
+	return $?
+}
 
-    'stop')
-    log_daemon_msg "Stopping OGP Agent" "ogp_agent_run"
-    kill `cat $agent_dir/ogp_agent_run.pid`
-    ;;
+stop() {
+	if [ -e "$agent_dir/ogp_agent_run.pid" ]; then
+		PID=`cat $agent_dir/ogp_agent_run.pid`
+		RET=$(kill $PID &> /dev/null; echo $?)
+		if [ $RET -ne 0 ]; then
+			log_failure_msg "OGP Agent not running."
+		else
+			log_success_msg "OGP Agent stopped successfully."
+		fi
+	else
+		log_failure_msg "PID file not found ($agent_dir/ogp_agent_run.pid)"
+	fi
+	return 0
+}
 
-    'restart')
-    set +e; /etc/init.d/ogp_agent stop; set -e
-    /etc/init.d/ogp_agent start
-    ;;
-
-    *)
-    echo "Usage: /etc/init.d/ogp_agent start|stop|restart"
-    exit 1
-    ;;
+case "${1:-''}" in
+	start)
+	start
+	RETVAL=$?
+	;;
+	stop)
+	stop
+	RETVAL=$?
+	;;
+	restart)
+	stop
+	sleep 1
+	start
+	RETVAL=$?
+	;;
+ 	*)
+	echo "Usage: service ogp_agent start|stop|restart"
+	RETVAL=1
+	;;
 esac
-
-exit 0;
+exit $RETVAL
