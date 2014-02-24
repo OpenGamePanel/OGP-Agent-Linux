@@ -24,6 +24,10 @@ if [ ! -z "$1" ]; then
 	opType="$1"
 fi
 
+if [ ! -z "$2" ]; then
+	sudo_password="$2"
+fi
+
 readonly DEFAULT_PORT=12679
 readonly DEFAULT_IP=0.0.0.0
 readonly AGENT_VERSION='v1.0'
@@ -67,6 +71,11 @@ fi
 
 if [ "X${overwrite_config}" == "X1" ]
 then
+	if [ -z "$sudo_password" ]; then
+		if [ -f "$cfgfile" ]; then
+			sudo_password=`awk '/sudo_password/{print $3}' $cfgfile|sed -e "s#\('\)\(.*\)\(',\)#\2#"`
+		fi
+	fi
 	echo "#######################################################################"
 	echo ""
 	echo "OGP agent uses basic encryption to prevent unauthorized users from connecting"

@@ -242,7 +242,7 @@ echo ""
 
 # Run the configuration script
 chmod +x ${agent_home}/agent_conf.sh
-bash ${agent_home}/agent_conf.sh $opType
+bash ${agent_home}/agent_conf.sh $opType $sudo_password
 
 echo;echo 
 echo "Installation complete!"  
