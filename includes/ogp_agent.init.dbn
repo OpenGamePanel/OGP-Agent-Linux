@@ -74,12 +74,12 @@ start() {
 	then
 		if [ -f "/var/run/pure-ftpd/pure-ftpd.pid" ]
 		then
-			service pure-ftpd stop &> /dev/null
+			bash /etc/init.d/pure-ftpd stop &> /dev/null
 		fi
 		
-		if [ "$( service pure-ftpd start | grep "pureftpd.pdb" )" != "" ]
+		if [ "$( bash /etc/init.d/pure-ftpd start | grep "pureftpd.pdb" )" == "" ]
 		then
-			service pure-ftpd stop &> /dev/null
+			bash /etc/init.d/pure-ftpd stop &> /dev/null
 			TEST_COMMON_INSTALLED=`dpkg -s pure-ftpd-common &> /dev/null`
 			if test $? -ne 0
 			then
@@ -109,9 +109,8 @@ start() {
 			then
 				ln -s /etc/pure-ftpd/pureftpd.pdb /etc/pureftpd.pdb
 			fi
-			
 			pure-pw mkdb &> /dev/null
-			service pure-ftpd start &> /dev/null
+			bash /etc/init.d/pure-ftpd start &> /dev/null
 		fi
 	fi
 	
