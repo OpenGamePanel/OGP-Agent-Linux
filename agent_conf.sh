@@ -21,11 +21,11 @@
 #
 
 if [ ! -z "$1" ]; then
-	opType="$1"
+	sudo_password="$1"
 fi
 
 if [ ! -z "$2" ]; then
-	sudo_password="$2"
+	opType="$2"
 fi
 
 readonly DEFAULT_PORT=12679
@@ -145,6 +145,8 @@ then
 	if [ $? != 0 ]
 	then
 		failed "Failed to write config file."
+	else
+		chmod 600 ${cfgfile} || failed "Failed to chmod ${cfgfile} to 600."
 	fi 
 
 	echo;

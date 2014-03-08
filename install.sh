@@ -48,6 +48,12 @@ if [ ! -z "$4" ]; then
 	ogpInsPath="$4"
 fi
 
+failed()
+{
+	echo "ERROR: ${1}"
+	exit 1
+}
+
 if [ "X`which screen &> /dev/null;echo $?`" != "X0" ]; then
     failed "You need to install software called 'screen', before you can install OGP agent.";
 fi
@@ -228,7 +234,6 @@ echo;
 echo "Setting Permissions on files in ${agent_home}..."
 chmod 750 ${init_dir}/ogp_agent || failed "Failed to chmod ${init_dir}/ogp_agent to 750."
 chmod 750 ${agent_home}/ogp_agent.pl || failed "Failed to chmod ${agent_home}/ogp_agent.pl to 750."
-chmod 600 ${cfgfile} || failed "Failed to chmod ${cfgfile} to 600."
 chmod 750 ${agent_home}/ogp_agent_run || failed "Failed to chmod ${agent_home}/ogp_agent_run to 750."
 
 echo "Chmodding files to user ${username}...";
@@ -242,7 +247,7 @@ echo ""
 
 # Run the configuration script
 chmod +x ${agent_home}/agent_conf.sh
-bash ${agent_home}/agent_conf.sh $opType $sudo_password
+bash ${agent_home}/agent_conf.sh $sudo_password $opType
 
 echo;echo 
 echo "Installation complete!"  
