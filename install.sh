@@ -192,7 +192,7 @@ fi
 init_dir=${init_dir%/}
 echo "Copying files..."
 
-cp -avf Crypt EHCP File Frontier IspConfig KKrcon ogp_agent.pl ogp_screenrc ogp_agent_run ${agent_home}/ || failed "Failed to copy agent files to ${agent_home}."
+cp -avf Crypt EHCP File Frontier IspConfig KKrcon ogp_agent.pl ogp_screenrc ogp_agent_run agent_conf.sh ${agent_home}/ || failed "Failed to copy agent files to ${agent_home}."
 
 # Create the directory for configs.
 mkdir -p ${agent_home}/Cfg || failed "Failed to create ${agent_home}/Cfg dir."
