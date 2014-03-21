@@ -422,11 +422,6 @@ sub check_steam_cmd_client
 		logger "Steam license not accepted, stopping steam client check.";
 		return 0;
 	}
-
-	while (is_screen_running_without_decrypt(SCREEN_TYPE_UPDATE, "0") == 1)
-	{
-		sleep 1;
-	}
 	
 	if (-f STEAMCMD_CLIENT_BIN_UPDATED)
 	{
@@ -434,7 +429,6 @@ sub check_steam_cmd_client
 		return 1;
 	}
 	
-
 	if (!-d STEAMCMD_CLIENT_DIR && !mkdir STEAMCMD_CLIENT_DIR)
 	{
 		logger "Could not create " . STEAMCMD_CLIENT_DIR . " directory $!.", 1;
@@ -447,45 +441,22 @@ sub check_steam_cmd_client
 		  . "' not writable. Unable to get steam client.";
 		return -1;
 	}
-
-	chdir STEAMCMD_CLIENT_DIR;
-
-	# These two commands needs to be variables changed depending the platform.
-	my $steam_client_file		  = 'steamcmd_linux.tar.gz';
-	my $steam_installation_command = 'tar -xzvf ' . $steam_client_file;
-
-	if (!-f Path::Class::File->new(STEAMCMD_CLIENT_DIR, $steam_client_file))
-	{
-		my $steam_client_url =
-		  "http://media.steampowered.com/client/" . $steam_client_file;
-		logger "Downloading the steam client from $steam_client_url to '"
-		  . getcwd() . "'.";
-		my $steam_client_val = getstore($steam_client_url, $steam_client_file);
-		if ($steam_client_val != 200)
-		{
-			logger "Failed to download steam binary from "
-			  . $steam_client_url
-			  . ". Error code: "
-			  . $steam_client_val
-			  . "", 1;
-			return -1;
-		}
-	}
 	
-	my $steam_installation = system($steam_installation_command);
-	if ($steam_installation == 0)
-	{
-		logger "Failed to execute '"
-		  . $steam_installation_command
-		  . "' in dir "
-		  . STEAMCMD_CLIENT_DIR . ".";
-		return -1;
-	}
-		
+	chdir STEAMCMD_CLIENT_DIR;
+	
+	my $steamcmd_installer = "steamcmd_installer.sh";
+	
+	open (INSTALL_SCRIPT, '>', $steamcmd_installer);
+	my $steamcmd_installation = "#!/bin/bash" . "\n"
+	. "curl -Os http://media.steampowered.com/client/steamcmd_linux.tar.gz" . "\n"
+	. "tar -xzf steamcmd_linux.tar.gz" . "\n"
+	. "rm -f steamcmd_linux.tar.gz" . "\n";
+	print INSTALL_SCRIPT $steamcmd_installation;
+	close (INSTALL_SCRIPT);
+	
 	if (!-f STEAMCMD_CLIENT_BIN_UPDATED)
 	{
-		my $steam_update_command = 'bash ' . STEAMCMD_CLIENT_DIR . '/steamcmd.sh +exit';
-		my $home_path = STEAMCMD_CLIENT_DIR;
+		my $steam_update_command = 'bash ' . STEAMCMD_CLIENT_DIR . '/' . $steamcmd_installer;
 		my $screen_id = create_screen_id(SCREEN_TYPE_UPDATE, "0");
 		my $screen_cmd = create_screen_cmd($screen_id, $steam_update_command);
 		my $steam_first_update = system($screen_cmd);
@@ -497,23 +468,8 @@ sub check_steam_cmd_client
 			  . STEAMCMD_CLIENT_DIR . ".";
 			return -1;
 		}
-		while (is_screen_running_without_decrypt(SCREEN_TYPE_UPDATE, "0") == 1)
-		{
-			if( -f STEAMCMD_CLIENT_BIN_UPDATED)
-			{
-				my $update_screen_id = create_screen_id(SCREEN_TYPE_HOME, "0");
-				system('screen -S '.$update_screen_id.' -X quit');
-				system('screen -wipe');
-			}
-			sleep 1;
-		}
-		my $log_file = Path::Class::File->new(SCREEN_LOGS_DIR, "screenlog.$screen_id");
-		backup_home_log( "0", $log_file );
 	}
-	unlink($steam_client_file);
-	
 	chdir AGENT_RUN_DIR;
-	
 	return 1;
 }
 
@@ -1927,12 +1883,21 @@ sub master_server_update
 ### @return 0 In error case.
 sub steam_cmd
 {
-	if (check_steam_cmd_client() < 1)
+	if (is_screen_running_without_decrypt(SCREEN_TYPE_UPDATE, "0") != 1)
 	{
-		return 0;
+		if (check_steam_cmd_client() < 1)
+		{
+			return 0;
+		}
 	}
 	
-	my ($home_id, $home_path, $mod, $modname, $betaname, $betapwd, $user, $pass, $guard, $exec_folder_path, $exec_path, $precmd, $postcmd) = decrypt_params(@_);
+	while (is_screen_running_without_decrypt(SCREEN_TYPE_UPDATE, "0") == 1)
+	{
+		logger "Installing steamcmd...";
+		sleep 2;
+	}
+
+	my ($home_id, $home_path, $mod, $modname, $betaname, $betapwd, $user, $pass, $guard, $exec_folder_path, $exec_path, $precmd, $postcmd, $cfg_os) = decrypt_params(@_);
 	
 	if ( check_b4_chdir($home_path) != 0)
 	{
@@ -1959,8 +1924,12 @@ sub steam_cmd
 	open  FILE, '>', $installtxt;
 	print FILE "\@ShutdownOnFailedCommand 1\n";
 	print FILE "\@NoPromptForPassword 1\n";
+	if($cfg_os eq 'windows')
+	{
+		print FILE "\@sSteamCmdForcePlatformType windows\n";
+	}
 	if($guard ne '')
-	{	
+	{
 		print FILE "set_steam_guard_code $guard\n";
 	}
 	if($user ne '' && $user ne 'anonymous')
