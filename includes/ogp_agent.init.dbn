@@ -1,0 +1,139 @@
+#!/bin/bash
+#
+### BEGIN INIT INFO
+# Provides:          ogp_agent
+# Required-Start:    $all
+# Required-Stop:     $all
+# Should-Start:      $all
+# Should-Stop:       $all
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start and stop the OGP Agent
+# Description:       Start and stop the OGP Agent
+### END INIT INFO
+#
+set -e
+set -u
+${DEBIAN_SCRIPT_DEBUG:+ set -v -x}
+
+. /lib/lsb/init-functions
+
+agent_dir=OGP_AGENT_DIR
+agent_user=OGP_USER
+
+#
+# main()
+#
+
+if [ "X`whoami`" != "Xroot" ]
+then
+	log_failure_msg "Permission denied."
+	exit 1
+fi
+
+start() {
+	if [ -e "$agent_dir/ogp_agent_run.pid" ]
+	then
+		if [ "X$(ps -A | grep -o `cat $agent_dir/ogp_agent_run.pid`)" != "X" ]
+		then
+			log_failure_msg "OGP Agent already running."
+			return 1
+		fi
+	fi
+
+	# Lets the agent user to use sudo to enable FTP accounts and use renice and taskset.
+	if [ "$( groups $agent_user | grep "\bsudo\b" )" == "" ]
+	then
+		if [ "$( egrep -i "^sudo" /etc/group )" == "" ]
+		then
+			groupadd sudo >/dev/null 2>&1
+		fi
+		usermod -aG sudo $agent_user >/dev/null 2>&1
+	fi
+
+	chown -Rf `id -u $agent_user`:`id -g $agent_user` $agent_dir >/dev/null 2>&1
+
+	# Lets the agent user to attach screens.
+	if [ "$( groups $agent_user | grep "\btty\b" )" == "" ]
+	then
+		usermod -aG tty $agent_user >/dev/null 2>&1
+	fi
+
+	chmod g+rw /dev/pts/* >/dev/null 2>&1
+	chmod g+rw /dev/tty* >/dev/null 2>&1
+
+	# Check the FTP status
+	if [ -f "/etc/init.d/pure-ftpd" ] && [ -e "/etc/pure-ftpd/conf" ]
+	then
+		echo no > /etc/pure-ftpd/conf/PAMAuthentication
+		echo no > /etc/pure-ftpd/conf/UnixAuthentication
+		echo yes > /etc/pure-ftpd/conf/CreateHomeDir
+
+		if [ ! -f /etc/pure-ftpd/pureftpd.passwd ]
+		then
+			touch /etc/pure-ftpd/pureftpd.passwd
+		fi
+
+		if [ ! -f /etc/pureftpd.passwd ]
+		then
+			ln -s /etc/pure-ftpd/pureftpd.passwd /etc/pureftpd.passwd
+		fi
+
+		if [ ! -f /etc/pure-ftpd/auth/50pure ]
+		then
+			ln -s /etc/pure-ftpd/conf/PureDB /etc/pure-ftpd/auth/50pure
+		fi
+
+		if [ ! -f /etc/pureftpd.pdb ]
+		then
+			ln -s /etc/pure-ftpd/pureftpd.pdb /etc/pureftpd.pdb
+		fi
+		pure-pw mkdb >/dev/null 2>&1
+		service pure-ftpd force-reload >/dev/null 2>&1 &
+	fi
+
+	cd $agent_dir
+	su -c "screen -d -m -t ogp_agent -c ogp_screenrc -S ogp_agent ./ogp_agent_run -pidfile ogp_agent_run.pid" $agent_user &> $agent_dir/ogp_agent.svc &
+	log_success_msg "OGP Agent started successfully."
+	echo "Use \"sudo su -c 'screen -S ogp_agent -r' $agent_user\" to attach the agent screen,"
+	echo "and CTRL+A+D to detach it."
+	return 0
+}
+
+stop() {
+	if [ -e "$agent_dir/ogp_agent_run.pid" ]
+	then
+		if [ "X$(ps -A | grep -o `cat $agent_dir/ogp_agent_run.pid`)" == "X" ]
+		then
+			log_failure_msg "OGP Agent not running."
+		else
+			kill `cat $agent_dir/ogp_agent_run.pid` >/dev/null 2>&1
+			log_success_msg "OGP Agent stopped successfully."
+		fi
+	else
+		log_failure_msg "PID file not found ($agent_dir/ogp_agent_run.pid)"
+	fi
+	return 0
+}
+
+case "${1:-''}" in
+	start)
+	start
+	RETVAL=$?
+	;;
+	stop)
+	stop
+	RETVAL=$?
+	;;
+	restart)
+	stop
+	sleep 1
+	start
+	RETVAL=$?
+	;;
+ 	*)
+	echo "Usage: service ogp_agent start|stop|restart"
+	RETVAL=1
+	;;
+esac
+exit $RETVAL

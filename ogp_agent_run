@@ -1,0 +1,260 @@
+#!/bin/bash
+#
+#
+#	A wrapper script for the OGP agent perl script.
+#	Performs auto-restarting of the agent on crash. You can
+#	extend this to log crashes and more.
+#
+# The ogp_agent_run script should be at the top level of the agent tree
+# Make sure we are in that directory since the script assumes this is the case
+AGENTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+BASH_PREFS_CONF="$AGENTDIR/Cfg/bash_prefs.cfg" 
+chmod -Rf 770 $AGENTDIR
+find $AGENTDIR -type f -print | xargs chmod ug=rw 
+if [ -d "$AGENTDIR/steamcmd" ]; then
+	chmod +x $AGENTDIR/steamcmd/linux32/*
+	chmod +x $AGENTDIR/steamcmd/*.sh
+fi
+if [ -d "$AGENTDIR/screenlogs" ]; then
+	chmod -Rf ug=rwx $AGENTDIR/screenlogs
+fi
+chmod +x $AGENTDIR/ogp_agent.pl
+chmod +x $AGENTDIR/ogp_agent_run
+chmod +x $AGENTDIR/agent_conf.sh
+
+if test `id -u` -eq 0; then
+	echo
+	echo
+	echo "************** WARNING ***************"
+	echo "Running OGP's agent as root  "
+	echo "is highly discouraged. It is generally"
+	echo "unnecessary to use root privileges to "
+	echo "execute the agent.         "
+	echo "**************************************"
+	echo
+	echo
+	timeout=10
+	while test $timeout -gt 0; do
+		echo -n "The agent will continue to launch in $timeout seconds\r"
+		timeout=`expr $timeout - 1`
+		sleep 1
+	done
+fi
+
+init() {
+	RESTART="yes"
+	AGENT="$AGENTDIR/ogp_agent.pl"
+	TIMEOUT=10 # time to wait after a crash (in seconds)
+	PID_FILE=""
+	
+	# Should we perform an automatic update?
+	if [ -e $BASH_PREFS_CONF ]
+	then
+		source "$BASH_PREFS_CONF"
+		
+		if [ "$agent_auto_update" -eq "1" ]
+		then
+			AUTO_UPDATE="yes"
+		fi
+		
+		if [ -z "$sf_update_mirror" ]
+		then
+			MIRROR="master"
+		else
+			MIRROR=$sf_update_mirror
+		fi
+	else
+		AUTO_UPDATE="yes"
+		MIRROR="master"
+	fi
+	
+	while test $# -gt 0; do
+		case "$1" in
+		"-pidfile")
+			PID_FILE="$2"
+			PID_FILE_SET=1
+			echo $$ > $PID_FILE
+			shift ;;
+		esac
+		shift
+	done
+
+	if test ! -f "$AGENT"; then
+		echo "ERROR: '$AGENT' not found, exiting"
+		quit 1
+	elif test ! -x "$AGENT"; then
+		# Could try chmod but dont know what we will be
+		# chmoding so just fail.
+		echo "ERROR: '$AGENT' not executable, exiting"
+		quit 1
+	fi
+
+	CMD="perl $AGENT"
+}
+
+syntax () {
+	# Prints script syntax
+
+	echo "Syntax:"
+	echo "$0"
+}
+
+checkDepends() {
+	CURL=`which curl 2>/dev/null`
+	if test "$?" -gt 0; then
+		echo "WARNING: Failed to locate curl binary."
+	else
+		echo "INFO: Located curl: $CURL"
+	fi
+	UNZIP=`which unzip 2>/dev/null`
+	if test "$?" -gt 0; then
+		echo "WARNING: Failed to locate unzip binary."
+	else
+		echo "INFO: Located unzip: $UNZIP"
+	fi
+}
+
+update() {
+	# Run the update
+	expires=$(LC_ALL=en_US.utf8 date --date='TZ="GMT" @'`expr $(date +"%s") + 31536000000`'' +"%a, %d-%b-%Y %H:%M:%S GMT")
+	if test -n "$AUTO_UPDATE"; then
+		if [ -z "$CURL" -o -z "$UNZIP" ]; then
+			checkDepends
+		fi
+		if [ -f "$CURL" -a -x "$CURL" ] && [ -f "$UNZIP" -a -x "$UNZIP" ]; then
+			cd $AGENTDIR
+			mkdir tmp
+			cd tmp
+			curl -b "FreedomCookie=true;path=/;expires=$expires" -Os http://svn.code.sf.net/p/hldstart/svn/trunk/agent/ogp_agent_run
+			diff ./ogp_agent_run $AGENTDIR/ogp_agent_run &>/dev/null
+			if test $? -ne 0; then
+				cp -f ./ogp_agent_run $AGENTDIR/ogp_agent_run &> /dev/null
+				if test $? -eq 0; then
+					cd $AGENTDIR
+					chmod +x ogp_agent_run
+					echo "`date`: The agent updater has been changed, relaunching..."
+					rm -Rf tmp
+					./ogp_agent_run
+					exit 0
+				fi
+			fi
+			cd $AGENTDIR
+			rm -Rf tmp
+			CURRENT=$(cat $AGENTDIR/Cfg/Config.pm | grep version | grep -Eo '[0-9]{1,6}')
+			REVISION=$(curl -L -b "FreedomCookie=true;path=/;expires=$expires" -s https://sourceforge.net/projects/ogpextras/rss?path=/Alternative-Snapshot\&limit=3 | grep -m 1 "title.*hldstart-code-" | grep -o -P '(?<=hldstart-code-).*(?=.zip)')
+			if [ "$CURRENT" == "$REVISION" ]; then
+				echo "The agent is up to date."
+			else
+				URL=https://${MIRROR}.dl.sourceforge.net/project/ogpextras/Alternative-Snapshot/linux-agent-${REVISION}.zip
+				HEAD=$(curl -L --insecure -b "FreedomCookie=true;path=/;expires=$expires" -Os --head -w "%{http_code}" "$URL")
+				if [ "$HEAD" == "200" ]; then
+					echo "Updating agent using curl."
+					curl -L --insecure -b "FreedomCookie=true;path=/;expires=$expires" -Os $URL
+					if test $? -ne 0; then
+						echo "`date`: curl failed to download the update package."
+					else
+						unzip -oq linux-agent-${REVISION}.zip
+						if test $? -ne 0; then
+							echo "`date`: Unable to unzip the update package."
+							echo "cleaning up..."
+							rm -Rf linux-agent-* &> /dev/null
+						else
+							cd linux-agent-${REVISION}
+							cp -avf Schedule Time FastDownload php-query ogp_agent.pl ogp_screenrc ogp_agent_run agent_conf.sh $AGENTDIR &> /dev/null
+							if test $? -ne 0; then
+								echo "`date`: The agent files cannot be overwritten."
+								echo "Cleaning up..."
+								cd ..
+								rm -Rf linux-agent-* &> /dev/null
+								echo "Agent update failed."
+							else
+								if test ! -d "$AGENTDIR/IspConfig"; then
+									cp -Rf IspConfig $AGENTDIR/IspConfig &> /dev/null
+								fi
+								if test ! -d "$AGENTDIR/EHCP"; then
+									cp -Rf EHCP $AGENTDIR/EHCP &> /dev/null
+								fi
+								if test ! -f "$AGENTDIR/Cfg/Preferences.pm"; then
+									cp -f Cfg/Preferences.pm $AGENTDIR/Cfg/Preferences.pm &> /dev/null
+								fi
+								echo "Fixing permissions..."
+								chmod ug+x $AGENTDIR/ogp_agent.pl &> /dev/null
+								chmod ug+x $AGENTDIR/ogp_agent_run &> /dev/null
+								chmod ug+x $AGENTDIR/agent_conf.sh &> /dev/null
+								echo "Cleaning up..."
+								cd ..
+								rm -Rf linux-agent-* &> /dev/null
+								sed -i "s/version.*/version => 'v${REVISION}',/" $AGENTDIR/Cfg/Config.pm
+								echo "Agent updated successfully."
+							fi
+						fi
+					fi
+				else
+					echo "There is a update available (${REVISION}) but the download source is not ready.";
+					echo "Try again later."
+				fi
+			fi
+		else
+			echo "Update failed."
+		fi
+	fi
+	return 0
+}
+	
+run() {
+	update
+	if test -n "$RESTART" ; then
+		echo "Agent will auto-restart if there is a crash."
+		#loop forever
+		while true
+		do
+			# Run
+			$CMD
+			echo "`date`: Agent restart in $TIMEOUT seconds"
+			# don't thrash the hard disk if the agent dies, wait a little
+			sleep $TIMEOUT
+		done # while true
+	else
+		$CMD
+	fi
+}
+
+quit() {
+	# Exits with the give error code, 1
+	# if none specified.
+	# exit code 2 also prints syntax
+	exitcode="$1"
+
+	# default to failure
+	if test -z "$exitcode"; then
+		exitcode=1
+	fi
+
+	case "$exitcode" in
+	0)
+		echo "`date`: OGP Agent Quit" ;;
+	2)
+		syntax ;;
+	*)
+		echo "`date`: OGP Agent Failed" ;;
+	esac
+
+	# Remove pid file
+	if test -n "$PID_FILE" && test -f "$PID_FILE" ; then
+		# The specified pid file
+		rm -f $PID_FILE
+	fi
+
+	# reset SIGINT and then kill ourselves properly
+	trap - 2
+	kill -2 $$
+}
+
+# Initialise
+init $*
+
+# Run
+run
+
+# Quit normally
+quit 0
