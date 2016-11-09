@@ -146,7 +146,7 @@ update() {
 				fi
 			fi
 			cd $AGENTDIR
-			CURRENT=$(cat $AGENTDIR/Cfg/Config.pm | grep version | grep -Eo '[0-9]{1,6}')
+			CURRENT=$(cat $AGENTDIR/Cfg/Config.pm | grep version | grep -Eo '[0-9a-f]{40}')
 			if [ "$CURRENT" == "$REVISION" ]; then
 				echo "The agent is up to date."
 			else
@@ -189,7 +189,7 @@ update() {
 								echo "Cleaning up..."
 								cd ..
 								rm -Rf ${REPONAME}-* &> /dev/null
-								sed -i "s/version.*/version => 'v${REVISION}',/" $AGENTDIR/Cfg/Config.pm
+								sed -i "s/version.*/version => '${REVISION}',/" $AGENTDIR/Cfg/Config.pm
 								echo "Agent updated successfully."
 							fi
 						fi
