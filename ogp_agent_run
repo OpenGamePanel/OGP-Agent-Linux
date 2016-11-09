@@ -121,10 +121,10 @@ checkDepends() {
 update() {
 	# Run the update
 	if test -n "$AUTO_UPDATE"; then
-		if [ -z "$CURL" -o -z "$UNZIP" ]; then
+		if [ -z "$CURL" -o -z "$UNZIP" -o -z "$GIT" ]; then
 			checkDepends
 		fi
-		if [ -f "$CURL" -a -x "$CURL" ] && [ -f "$UNZIP" -a -x "$UNZIP" ]; then
+		if [ -f "$CURL" -a -x "$CURL" ] && [ -f "$UNZIP" -a -x "$UNZIP" ] && [ -f "$GIT" -a -x "$GIT" ]; then
 			cd $AGENTDIR
 			if [ ! -d tmp ]; then
 				mkdir tmp
