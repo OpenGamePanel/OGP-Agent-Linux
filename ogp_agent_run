@@ -130,7 +130,7 @@ update() {
 				mkdir tmp
 			fi
 			cd tmp
-			REPONAME=OGP-Agent-Windows
+			REPONAME=OGP-Agent-Linux
 			REVISION=`git ls-remote --heads https://github.com/OpenGamePanel/${REPONAME}.git | grep -owE "^[^?\s]+"`
 			curl -Os https://raw.githubusercontent.com/OpenGamePanel/${REPONAME}/${REVISION}/OGP/ogp_agent_run
 			diff ./ogp_agent_run $AGENTDIR/ogp_agent_run &>/dev/null
