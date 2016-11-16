@@ -55,16 +55,8 @@ init() {
 		then
 			AUTO_UPDATE="yes"
 		fi
-		
-		if [ -z "$sf_update_mirror" ]
-		then
-			MIRROR="master"
-		else
-			MIRROR=$sf_update_mirror
-		fi
 	else
 		AUTO_UPDATE="yes"
-		MIRROR="master"
 	fi
 	
 	while test $# -gt 0; do
