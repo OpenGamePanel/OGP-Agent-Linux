@@ -102,28 +102,22 @@ checkDepends() {
 	else
 		echo "INFO: Located unzip: $UNZIP"
 	fi
-	GIT=`which git 2>/dev/null`
-	if test "$?" -gt 0; then
-		echo "WARNING: Failed to locate git binary."
-	else
-		echo "INFO: Located git: $GIT"
-	fi
 }
 
 update() {
 	# Run the update
 	if test -n "$AUTO_UPDATE"; then
-		if [ -z "$CURL" -o -z "$UNZIP" -o -z "$GIT" ]; then
+		if [ -z "$CURL" -o -z "$UNZIP" ]; then
 			checkDepends
 		fi
-		if [ -f "$CURL" -a -x "$CURL" ] && [ -f "$UNZIP" -a -x "$UNZIP" ] && [ -f "$GIT" -a -x "$GIT" ]; then
+		if [ -f "$CURL" -a -x "$CURL" ] && [ -f "$UNZIP" -a -x "$UNZIP" ]; then
 			cd $AGENTDIR
 			if [ ! -d tmp ]; then
 				mkdir tmp
 			fi
 			cd tmp
 			REPONAME=OGP-Agent-Linux
-			REVISION=`git ls-remote --heads https://github.com/OpenGamePanel/${REPONAME}.git | grep -owE "^[^?\s]+"`
+			REVISION=`curl -s https://github.com/OpenGamePanel/${REPONAME}/commits/master.atom | egrep -o "([a-f0-9]{40})" | awk 'NR==1{print $1}'`
 			curl -Os https://raw.githubusercontent.com/OpenGamePanel/${REPONAME}/${REVISION}/ogp_agent_run
 			diff ./ogp_agent_run $AGENTDIR/ogp_agent_run &>/dev/null
 			if test $? -ne 0; then
