@@ -4,16 +4,28 @@
 This FTP addon works with EHCP (www.ehcp.net)
 It allows OGP - the open game panel - to manage custom FTP user accounts
 
-You must update these credentials before FTP integrating with EHCP will work!
-
 by own3mall
 */
 
-// Database credentials
+@include_once "/var/www/new/ehcp/config.php";
+
+/**********************************
+*             DB Creds            *
+* ********************************/
+// Database credentials change if needed
 $server = 'localhost';
 $login = 'ehcp';
-$dbpass = 'changeme';
+
+// Script should detect password automatically from EHCP config file above... but if not, please change the value down here.
+if(!isset($dbpass) || empty($dbpass)){
+	$dbpass = 'changeme';
+}
+
 $dbName = 'ehcp';
+
+/**********************************
+*          END DB Creds           *
+* ********************************/
 
 // Log File
 $logFile = 'ehcp_ftp_log.txt';
