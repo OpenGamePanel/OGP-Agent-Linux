@@ -98,7 +98,7 @@ if (!isset($ftp_username) || !isset($update_dir)) {
 			$ftp_password_db = escapeSQLStr($ftp_pass, $connection);
         }
         
-        $ftp_username_db = escapeSQLStr($ftp_username);
+        $ftp_username_db = escapeSQLStr($ftp_username, $connection);
 		
         $SQL = "SELECT * FROM ftpaccounts WHERE ftpusername = '$ftp_username_db'";
         
