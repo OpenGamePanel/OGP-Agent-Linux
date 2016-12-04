@@ -2480,6 +2480,10 @@ sub ftp_mgr
 			
 			chmod 0777, 'ehcp_ftp_log.txt';
 			
+			# In order to access the FTP files, the vsftpd user needs to be added to the ogp group
+			sudo_exec_without_decrypt("usermod -a -G '$gid' ftp"); 
+			sudo_exec_without_decrypt("usermod -a -G '$gid' vsftpd"); 
+			
 			if($action eq "list")
 			{
 				return "1;".encode_list(`php-cgi -f listAllUsers.php`);
