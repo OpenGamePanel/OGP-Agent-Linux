@@ -1641,6 +1641,11 @@ sub create_secure_script
 sub check_b4_chdir
 {
 	my ( $path ) = @_;
+	
+	my $uid = `id -u`;
+	chomp $uid;
+	my $gid = `id -g`;
+	chomp $gid;	
 		
 	if (!-e $path)
 	{
@@ -1651,6 +1656,10 @@ sub check_b4_chdir
 			logger "Error creating $path . Errno: $!";
 			return -1;
 		}
+		
+		# Set perms on it as well
+		sudo_exec_without_decrypt('chown -Rf '.$uid.':'.$gid.' \''.$path.'\'');
+		
 	}
 	else
 	{	
