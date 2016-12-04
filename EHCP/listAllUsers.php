@@ -17,28 +17,31 @@ if (!isset($connection)) {
     include "config.php";
 }
 
+include_once 'db_functions.php';
+
 if (!isset($connection)) {
     die("Problem setting up connection!");
 } else {
     $SQL = "SELECT ftpusername, homedir, domainname, status FROM ftpaccounts";
-    $Result = mysql_query($SQL, $connection);
+    $Result = execSQL($SQL, $connection);
     
     if ($Result !== FALSE) {
-        $count = mysql_num_rows($Result);
+		$count = countSQLResult($Result);
         
         if ($count > 0) {
-            while ($row = mysql_fetch_assoc($Result)) {
 
-                // Only show custom entries... do not allow to modify EHCP accounts.
-                // domainname field will be NULL for custom FTP entries
-                
-                if (!empty($row['homedir']) && (empty($row['domainname']) || $row['domainname'] === NULL) && (empty($row['status']) || $row['status'] === NULL)) {
-                    $countNotNull++;
-                    $username = $row['ftpusername'];
-                    $dir = $row['homedir'];
-                    $users_list.= $username . "\t" . $dir . "/./\n";
-                }
-            }
+			while ($row = getSQLRow($Result)) {
+
+				// Only show custom entries... do not allow to modify EHCP accounts.
+				// domainname field will be NULL for custom FTP entries
+					
+				if (!empty($row['homedir']) && (empty($row['domainname']) || $row['domainname'] === NULL) && (empty($row['status']) || $row['status'] === NULL)) {
+					$countNotNull++;
+					$username = $row['ftpusername'];
+					$dir = $row['homedir'];
+					$users_list.= $username . "\t" . $dir . "/./\n";
+				}
+			}
             
             if ($countNotNull == 0) {
                 $errorCount++;
@@ -50,7 +53,8 @@ if (!isset($connection)) {
         }
     } else {
         $errorCount++;
-        $errors[] = "Error code " . mysql_errno($connection) . ": " . mysql_error($connection);
+        $errors[] = getSQLError($connection);
+		$success = 0;
     }
 
     // Log errors

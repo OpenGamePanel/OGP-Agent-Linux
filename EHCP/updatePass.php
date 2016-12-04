@@ -6,6 +6,8 @@ if (file_exists("config.php")) {
     die("config.php must exist within the installation root folder!");
 }
 
+include_once 'db_functions.php';
+
 // Updates ftpuser's password
 $success = 0;
 $errorCount = 0;
@@ -30,37 +32,37 @@ if (!isset($ftp_username) || !isset($ftp_pass)) {
     if ($errorCount == 0) {
 
         // Security checks
-        $ftp_password_db = mysql_real_escape_string($ftp_pass);
-        $ftp_username_db = mysql_real_escape_string($ftp_username);
+        $ftp_password_db = escapeSQLStr($ftp_pass, $connection);
+        $ftp_username_db = escapeSQLStr($ftp_username, $connection);
         $SQL = "SELECT * FROM ftpaccounts WHERE ftpusername = '$ftp_username_db'";
-        $Result = mysql_query($SQL, $connection);
+        $Result = execSQL($SQL, $connection);
         
         if ($Result !== FALSE) {
-            $count = mysql_num_rows($Result);
+            $count = countSQLResult($Result);
             
             if ($count != 1) {
                 $errorCount++;
                 $errors[] = "The account information was not updated because the FTP username $ftp_old_username never existed in the first place and cannot be modified";
             } else {
                 
-                if ($row = mysql_fetch_assoc($Result)) {
+                if ($row = getSQLRow($Result)) {
                     $recordID = $row['id'];
                 }
 
                 // Update user's password data into DB:
                 $SQL = "UPDATE ftpaccounts SET password=password('$ftp_password_db') WHERE ftpusername='$ftp_username_db'";
-                $Result = mysql_query($SQL, $connection);
+                $Result = execSQL($SQL, $connection);
                 
                 if ($Result !== FALSE) {
                     $success = 1;
                 } else {
                     $errorCount++;
-                    $errors[] = "Error code " . mysql_errno($connection) . ": " . mysql_error($connection);
+                    $errors[] = getSQLError($connection);
                 }
             }
         } else {
             $errorCount++;
-            $errors[] = "Error code " . mysql_errno($connection) . ": " . mysql_error($connection);
+            $errors[] = getSQLError($connection);
         }
     }
 }

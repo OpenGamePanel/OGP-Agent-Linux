@@ -24,10 +24,11 @@ if (isset($errors)) {
 
 if (file_exists("config.php")) {
     include 'config.php';
-    mysql_select_db($dbName, $connection);
 } else {
     die("config.php must exist within the installation root folder!");
 }
+
+include_once 'db_functions.php';
 
 // Did we properly receive the variables from the OGP agent?
 
@@ -72,14 +73,14 @@ if (isset($ftp_username) && isset($ftp_pass) && isset($rDir)) {
     if ($errorCount == 0) {
 
         // Security checks
-        $ftp_password_db = mysql_real_escape_string($ftp_pass);
-        $ftp_username_db = mysql_real_escape_string($ftp_username);
-        $rDir = mysql_real_escape_string($rDir);
+        $ftp_password_db = escapeSQLStr($ftp_pass, $connection);
+        $ftp_username_db = escapeSQLStr($ftp_username, $connection);
+        $rDir = escapeSQLStr($rDir, $connection);
         $SQL = "SELECT id FROM ftpaccounts WHERE ftpusername = '$ftp_username_db'";
-        $Result = mysql_query($SQL, $connection);
+        $Result = execSQL($SQL, $connection);
         
         if ($Result !== FALSE) {
-            $count = mysql_num_rows($Result);
+            $count = countSQLResult($Result);
             
             if ($count > 0) {
                 $errorCount++;
@@ -88,24 +89,24 @@ if (isset($ftp_username) && isset($ftp_pass) && isset($rDir)) {
 
                 // Make sure data enter is unique for homedir
                 $SQL = "SELECT id FROM ftpaccounts WHERE homedir = '$rDir'";
-                $Result = mysql_query($SQL, $connection);
+                $Result = execSQL($SQL, $connection);
                 
                 if ($Result !== FALSE) {
-                    $count = mysql_num_rows($Result);
+                    $count = countSQLResult($Result);
 
                     // Insert the data into the
                     $SQL = "INSERT INTO ftpaccounts (ftpusername, password, homedir) VALUES ('$ftp_username_db', password('$ftp_password_db'), '$rDir')";
-                    $Result = mysql_query($SQL, $connection);
+                    $Result = execSQL($SQL, $connection);
                     
                     if ($Result !== FALSE) {
                         $success = 1;
                     } else {
                         $errorCount++;
-                        $errors[] = "Error code " . mysql_errno($connection) . ": " . mysql_error($connection);
+                        $errors[] = getSQLError($connection);
                     }
                 } else {
                     $errorCount++;
-                    $errors[] = "Error code " . mysql_errno($connection) . ": " . mysql_error($connection);
+                    $errors[] = getSQLError($connection);
                 }
                 
                 if ($errorCount > 0 && $success == 0) {
@@ -115,7 +116,7 @@ if (isset($ftp_username) && isset($ftp_pass) && isset($rDir)) {
             }
         } else {
             $errorCount++;
-            $errors[] = "Error code " . mysql_errno($connection) . ": " . mysql_error($connection);
+            $errors[] = getSQLError($connection);
         }
     }
 }

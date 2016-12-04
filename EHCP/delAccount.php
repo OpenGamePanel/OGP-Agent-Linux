@@ -5,6 +5,7 @@ if (file_exists("config.php")) {
 } else {
     die("config.php must exist within the installation root folder!");
 }
+include_once 'db_functions.php';
 
 // Deletes passed in user account from database
 
@@ -25,16 +26,16 @@ if (!isset($userToDelete)) {
     $errors[] = "No username was passed to the form.";
 } else {
     $SQL = "SELECT ftpusername FROM ftpaccounts WHERE ftpusername = '$userToDelete'";
-    $Result = mysql_query($SQL, $connection);
+	$Result = execSQL($SQL, $connection);
     
     if ($Result !== FALSE) {
-        $row = mysql_fetch_row($Result);
+		$row = getSQLRow($Result);
         $unameDeleted = $row[0];
     }
     
     if (isset($unameDeleted)) {
         $SQL = "DELETE FROM ftpaccounts WHERE ftpusername = '$userToDelete'";
-        $Result = mysql_query($SQL, $connection);
+		$Result = execSQL($SQL, $connection);
         
         if ($Result !== FALSE) {
             
@@ -46,7 +47,7 @@ if (!isset($userToDelete)) {
             }
         } else {
             $errorCount++;
-            $errors[] = "Error code " . mysql_errno($connection) . ": " . mysql_error($connection);
+			$errors[] = getSQLError($connection);			
             $success = 0;
         }
     }

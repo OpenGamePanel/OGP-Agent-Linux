@@ -6,6 +6,8 @@ if (file_exists("config.php")) {
     die("config.php must exist within the installation root folder!");
 }
 
+include_once 'db_functions.php';
+
 // Updates ftpuser's password
 $success = 0;
 $errorCount = 0;
@@ -93,15 +95,17 @@ if (!isset($ftp_username) || !isset($update_dir)) {
         // Security checks
         
         if (isset($ftp_pass)) {
-            $ftp_password_db = mysql_real_escape_string($ftp_pass);
+			$ftp_password_db = escapeSQLStr($ftp_pass, $connection);
         }
-        $ftp_username_db = mysql_real_escape_string($ftp_username);
+        
+        $ftp_username_db = escapeSQLStr($ftp_username);
+		
         $SQL = "SELECT * FROM ftpaccounts WHERE ftpusername = '$ftp_username_db'";
-        $Result = mysql_query($SQL, $connection);
+        
+		$Result = execSQL($SQL, $connection);
         
         if ($Result !== FALSE) {
-            $count = mysql_num_rows($Result);
-            
+			$count = countSQLResult($Result);
             if ($count != 1) {
                 $errorCount++;
                 $errors[] = "FTP User " . $ftp_username . " does not exist in the database. Account information cannot be updated";
@@ -114,18 +118,18 @@ if (!isset($ftp_username) || !isset($update_dir)) {
                     $SQL.= "password=password('$ftp_password_db'), ";
                 }
                 $SQL.= "homedir='$update_dir' WHERE ftpusername='$ftp_username_db'";
-                $Result = mysql_query($SQL, $connection);
+                $Result = execSQL($SQL, $connection);
                 
                 if ($Result !== FALSE) {
                     $success = 1;
                 } else {
                     $errorCount++;
-                    $errors[] = "Error code " . mysql_errno($connection) . ": " . mysql_error($connection);
+                    $errors[] = getSQLError($connection);
                 }
             }
         } else {
             $errorCount++;
-            $errors[] = "Error code " . mysql_errno($connection) . ": " . mysql_error($connection);
+            $errors[] = getSQLError($connection);
         }
     }
 }

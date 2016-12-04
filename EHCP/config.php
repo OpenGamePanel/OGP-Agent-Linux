@@ -52,11 +52,16 @@ function addToLog($errors) {
 }
 
 // Create the database connection
-$connection = mysql_connect($server, $login, $dbpass);
+if(function_exists("mysql_connect")){
+	$connection = mysql_connect($server, $login, $dbpass);
+	if ($connection) {
+		mysql_select_db($dbName, $connection);
+	}
+}else{
+	$connection = mysqli_connect($server, $login, $dbpass, $dbName);
+}
 
-if ($connection) {
-    mysql_select_db($dbName, $connection);
-} else {
+if(!$connection){
     $errToLog[] = 'Unable to connect to the EHCP MySQL database using provided credentials! Please update your config.php settings!';
     addToLog($errToLog);
     die('Unable to connect to the EHCP MySQL database using provided credentials! Please update your config.php settings!');
