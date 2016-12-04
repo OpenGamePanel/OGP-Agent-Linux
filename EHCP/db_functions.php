@@ -35,6 +35,14 @@
 		}
 	}
 	
+	function getSQLRowArray($Result){
+		if(function_exists("mysql_fetch_row")){
+			return mysql_fetch_row($Result);
+		}else{
+			return mysqli_fetch_row($Result);
+		}
+	}
+	
 	function escapeSQLStr($str, $connection){
 		if(function_exists("mysql_real_escape_string")){
 			return mysql_real_escape_string($str);

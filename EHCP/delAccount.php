@@ -29,7 +29,7 @@ if (!isset($userToDelete)) {
 	$Result = execSQL($SQL, $connection);
     
     if ($Result !== FALSE) {
-		$row = getSQLRow($Result);
+		$row = getSQLRowArray($Result);
         $unameDeleted = $row[0];
     }
     
