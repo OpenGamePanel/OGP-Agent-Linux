@@ -252,14 +252,16 @@ if [ -z "$opType" ]; then
 	bash ${agent_home}/agent_conf.sh -s $sudo_password
 fi
 
-echo;echo 
-echo "Installation complete!"  
-echo "Start the agent manually to test it like this:"
-echo "  cd ${agent_home}"
-echo "  ./ogp_agent.pl"
-echo
-echo "If everything looks good, hit <Ctrl C> to kill the agent." 
-echo "The agent can be started with the init scripst by using following command"
-echo "  ${init_dir}/ogp_agent start";
+echo "Attempting to start the Open Game Panel (OGP) agent..."  
+
+systemctl daemon-reload
+chkconfig ogp_agent on
+rc-update add ogp_agent default
+update-rc.d ogp_agent defaults
+service ogp_agent restart
+
+echo;
+echo "OGP installation complete!"  
 echo 
+
 exit 0

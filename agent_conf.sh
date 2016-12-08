@@ -354,7 +354,7 @@ then
 				while [ 1 ]
 				do
 					echo;
-					echo "If you have installed the Easy Hosting Control Panel (EHCP - www.ehcp.net),"
+					echo "If you have installed the Easy Hosting Control Panel (EHCP - www.ehcpforce.tk),"
 					echo "the agent can use it to create FTP accounts instead of using Pure-FTPd."
 					echo "Would you like to configure this agent to use the API of EHCP?"
 					echo -n "(yes|no) [Default no]: "
