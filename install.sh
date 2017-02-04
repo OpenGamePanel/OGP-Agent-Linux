@@ -34,23 +34,21 @@
 
 detectSystemD(){
 	# Ops require sudo
-	if [ ! -z "$sudoPass" ]; then
-		initProcessStr=$(ps -p 1 | awk '{print $4}' | tail -n 1)
-		if [ "$initProcessStr" == "systemd" ]; then
-			systemdPresent=1
-			if [ -e "/lib/systemd/system" ]; then
-				SystemDDir="/lib/systemd/system"
-			elif [ -e "/etc/systemd/system" ]; then
-				SystemDDir="/etc/systemd/system"
+	initProcessStr=$(ps -p 1 | awk '{print $4}' | tail -n 1)
+	if [ "$initProcessStr" == "systemd" ]; then
+		systemdPresent=1
+		if [ -e "/lib/systemd/system" ]; then
+			SystemDDir="/lib/systemd/system"
+		elif [ -e "/etc/systemd/system" ]; then
+			SystemDDir="/etc/systemd/system"
+		else
+			checkDir=$(ps -eaf|grep '[s]ystemd' | head -n 1 | awk '{print $8}' | grep -o ".*systemd/")
+			if [ -e "${checkDir}system" ]; then
+				SystemDDir="$checkDir"
 			else
-				checkDir=$(ps -eaf|grep '[s]ystemd' | head -n 1 | awk '{print $8}' | grep -o ".*systemd/")
-				if [ -e "${checkDir}system" ]; then
-					SystemDDir="$checkDir"
-				else
 					# Can't find systemd dir
-					systemdPresent=
-					SystemDDir=
-				fi
+				systemdPresent=
+				SystemDDir=
 			fi
 		fi
 	fi
@@ -300,6 +298,7 @@ sed -i "s|OGP_USER|${username}|" ${init_file} || failed "Failed to modify init f
 chmod a+x $init_file
 
 if [ "$init_dir" == "$agent_home" ] && [ ! -z "$systemdPresent" ]; then
+	init_file=${init_dir}/ogp_agent_init
 	mv ${init_dir}/ogp_agent ${init_dir}/ogp_agent_init
 	copySystemDInit
 fi
@@ -312,7 +311,12 @@ echo "Changing files owner to user ${username}...";
 chown --preserve-root -R ${username} ${agent_home} || failed "Failed to chmod the agent_home ${agent_home} for user ${username}."
 
 echo "Setting Permissions on files in ${agent_home}..."
-chmod 750 ${init_dir}/ogp_agent || failed "Failed to chmod ${init_dir}/ogp_agent to 750."
+if [ -e "${init_dir}/ogp_agent" ]; then
+	chmod 750 ${init_dir}/ogp_agent || failed "Failed to chmod ${init_dir}/ogp_agent to 750."
+fi
+if [ -e "${init_dir}/ogp_agent_init" ]; then
+	chmod 750 ${init_dir}/ogp_agent_init || failed "Failed to chmod ${init_dir}/ogp_agent_init to 750."
+fi
 chmod 750 ${agent_home}/ogp_agent.pl || failed "Failed to chmod ${agent_home}/ogp_agent.pl to 750."
 chmod 750 ${agent_home}/ogp_agent_run || failed "Failed to chmod ${agent_home}/ogp_agent_run to 750."
 
@@ -324,7 +328,7 @@ echo ""
 chmod +x ${agent_home}/agent_conf.sh
 
 if [ -z "$opType" ]; then
-	bash ${agent_home}/agent_conf.sh -s $sudo_password
+	bash ${agent_home}/agent_conf.sh -s $sudo_password -u $username
 fi
 
 echo "Attempting to start the Open Game Panel (OGP) agent..."  
@@ -333,8 +337,8 @@ systemctl daemon-reload
 chkconfig ogp_agent on
 rc-update add ogp_agent default
 update-rc.d ogp_agent defaults
-service ogp_agent restart
 systemctl enable ogp_agent.service
+service ogp_agent restart
 
 echo;
 echo "OGP installation complete!"  

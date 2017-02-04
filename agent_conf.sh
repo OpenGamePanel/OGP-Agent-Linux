@@ -19,6 +19,23 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #
+
+####################
+#    FUNCTIONs     #
+####################
+
+function indexOf(){ 
+	# $1 = search string
+	# $2 = string or char to find
+	# Returns -1 if not found
+	x="${1%%$2*}"
+	[[ $x = $1 ]] && echo -1 || echo ${#x}
+}
+
+#####################
+#    CODE  ##########
+#####################
+
 if [ $EUID -ne 0 -a "$(uname -o)" != "Cygwin" ]; then
    echo "This script must be run as root" 1>&2
    exit 1
@@ -33,7 +50,7 @@ Usage: $0 option
 OPTIONS:
    -s password       Set the password for the agent's user (Linux)
    -p password       Set the password for cyg_server user (Windows)
-
+   -u ogpuser        Set the username of the ogp user
 EOF
 }
 
@@ -46,6 +63,10 @@ do
          p)
              cs_psw=$OPTARG
              ;;
+		 u)
+             agent_user=$OPTARG
+             ;;
+            
          ?)
              exit
              ;;
@@ -485,7 +506,9 @@ then
 								fi
 								ftpd_user=$(grep -oP '^User\s+\K.+' ${proFTPdConfFile})
 								ftpd_group=$(grep -oP '^Group\s+\K.+' ${proFTPdConfFile})
-								agent_user=$(grep -oP 'agent_user=\K.+' /etc/init.d/ogp_agent)
+								if [ -z "$agent_user" ]; then
+									agent_user=$(grep -oP 'agent_user=\K.+' /etc/init.d/ogp_agent)
+								fi
 								if [ ! -z "$ftpd_user" ] && [ ! -z "$ftpd_group" ] && [ ! -z "$agent_user" ]
 								then
 									if [ "$(groups $agent_user|grep $ftpd_group)" == "" ]
