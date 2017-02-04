@@ -80,7 +80,6 @@ copySystemDInit(){
 				echo -e "Copying ogp_agent systemd service file to $SystemDDir"
 				echo "$sudoPass" | sudo -S -p "" cp "${AGENTDIR}/systemd/ogp_agent.service" "$SystemDDir"
 				echo "$sudoPass" | sudo -S -p "" sed -i "s#{OGP_AGENT_PATH}#$AGENTDIR#g" "${SystemDDir}/ogp_agent.service"
-				exit
 			fi
 		fi
 	fi
