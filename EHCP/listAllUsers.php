@@ -1,9 +1,6 @@
 <?php
-
 // Returns a list of all custom FTP users
-
 // Only custom users are setup when tying into the EHCP FTP API
-
 $countNotNull = 0;
 $users_list = "";
 $success = 0;
@@ -66,5 +63,4 @@ if (!isset($connection)) {
 
 // Return the user list
 echo $users_list;
-
 ?>

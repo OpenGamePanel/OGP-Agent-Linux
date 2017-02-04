@@ -1,9 +1,6 @@
 <?php
-
 // Adds users to the database
-
 // Variables
-
 $success = 0;
 
 if (isset($_GET['username'])) {
@@ -128,7 +125,5 @@ if ($errorCount > 0) {
 }
 
 // Return value:
-
 echo $success;
-
 ?>

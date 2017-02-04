@@ -1,5 +1,4 @@
 <?php
-
 if (file_exists("config.php")) {
     include 'config.php';
 } else {
@@ -142,5 +141,4 @@ if ($errorCount > 0) {
 
 // Return value:
 echo $success;
-
 ?>

@@ -1,5 +1,4 @@
 <?php
-
 /*
 This FTP addon works with EHCP (www.ehcp.net)
 It allows OGP - the open game panel - to manage custom FTP user accounts
@@ -22,6 +21,7 @@ if(!isset($dbpass) || empty($dbpass)){
 }
 
 $dbName = 'ehcp';
+$debug=false;
 
 /**********************************
 *          END DB Creds           *
@@ -31,7 +31,7 @@ $dbName = 'ehcp';
 $logFile = 'ehcp_ftp_log.txt';
 
 function addToLog($errors) {
-    global $logFile;
+    global $logFile, $debug;
     
     if (!file_exists($logFile)) {
         $createLog = fopen($logFile, 'a+');
@@ -53,8 +53,10 @@ function addToLog($errors) {
     
     foreach ($errors as $err) {
         $logContents.= $err . "\n";
-        trigger_error($err, E_USER_NOTICE);
-        echo $err . "\n";
+        if($debug){
+			trigger_error($err, E_USER_NOTICE);
+			echo $err . "\n";
+		}
     }
     $updateLog = file_put_contents($logFile, $logContents);
     
@@ -78,6 +80,4 @@ if(!$connection){
     addToLog($errToLog);
     die('Unable to connect to the EHCP MySQL database using provided credentials! Please update your config.php settings!');
 }
-
 ?>
-

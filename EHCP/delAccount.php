@@ -1,5 +1,4 @@
 <?php
-
 if (file_exists("config.php")) {
     include 'config.php';
 } else {
@@ -28,23 +27,19 @@ if (!isset($userToDelete)) {
     $SQL = "SELECT ftpusername FROM ftpaccounts WHERE ftpusername = '$userToDelete'";
 	$Result = execSQL($SQL, $connection);
     
-    if ($Result !== FALSE) {
+    if ($Result !== FALSE && countSQLResult($Result) == 1) {
 		$row = getSQLRowArray($Result);
         $unameDeleted = $row[0];
-    }
+    }else{
+		$errorCount++;
+        $errors[] = "The specified user $userToDelete does not exist within the databse. No actions were taken!";
+	}
     
     if (isset($unameDeleted)) {
         $SQL = "DELETE FROM ftpaccounts WHERE ftpusername = '$userToDelete'";
-		$Result = execSQL($SQL, $connection);
-        
+		$Result = execSQL($SQL, $connection); 
         if ($Result !== FALSE) {
-            
-            if ($unameDeleted === "none") {
-                $errorCount++;
-                $errors[] = "The specified user $userToDelete does not exist within the databse. No actions were taken!";
-            } else {
-                $success = 1;
-            }
+			$success = 1;
         } else {
             $errorCount++;
 			$errors[] = getSQLError($connection);			
@@ -61,5 +56,4 @@ if ($errorCount > 0) {
 
 // Return value:
 echo $success;
-
 ?>

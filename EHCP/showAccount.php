@@ -1,9 +1,4 @@
 <?php
-
-// Returns the information of ONE custom ftpuser
-
-// Only custom users are setup when tying into the EHCP FTP API
-
 $countNotNull = 0;
 $user_details = "";
 $success = 0;
@@ -68,5 +63,4 @@ if (isset($ftp_account)) {
 
 // Return the user list
 echo $user_details;
-
 ?>

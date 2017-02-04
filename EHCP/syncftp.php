@@ -1,6 +1,5 @@
 <?php
 $curDir = getcwd();
-
 if(chdir("/var/www/new/ehcp/")){
 	require ("classapp.php");
 	$app = new Application();
@@ -8,7 +7,5 @@ if(chdir("/var/www/new/ehcp/")){
 
 	$app->addDaemonOp('syncftp', '', '', '', 'sync ftp for nonstandard homes');
 }
-
 chdir($curDir);
-
 ?>

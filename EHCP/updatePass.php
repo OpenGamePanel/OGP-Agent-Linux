@@ -1,5 +1,4 @@
 <?php
-
 if (file_exists("config.php")) {
     include 'config.php';
 } else {
@@ -67,16 +66,11 @@ if (!isset($ftp_username) || !isset($ftp_pass)) {
     }
 }
 
-
-
 // Log errors
-
 if ($errorCount > 0) {
     addToLog($errors);
 }
 
 // Return value:
-
 echo $success;
-
 ?>
