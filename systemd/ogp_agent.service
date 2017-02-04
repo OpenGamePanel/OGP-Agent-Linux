@@ -1,0 +1,16 @@
+# ogp_agent systemd Service Script
+# By Open Game Panel
+# OGP <own3mall@gmail.com>
+[Unit]
+Description=Open Game Panel (OGP) Daemon www.opengamepanel.org
+After=network.target
+
+[Service]
+Type=forking
+ExecStart=/bin/sh -c "{OGP_AGENT_PATH}/ogp_agent_init start"
+ExecStop=/bin/sh -c "{OGP_AGENT_PATH}/ogp_agent_init stop"
+RemainAfterExit=yes
+PIDFile="{OGP_AGENT_PATH}/ogp_agent_run.pid"
+
+[Install]
+WantedBy=multi-user.target
