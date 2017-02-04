@@ -304,6 +304,7 @@ my $d = Frontier::Daemon::Forking->new(
 				 rebootnow						=> \&rebootnow,
 				 what_os					  	=> \&what_os,
 				 start_file_download		  	=> \&start_file_download,
+				 lock_additional_files          => \&lock_additional_files,
 				 is_file_download_in_progress 	=> \&is_file_download_in_progress,
 				 uncompress_file			  	=> \&uncompress_file,
 				 discover_ips					=> \&discover_ips,
@@ -1679,6 +1680,61 @@ sub start_file_download
 	}
 }
 
+sub lock_additional_files{
+	return "Bad Encryption Key" unless(decrypt_param(pop(@_)) eq "Encryption checking OK");
+	my ($homedir, $files, $action) = &decrypt_params(@_);
+	return lock_additional_files_logic($homedir, $files, $action);
+}
+
+sub lock_additional_files_logic{
+	my ($homedir, $filesToLock, $action, $returnType) = @_;
+	
+	logger "Locking additional files specified in the XML.";
+	
+	my $commandStr = "";
+	$filesToLock = startup_comma_format_to_multiline($filesToLock);
+	$filesToLock = replace_OGP_Env_Vars("", $homedir, $filesToLock);
+	my @filesToProcess = split /[\r\n]+/, $filesToLock;
+	foreach my $line (@filesToProcess) {
+		my $fullPath = $homedir . "/" . $line;
+		if (-e "$fullPath"){
+			if($action eq "lock"){
+				if(defined $returnType && $returnType eq "str"){
+					$commandStr .= "echo '".$SUDOPASSWD."' | sudo -S -p \"\" sh -c \"" . secure_path_without_decrypt("chattr+i", $fullPath, $returnType) . "\"\n";
+				}else{
+					secure_path_without_decrypt("chattr+i", $fullPath);
+				}
+			}else{
+				if(defined $returnType && $returnType eq "str"){
+					$commandStr .= "echo '".$SUDOPASSWD."' | sudo -S -p \"\" sh -c \"" . secure_path_without_decrypt("chattr+i", $fullPath, $returnType) . "\"\n";
+				}else{
+					secure_path_without_decrypt("chattr-i", $fullPath);
+				}
+			}
+		}elsif(-e "$line"){
+			if($action eq "lock"){
+				if(defined $returnType && $returnType eq "str"){
+					$commandStr .= "echo '".$SUDOPASSWD."' | sudo -S -p \"\" sh -c \"" . secure_path_without_decrypt("chattr+i", $fullPath, $returnType) . "\"\n";
+				}else{
+					secure_path_without_decrypt("chattr+i", $line);
+				}
+			}else{
+				if(defined $returnType && $returnType eq "str"){
+					$commandStr .= "echo '".$SUDOPASSWD."' | sudo -S -p \"\" sh -c \"" . secure_path_without_decrypt("chattr+i", $fullPath, $returnType) . "\"\n";
+				}else{
+					secure_path_without_decrypt("chattr-i", $line);
+				}
+			}
+		}
+	}
+	
+	if($commandStr ne ""){
+		return $commandStr;
+	}
+	
+	return 1;
+}
+
 sub run_before_start_commands
 {
 	#return "Bad Encryption Key" unless(decrypt_param(pop(@_)) eq "Encryption checking OK");
@@ -1856,7 +1912,7 @@ sub create_bash_scripts
 sub start_rsync_install
 {
 	return "Bad Encryption Key" unless(decrypt_param(pop(@_)) eq "Encryption checking OK");
-	my ($home_id, $home_path, $url, $exec_folder_path, $exec_path, $precmd, $postcmd) = decrypt_params(@_);
+	my ($home_id, $home_path, $url, $exec_folder_path, $exec_path, $precmd, $postcmd, $filesToLockUnlock) = decrypt_params(@_);
 
 	if ( check_b4_chdir($home_path) != 0)
 	{
@@ -1889,6 +1945,10 @@ sub start_rsync_install
 	my $screen_id = create_screen_id(SCREEN_TYPE_UPDATE, $home_id);
 	
 	my $log_file = Path::Class::File->new(SCREEN_LOGS_DIR, "screenlog.$screen_id");
+	
+	if(defined $filesToLockUnlock && $filesToLockUnlock ne ""){
+		$postcmd .= "\n" . lock_additional_files_logic($home_path, $filesToLockUnlock, "lock", "str");
+	}
 	
 	backup_home_log( $home_id, $log_file );
 	my $path	= $home_path;
@@ -1977,7 +2037,7 @@ sub master_server_update
 sub steam_cmd
 {
 	return "Bad Encryption Key" unless(decrypt_param(pop(@_)) eq "Encryption checking OK");
-	my ($home_id, $home_path, $mod, $modname, $betaname, $betapwd, $user, $pass, $guard, $exec_folder_path, $exec_path, $precmd, $postcmd, $cfg_os) = decrypt_params(@_);
+	my ($home_id, $home_path, $mod, $modname, $betaname, $betapwd, $user, $pass, $guard, $exec_folder_path, $exec_path, $precmd, $postcmd, $cfg_os, $filesToLockUnlock) = decrypt_params(@_);
 	
 	if ( check_b4_chdir($home_path) != 0)
 	{
@@ -2049,6 +2109,11 @@ sub steam_cmd
 	backup_home_log( $home_id, $log_file );
 	
 	my $postcmd_mod = $postcmd;
+	
+	if(defined $filesToLockUnlock && $filesToLockUnlock ne ""){
+		$postcmd_mod .= "\n" . lock_additional_files_logic($home_path, $filesToLockUnlock, "lock", "str");
+	}
+	
 	my @installcmds = ("$steam_binary +runscript $installtxt +exit");
 	
 	my $installfile = create_bash_scripts( $home_path, $bash_scripts_path, $precmd, $postcmd_mod, @installcmds );
@@ -2496,7 +2561,7 @@ sub secure_path
 
 sub secure_path_without_decrypt
 {   
-	my ($action, $file_path) = @_;
+	my ($action, $file_path, $returnType) = @_;
 	
 	if( -e $file_path )
 	{
@@ -2507,11 +2572,19 @@ sub secure_path_without_decrypt
 		$file_path =~ s/('+)/'\"$1\"'/g;
 		if($action eq "chattr+i")
 		{
-			return sudo_exec_without_decrypt('chown -Rf '.$uid.':'.$gid.' \''.$file_path.'\' && chattr -Rf +i \''.$file_path.'\'');
+			if(defined $returnType && $returnType eq "str"){
+				return 'chown -Rf '.$uid.':'.$gid.' \''.$file_path.'\' && chattr -Rf +i \''.$file_path.'\'';
+			}else{
+				return sudo_exec_without_decrypt('chown -Rf '.$uid.':'.$gid.' \''.$file_path.'\' && chattr -Rf +i \''.$file_path.'\'');
+			}
 		}
 		elsif($action eq "chattr-i")
 		{
-			return sudo_exec_without_decrypt('chattr -Rf -i \''.$file_path.'\' && chown -Rf '.$uid.':'.$gid.' \''.$file_path.'\'');
+			if(defined $returnType && $returnType eq "str"){
+				return 'chattr -Rf -i \''.$file_path.'\' && chown -Rf '.$uid.':'.$gid.' \''.$file_path.'\'';
+			}else{
+				return sudo_exec_without_decrypt('chattr -Rf -i \''.$file_path.'\' && chown -Rf '.$uid.':'.$gid.' \''.$file_path.'\'');
+			}
 		}
 	}
 	return -1;
