@@ -27,6 +27,69 @@
 # $3 = OGP User Sudo Pass (Used as ogpUserPass)
 # $4 = Install Path (Used as ogpInsPath)
 
+
+####################
+#    FUNCTIONs     #
+####################
+
+detectSystemD(){
+	# Ops require sudo
+	if [ ! -z "$sudoPass" ]; then
+		initProcessStr=$(ps -p 1 | awk '{print $4}' | tail -n 1)
+		if [ "$initProcessStr" == "systemd" ]; then
+			systemdPresent=1
+			if [ -e "/lib/systemd/system" ]; then
+				SystemDDir="/lib/systemd/system"
+			elif [ -e "/etc/systemd/system" ]; then
+				SystemDDir="/etc/systemd/system"
+			else
+				checkDir=$(ps -eaf|grep '[s]ystemd' | head -n 1 | awk '{print $8}' | grep -o ".*systemd/")
+				if [ -e "${checkDir}system" ]; then
+					SystemDDir="$checkDir"
+				else
+					# Can't find systemd dir
+					systemdPresent=
+					SystemDDir=
+				fi
+			fi
+		fi
+	fi
+}
+
+copySystemDInit(){
+	AGENTDIR=${agent_home}
+	sudoPass=${sudo_password}
+	if [ -e "${AGENTDIR}/systemd/ogp_agent.service" ]; then
+		if [ ! -z "$systemdPresent" ] && [ ! -z "$SystemDDir" ]; then
+			echo -e "systemd detected as the init system with a directory of $SystemDDir.  Updating OGP agent to use systemd service init script."
+			if [ -e "/etc/init.d/ogp_agent" ] && [ ! -e "${AGENTDIR}/ogp_agent_init" ]; then
+				echo -e "Taking care of existing OGP files."
+				echo "$sudoPass" | sudo -S -p "" service ogp_agent stop
+				# Kill any remaining ogp agent process
+				ogpPID=$(ps -ef | grep -v grep | grep ogp_agent.pl | head -n 1 | awk '{print $3}')
+				if [ ! -z "$ogpPID" ]; then
+					echo "$sudoPass" | sudo -S -p "" kill -9 "$ogpPID"
+				fi
+				echo "$sudoPass" | sudo -S -p "" cp "/etc/init.d/ogp_agent" "${AGENTDIR}/ogp_agent_init"
+				echo "$sudoPass" | sudo -S -p "" chmod +x "${AGENTDIR}/ogp_agent_init"
+				echo "$sudoPass" | sudo -S -p "" update-rc.d ogp_agent disable
+				echo "$sudoPass" | sudo -S -p "" chkconfig ogp_agent off
+				echo "$sudoPass" | sudo -S -p "" rm -rf "/etc/init.d/ogp_agent"
+			fi
+			if [ ! -e "$SystemDDir/ogp_agent.service" ]; then
+				echo -e "Copying ogp_agent systemd service file to $SystemDDir"
+				echo "$sudoPass" | sudo -S -p "" cp "${AGENTDIR}/systemd/ogp_agent.service" "$SystemDDir"
+				echo "$sudoPass" | sudo -S -p "" sed -i "s#{OGP_AGENT_PATH}#$AGENTDIR#g" "${SystemDDir}/ogp_agent.service"
+				exit
+			fi
+		fi
+	fi
+}
+
+#####################
+#    CODE  ##########
+#####################
+
 # Parameter notifications
 if [ ! -z "$1" ]; then
 	echo -n "Received operation type of $1 as a parameter."
@@ -130,6 +193,8 @@ else
     done
 fi
 
+detectSystemD
+
 readonly AGENT_USER_HOME="`cat /etc/passwd | grep "^${username}:" | cut -d':' -f6`/OGP/"
 
 echo
@@ -176,19 +241,25 @@ else
     readonly DEFAULT_INIT_DIR="${agent_home}/"
 fi
 
-if [ "X`uname`" != "XLinux" ]
-then 
-    echo
-    echo "Detected non-Linux platform..."
-    echo "Where do you want to put the init scripts?"
-	echo -n "[Default ${DEFAULT_INIT_DIR}]: "
-    read init_dir
-fi
+if [ -z "$systemdPresent" ]; then
 
-if [ -z "$opType" ]; then
-	echo "Where do you want to put the init scripts?"
-	echo -n "[Default ${DEFAULT_INIT_DIR}]:"
-	read init_dir
+	if [ "X`uname`" != "XLinux" ]
+	then 
+		echo
+		echo "Detected non-Linux platform..."
+		echo "Where do you want to put the init scripts?"
+		echo -n "[Default ${DEFAULT_INIT_DIR}]: "
+		read init_dir
+	fi
+
+	if [ -z "$opType" ]; then
+		echo "Where do you want to put the init scripts?"
+		echo -n "[Default ${DEFAULT_INIT_DIR}]:"
+		read init_dir
+	fi
+
+else
+	init_dir=${agent_home}
 fi
 
 if [ -z "${init_dir}" ]  
@@ -227,8 +298,13 @@ cp -f $init_file_template $init_file || failed "Failed to create init file ($ini
 # Next we replace the OGP_AGENT_DIR with the actual dir in init file.
 sed -i "s|OGP_AGENT_DIR|${agent_home}|" ${init_file} || failed "Failed to modify init file ($init_file)."
 sed -i "s|OGP_USER|${username}|" ${init_file} || failed "Failed to modify init file ($init_file)."
-
 chmod a+x $init_file
+
+if [ "$init_dir" == "$agent_home" ] && [ ! -z "$systemdPresent" ]; then
+	mv ${init_dir}/ogp_agent ${init_dir}/ogp_agent_init
+	copySystemDInit
+fi
+
 echo;
 
 echo "Changing files owner to user ${username}...";
@@ -259,6 +335,7 @@ chkconfig ogp_agent on
 rc-update add ogp_agent default
 update-rc.d ogp_agent defaults
 service ogp_agent restart
+systemctl enable ogp_agent.service
 
 echo;
 echo "OGP installation complete!"  
