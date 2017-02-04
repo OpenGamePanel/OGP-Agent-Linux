@@ -198,7 +198,7 @@ fi
 init_dir=${init_dir%/}
 echo "Copying files..."
 
-cp -avf Crypt EHCP FastDownload File Frontier IspConfig KKrcon php-query Schedule Time ogp_agent.pl ogp_screenrc ogp_agent_run agent_conf.sh extPatterns.txt ${agent_home}/ || failed "Failed to copy agent files to ${agent_home}."
+cp -avf systemd Crypt EHCP FastDownload File Frontier IspConfig KKrcon php-query Schedule Time ogp_agent.pl ogp_screenrc ogp_agent_run agent_conf.sh extPatterns.txt ${agent_home}/ || failed "Failed to copy agent files to ${agent_home}."
 
 # Create the directory for configs.
 mkdir -p ${agent_home}/Cfg || failed "Failed to create ${agent_home}/Cfg dir."

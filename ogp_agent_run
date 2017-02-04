@@ -40,6 +40,63 @@ if test `id -u` -eq 0; then
 	done
 fi
 
+getSudoPassword(){
+	sudoPass=$(cat "$AGENTDIR/Cfg/Config.pm" | grep -o "sudo_password.*" | grep -o "[^sudo_password( )*=>( )*'].*" | grep -o ".*[^',]")
+}
+
+detectSystemD(){
+	# Ops require sudo
+	if [ ! -z "$sudoPass" ]; then
+		initProcessStr=$(ps -p 1 | awk '{print $4}' | tail -n 1)
+		if [ "$initProcessStr" == "systemd" ]; then
+			systemdPresent=1
+			if [ -e "/lib/systemd/system" ]; then
+				SystemDDir="/lib/systemd/system"
+			elif [ -e "/etc/systemd/system" ]; then
+				SystemDDir="/etc/systemd/system"
+			else
+				checkDir=$(ps -eaf|grep '[s]ystemd' | head -n 1 | awk '{print $8}' | grep -o ".*systemd/")
+				if [ -e "${checkDir}system" ]; then
+					SystemDDir="$checkDir"
+				else
+					# Can't find systemd dir
+					systemdPresent=
+					SystemDDir=
+				fi
+			fi
+		fi
+		
+		if [ -e "${AGENTDIR}/systemd/ogp_agent.service" ]; then
+			if [ ! -z "$systemdPresent" ] && [ ! -z "$SystemDDir" ]; then
+				echo -e "systemd detected as the init system with a directory of $SystemDDir.  Updating OGP agent to use systemd service init script."
+				if [ -e "/etc/init.d/ogp_agent" ] && [ ! -e "${AGENTDIR}/ogp_agent_init" ]; then
+					echo -e "Taking care of existing OGP files."
+					echo "$sudoPass" | sudo -S -p "" service ogp_agent stop
+					# Kill any remaining ogp agent process
+					ogpPID=$(ps -ef | grep -v grep | grep ogp_agent.pl | head -n 1 | awk '{print $3}')
+					if [ ! -z "$ogpPID" ]; then
+						echo "$sudoPass" | sudo -S -p "" kill -9 "$ogpPID"
+					fi
+					echo "$sudoPass" | sudo -S -p "" cp "/etc/init.d/ogp_agent" "${AGENTDIR}/ogp_agent_init"
+					echo "$sudoPass" | sudo -S -p "" chmod +x "${AGENTDIR}/ogp_agent_init"
+					echo "$sudoPass" | sudo -S -p "" update-rc.d ogp_agent disable
+					echo "$sudoPass" | sudo -S -p "" chkconfig ogp_agent off
+					echo "$sudoPass" | sudo -S -p "" rm -rf "/etc/init.d/ogp_agent"
+				fi
+				if [ ! -e "$SystemDDir/ogp_agent.service" ]; then
+					echo -e "Copying ogp_agent systemd service file to $SystemDDir"
+					echo "$sudoPass" | sudo -S -p "" cp "${AGENTDIR}/systemd/ogp_agent.service" "$SystemDDir"
+					echo "$sudoPass" | sudo -S -p "" sed -i "s#{OGP_AGENT_PATH}#$AGENTDIR#g" "${SystemDDir}/ogp_agent.service"
+					echo "$sudoPass" | sudo -S -p "" systemctl daemon-reload
+					echo "$sudoPass" | sudo -S -p "" systemctl enable ogp_agent.service
+					echo "$sudoPass" | sudo -S -p "" service ogp_agent restart
+					exit
+				fi
+			fi
+		fi
+	fi
+}
+
 init() {
 	RESTART="yes"
 	AGENT="$AGENTDIR/ogp_agent.pl"
@@ -151,7 +208,7 @@ update() {
 							rm -Rf ${REPONAME}-* &> /dev/null
 						else
 							cd ${REPONAME}-${REVISION}
-							cp -avf Schedule Time FastDownload php-query ogp_agent.pl ogp_screenrc ogp_agent_run agent_conf.sh $AGENTDIR &> /dev/null
+							cp -avf systemd Schedule Time FastDownload php-query ogp_agent.pl ogp_screenrc ogp_agent_run agent_conf.sh $AGENTDIR &> /dev/null
 							if test $? -ne 0; then
 								echo "`date`: The agent files cannot be overwritten."
 								echo "Cleaning up..."
@@ -193,6 +250,8 @@ update() {
 }
 	
 run() {
+	getSudoPassword
+	detectSystemD
 	update
 	if test -n "$RESTART" ; then
 		echo "Agent will auto-restart if there is a crash."
