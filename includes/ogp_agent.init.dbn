@@ -51,7 +51,9 @@ start() {
 		usermod -aG sudo $agent_user >/dev/null 2>&1
 	fi
 
-	chown -Rf `id -u $agent_user`:`id -g $agent_user` $agent_dir >/dev/null 2>&1
+	# Had to add the "|| true" part to the end of the below command due to chown causing the entire bash script to exit on failure in case of protected files (that have chattr +i applied)
+	# http://unix.stackexchange.com/questions/118217/chmod-silent-mode-how-force-exit-code-0-in-spite-of-error
+	chown -Rf `id -u $agent_user`:`id -g $agent_user` $agent_dir >/dev/null 2>&1 || true
 
 	# Lets the agent user to attach screens.
 	if [ "$( groups $agent_user | grep "\btty\b" )" == "" ]

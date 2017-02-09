@@ -41,7 +41,7 @@ if test `id -u` -eq 0; then
 fi
 
 getSudoPassword(){
-	sudoPass=$(cat "$AGENTDIR/Cfg/Config.pm" | grep -o "sudo_password.*" | grep -o "[^sudo_password( )*=>( )*'].*" | grep -o ".*[^',]")
+	sudoPass=$(cat "$AGENTDIR/Cfg/Config.pm" | grep -o "sudo_password.*" | grep -ow "[^sudo_password( \)*=>( \)*].*" | grep -o "[^'].*[^',]")
 }
 
 detectSystemD(){

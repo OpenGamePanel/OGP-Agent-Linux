@@ -61,7 +61,10 @@ start() {
 	fi
 	
 	group=`groups $agent_user | awk '{ print $3 }'`; 
-	chown -Rf $agent_user:$group $agent_dir &> /dev/null
+	
+	# Had to add the "|| true" part to the end of the below command due to chown causing the entire bash script to exit on failure in case of protected files (that have chattr +i applied)
+	# http://unix.stackexchange.com/questions/118217/chmod-silent-mode-how-force-exit-code-0-in-spite-of-error
+	chown -Rf $agent_user:$group $agent_dir &> /dev/null || true
 	
 	# Lets the agent user to attach screens.
 	if [ "$( groups $agent_user | grep "\btty\b" )" == "" ]
