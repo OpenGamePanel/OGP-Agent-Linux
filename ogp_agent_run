@@ -45,6 +45,7 @@ getSudoPassword(){
 }
 
 detectSystemD(){
+	replaceSystemDService=false
 	# Ops require sudo
 	if [ ! -z "$sudoPass" ]; then
 		initProcessStr=$(ps -p 1 | awk '{print $4}' | tail -n 1)
@@ -82,15 +83,16 @@ detectSystemD(){
 					echo "$sudoPass" | sudo -S -p "" update-rc.d ogp_agent disable
 					echo "$sudoPass" | sudo -S -p "" chkconfig ogp_agent off
 					echo "$sudoPass" | sudo -S -p "" rm -rf "/etc/init.d/ogp_agent"
+					replaceSystemDService=true
 				fi
-				if [ ! -e "$SystemDDir/ogp_agent.service" ]; then
+				if [ ! -e "$SystemDDir/ogp_agent.service" ] || [ "$replaceSystemDService" = true ]; then
 					echo -e "Copying ogp_agent systemd service file to $SystemDDir"
 					echo "$sudoPass" | sudo -S -p "" cp "${AGENTDIR}/systemd/ogp_agent.service" "$SystemDDir"
 					echo "$sudoPass" | sudo -S -p "" sed -i "s#{OGP_AGENT_PATH}#$AGENTDIR#g" "${SystemDDir}/ogp_agent.service"
 					echo "$sudoPass" | sudo -S -p "" systemctl daemon-reload
 					echo "$sudoPass" | sudo -S -p "" systemctl enable ogp_agent.service
 					echo "$sudoPass" | sudo -S -p "" service ogp_agent restart
-					exit
+					exit 0
 				fi
 			fi
 		fi
