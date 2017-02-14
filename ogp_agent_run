@@ -178,16 +178,21 @@ update() {
 			REPONAME=OGP-Agent-Linux
 			REVISION=`curl -s https://github.com/OpenGamePanel/${REPONAME}/commits/master.atom | egrep -o "([a-f0-9]{40})" | awk 'NR==1{print $1}'`
 			curl -Os https://raw.githubusercontent.com/OpenGamePanel/${REPONAME}/${REVISION}/ogp_agent_run
-			diff ./ogp_agent_run $AGENTDIR/ogp_agent_run &>/dev/null
-			if test $? -ne 0; then
-				cp -f ./ogp_agent_run $AGENTDIR/ogp_agent_run &> /dev/null
-				if test $? -eq 0; then
-					cd $AGENTDIR
-					chmod ug+x ogp_agent_run 2>/dev/null
-					echo "`date`: The agent updater has been changed, relaunching..."
-					rm -Rf tmp
-					./ogp_agent_run
-					exit 0
+			currentOGPAgentRunContent=$(cat "./ogp_agent_run")
+			# Check to make sure ogp_agent_run downloaded successfully from GitHub before we attempt to replace it.
+			# This should fix random 404 people have been experiencing
+			if [ ! -s "./ogp_agent_run" ] && [ "$(echo "$currentOGPAgentRunContent" | head -n 1)" != "404: Not Found" ] && [ ! -z "$(echo "$currentOGPAgentRunContent" | grep "ogp_agent.pl")" ]; then
+				diff ./ogp_agent_run $AGENTDIR/ogp_agent_run &>/dev/null
+				if test $? -ne 0; then
+					cp -f ./ogp_agent_run $AGENTDIR/ogp_agent_run &> /dev/null
+					if test $? -eq 0; then
+						cd $AGENTDIR
+						chmod ug+x ogp_agent_run 2>/dev/null
+						echo "`date`: The agent updater has been changed, relaunching..."
+						rm -Rf tmp
+						./ogp_agent_run
+						exit 0
+					fi
 				fi
 			fi
 			cd $AGENTDIR
