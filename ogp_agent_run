@@ -72,7 +72,6 @@ detectSystemD(){
 				echo -e "systemd detected as the init system with a directory of $SystemDDir.  Updating OGP agent to use systemd service init script."
 				if [ -e "/etc/init.d/ogp_agent" ] && [ ! -e "${AGENTDIR}/ogp_agent_init" ]; then
 					echo -e "Taking care of existing OGP files."
-					echo "$sudoPass" | sudo -S -p "" service ogp_agent stop
 					# Kill any remaining ogp agent process
 					ogpPID=$(ps -ef | grep -v grep | grep ogp_agent.pl | head -n 1 | awk '{print $3}')
 					if [ ! -z "$ogpPID" ]; then
