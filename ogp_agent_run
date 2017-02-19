@@ -40,6 +40,14 @@ if test `id -u` -eq 0; then
 	done
 fi
 
+ogpGitCleanup(){
+	echo "Cleaning up..."
+	rm -Rf ${REPONAME}-* &> /dev/null
+	if [ -e "ogp_agent_latest.zip" ]; then
+		rm -f "ogp_agent_latest.zip"
+	fi
+}
+
 getSudoPassword(){
 	sudoPass=$(cat "$AGENTDIR/Cfg/Config.pm" | grep -o "sudo_password.*" | grep -ow "[^sudo_password( \)*=>( \)*].*" | grep -o "[^'].*[^',]")
 }
@@ -203,23 +211,21 @@ update() {
 				HEAD=$(curl -L -Os --head -w "%{http_code}" "$URL")
 				if [ "$HEAD" == "200" ]; then
 					echo "Updating agent using curl."
-					curl -L -Os $URL
+					curl -L -s "$URL" -o "ogp_agent_latest.zip"
 					if test $? -ne 0; then
 						echo "`date`: curl failed to download the update package."
 					else
-						unzip -oq "${REVISION}.zip"
+						unzip -oq "ogp_agent_latest.zip"
 						if test $? -ne 0; then
 							echo "`date`: Unable to unzip the update package."
-							echo "cleaning up..."
-							rm -Rf ${REPONAME}-* &> /dev/null
+							ogpGitCleanup
 						else
 							cd ${REPONAME}-${REVISION}
 							cp -avf systemd Schedule Time FastDownload php-query ogp_agent.pl ogp_screenrc ogp_agent_run agent_conf.sh $AGENTDIR &> /dev/null
 							if test $? -ne 0; then
 								echo "`date`: The agent files cannot be overwritten."
-								echo "Cleaning up..."
 								cd ..
-								rm -Rf ${REPONAME}-* &> /dev/null
+								ogpGitCleanup
 								echo "Agent update failed."
 							else
 								if test ! -d "$AGENTDIR/IspConfig"; then
@@ -235,9 +241,8 @@ update() {
 								chmod ug+x $AGENTDIR/ogp_agent.pl &> /dev/null
 								chmod ug+x $AGENTDIR/ogp_agent_run &> /dev/null
 								chmod ug+x $AGENTDIR/agent_conf.sh &> /dev/null
-								echo "Cleaning up..."
 								cd ..
-								rm -Rf ${REPONAME}-* &> /dev/null
+								ogpGitCleanup
 								sed -i "s/version.*/version => '${REVISION}',/" $AGENTDIR/Cfg/Config.pm
 								echo "Agent updated successfully."
 							fi
