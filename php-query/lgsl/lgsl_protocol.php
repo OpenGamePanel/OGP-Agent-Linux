@@ -25,12 +25,14 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"aarmy"			=> "Americas Army",
 		"aarmy3"		=> "Americas Army 3",
 		"arcasimracing"	=> "Arca Sim Racing",
+		"arkse"         => "Ark Survival Evolved",
 		"arma"			=> "ArmA: Armed Assault",
 		"arma2"			=> "ArmA 2",
 		"arma2oa"		=> "ArmA 2 Operation Arrowhead",
 		"arma2co"		=> "ArmA 2 Combined Operations",
 		"arma3"			=> "ArmA 3",
 		"arma3alpha"	=> "ArmA 3 Alpha",
+		"avorion"	=> "Avorion",
 		"avp2"			=> "Aliens VS. Predator 2",
 		"avp2010"		=> "Aliens VS. Predator ( 2010 By Rebellion )",
 		"bfbc2"			=> "Battlefield Bad Company 2",
@@ -72,12 +74,14 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"halflife"		=> "Half-Life - Steam",
 		"halflifewon"	=> "Half-Life - WON",
 		"halo"			=> "Halo",
+		"hurtworld"		=> "Hurtworld",
 		"il2"			=> "IL-2 Sturmovik",
 		"ivmp"			=> "GTA IV:MP",
 		"jediknight2"	=> "JediKnight 2: Jedi Outcast",
 		"jediknightja"	=> "JediKnight: Jedi Academy",
 		"jc2mp"			=> "Just Cause 2 Multiplayer",
 		"killingfloor"	=> "Killing Floor",
+		"killingfloor2"	=> "Killing Floor 2",
 		"kingpin"		=> "Kingpin: Life of Crime",
 		"lif"			=> "Life is Feudal",
 		"modernwarfare3"=> "CoD: Modern Warfare 3",
@@ -123,6 +127,7 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"starwarsbf"	=> "Star Wars: Battlefront",
 		"starwarsbf2"	=> "Star Wars: Battlefront 2",
 		"starwarsrc"	=> "Star Wars: Republic Commando",
+		"squad"			=> "Squad",
 		"swat4"			=> "SWAT 4",
 		"test"			=> "Test ( For PHP Developers )",
 		"teeworlds"		=> "Teeworlds",
@@ -157,12 +162,14 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"aarmy_"		=> "03",
 		"aarmy3"		=> "26",
 		"arcasimracing"	=> "16",
+		"arkse"         => "05",
 		"arma"			=> "09",
 		"arma2"			=> "06",
 		"arma2oa"		=> "06",
 		"arma2co"		=> "06",
 		"arma3"			=> "05",
 		"arma3alpha"	=> "09",
+		"avorion"		=> "05",
 		"avp2"			=> "03",
 		"avp2010"		=> "31",
 		"bfbc2"			=> "30",
@@ -206,10 +213,12 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"graw"			=> "06",
 		"graw2"			=> "09",
 		"gtr2"			=> "15",
+		"hurtworld"		=> "05",
 		"jediknight2"	=> "02",
 		"jediknightja"	=> "02",
 		"jc2mp"			=> "40",
 		"killingfloor"	=> "13",
+		"killingfloor2"	=> "05",
 		"kingpin"		=> "03",
 		"lif"			=> "05",
 		"modernwarfare3"=> "31",
@@ -259,6 +268,7 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"starwarsbf"	=> "09",
 		"starwarsbf2"	=> "09",
 		"starwarsrc"	=> "09",
+		"squad"			=> "05",
 		"swat4"			=> "03",
 		"test"			=> "01",
 		"teeworlds"		=> "21",
@@ -295,12 +305,14 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"aarmy"			=> "qtracker://{IP}:{S_PORT}?game=ArmyOperations&action=show",
 		"aarmy3"		=> "qtracker://{IP}:{S_PORT}?game=AmericasArmy3&action=show",
 		"arcasimracing"	=> "http://en.wikipedia.org/wiki/ARCA_Sim_Racing",
+		"arkse"         => "steam://connect/{IP}:{S_PORT}",
 		"arma"			=> "qtracker://{IP}:{S_PORT}?game=ArmedAssault&action=show",
 		"arma2"			=> "http://en.wikipedia.org/wiki/ARMA_2",
 		"arma2oa"		=> "http://en.wikipedia.org/wiki/ARMA_2",
 		"arma2co"		=> "http://en.wikipedia.org/wiki/ARMA_2",
 		"arma3"			=> "steam://connect/{IP}:{S_PORT}",
 		"arma3alpha"	=> "http://en.wikipedia.org/wiki/ARMA_2",
+		"avorion" 	=> "steam://connect/{IP}:{S_PORT}",
 		"avp2"			=> "qtracker://{IP}:{S_PORT}?game=AliensversusPredator2&action=show",
 		"avp2010"		=> "http://en.wikipedia.org/wiki/Aliens_vs._Predator_%28video_game%29",
 		"bfbc2"			=> "http://en.wikipedia.org/wiki/Battlefield_bad_company_2",
@@ -342,12 +354,14 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"halflife"		=> "steam://connect/{IP}:{S_PORT}",
 		"halflifewon"	=> "qtracker://{IP}:{S_PORT}?game=HalfLife_WON2&action=show",
 		"halo"			=> "qtracker://{IP}:{S_PORT}?game=Halo&action=show",
+		"hurtworld"		=> "http://hurtworld.com",
 		"il2"			=> "http://en.wikipedia.org/wiki/IL-2_Sturmovik_(game)",
 		"ivmp"			=> "http://web.archive.org/web/20120817041710/http://web.no1http.com/~ivmultip/files/beta",
 		"jediknight2"	=> "qtracker://{IP}:{S_PORT}?game=JediKnight2&action=show",
 		"jediknightja"	=> "qtracker://{IP}:{S_PORT}?game=JediKnightJediAcademy&action=show",
 		"jc2mp"			=> "steam://connect/{IP}:{S_PORT}",
 		"killingfloor"	=> "steam://connect/{IP}:{C_PORT}",
+		"killingfloor2" => "steam://connect/{IP}:{S_PORT}",
 		"kingpin"		=> "qtracker://{IP}:{S_PORT}?game=Kingpin&action=show",
 		"lif"			=> "steam://connect/{IP}:{Q_PORT}",
 		"modernwarfare3"=> "http://en.wikipedia.org/wiki/Call_of_Duty:_Modern_Warfare_3",
@@ -392,6 +406,7 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"starwarsbf"	=> "qtracker://{IP}:{S_PORT}?game=StarWarsBattlefront&action=show",
 		"starwarsbf2"	=> "qtracker://{IP}:{S_PORT}?game=StarWarsBattlefront2&action=show",
 		"starwarsrc"	=> "qtracker://{IP}:{S_PORT}?game=StarWarsRepublicCommando&action=show",
+		"squad"			=> "steam://connect/{IP}:{S_PORT}",
 		"swat4"			=> "qtracker://{IP}:{S_PORT}?game=SWAT4&action=show",
 		"test"			=> "http://www.greycube.com",
 		"teeworlds"		=> "http://www.teeworlds.com",
@@ -434,7 +449,9 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 			case "aarmy"			: $c_to_q = 1;		$c_def = 1716;	$q_def = 1717;	$c_to_s = 0;	break;
 			case "aarmy3"			: $c_to_q = 0;		$c_def = 8777;	$q_def = 39300;	$c_to_s = 0;	break;
 			case "arcasimracing"	: $c_to_q = -100;	$c_def = 34397;	$q_def = 34297;	$c_to_s = 0;	break;
+			case "arkse"			: $c_to_q = 0;		$c_def = 0;		$q_def = 0;		$c_to_s = 0;	break;
 			case "arma3"			: $c_to_q = 1; 		$c_def = 2302; 	$q_def = 2303; 	$c_to_s = 0; 	break;
+			case "avorion" 			: $c_to_q = 20; 	$c_def = 27000;	$q_def = 27020; $c_to_s = 0;  	break;
 			case "bfbc2"			: $c_to_q = 0;		$c_def = 19567;	$q_def = 48888;	$c_to_s = 0;	break;
 			case "bfvietnam"		: $c_to_q = 0;		$c_def = 15567;	$q_def = 23000;	$c_to_s = 0;	break;
 			case "bf1942"			: $c_to_q = 0;		$c_def = 14567;	$q_def = 23000;	$c_to_s = 0;	break;
@@ -449,8 +466,10 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 			case "ghostrecon"		: $c_to_q = 2;		$c_def = 2346;	$q_def = 2348;	$c_to_s = 0;	break;
 			case "gtr2"				: $c_to_q = 1;		$c_def = 34297;	$q_def = 34298;	$c_to_s = 0;	break;
 			case "had2"				: $c_to_q = 3;		$c_def = 11001;	$q_def = 11004;	$c_to_s = 0;	break;
+			case "hurtworld"		: $c_to_q = 10;		$c_def = 12871;	$q_def = 12881;	$c_to_s = 0;	break;
 			case "kingpin"			: $c_to_q = -10;	$c_def = 31510;	$q_def = 31500;	$c_to_s = 0;	break;
 			case "killingfloor"		: $c_to_q = 1;		$c_def = 7708;	$q_def = 7709;	$c_to_s = 0;	break;
+			case "killingfloor2"		: $c_to_q = 19238; 	$c_def = 7777; 	$q_def = 27015; $c_to_s = 0;  	break;
 			case "lif"				: $c_to_q = 2;		$c_def = 28000; $q_def = 28002; $c_to_s = 0;	break;
 			case "modernwarfare3"	: $c_to_q = -1;		$c_def = 27015;	$q_def = 27014;	$c_to_s = 0;	break;
 			case "mohaa"			: $c_to_q = 97;		$c_def = 12203;	$q_def = 12300;	$c_to_s = 0;	break;
@@ -470,6 +489,7 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 			case "stalker"			: $c_to_q = 2;		$c_def = 5447;	$q_def = 5445;	$c_to_s = 0;	break;
 			case "stalkercs"		: $c_to_q = 2;		$c_def = 5447;	$q_def = 5445;	$c_to_s = 0;	break;
 			case "starwarsrc"		: $c_to_q = 0;		$c_def = 7777;	$q_def = 11138;	$c_to_s = 0;	break;
+			case "squad"			: $c_to_q = 19378;	$c_def = 7787;	$q_def = 27165;	$c_to_s = 0;	break;
 			case "swat4"			: $c_to_q = 1;		$c_def = 10780;	$q_def = 10781;	$c_to_s = 0;	break;
 			case "tribesv"			: $c_to_q = 1;		$c_def = 7777;	$q_def = 7778;	$c_to_s = 0;	break;
 			case "ut"				: $c_to_q = 1;		$c_def = 7777;	$q_def = 7778;	$c_to_s = 0;	break;
@@ -501,11 +521,12 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 	function lgsl_query_live($type, $ip, $c_port, $q_port, $s_port, $request)
 	{
 //---------------------------------------------------------+
+
 		if (preg_match("/[^0-9a-z\.\-\[\]\:]/i", $ip))
 		{
 			exit("LGSL PROBLEM: INVALID IP OR HOSTNAME");
 		}
-		
+
 		$lgsl_protocol_list = lgsl_protocol_list();
 
 		if (!isset($lgsl_protocol_list[$type]))
@@ -2688,7 +2709,7 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 	//---------------------------------------------------------+
 
 		$team_field = "?".lgsl_cut_pascal($buffer);
-		$team_field = split("\t", $team_field);
+		$team_field = explode("\t", $team_field);
 
 		foreach ($team_field as $key => $value)
 		{
@@ -2700,7 +2721,7 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 	//---------------------------------------------------------+
 
 		$player_field = "?".lgsl_cut_pascal($buffer);
-		$player_field = split("\t", $player_field);
+		$player_field = explode("\t", $player_field);
 
 		foreach ($player_field as $key => $value)
 		{
@@ -2725,7 +2746,7 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 			if (!$team_info) { continue; }
 
 			$team_info = str_replace("%t", $team_name, $team_info);
-			$team_info = split("\t", $team_info);
+			$team_info = explode("\t", $team_info);
 
 			foreach ($team_info as $key => $value)
 			{
@@ -2752,7 +2773,7 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 			if (!$player_info) { continue; }
 
 			$player_info = str_replace(array("%p","%l","%t","%n"), $player_bits, $player_info);
-			$player_info = split("\t", $player_info);
+			$player_info = explode("\t", $player_info);
 
 			foreach ($player_info as $key => $value)
 			{
