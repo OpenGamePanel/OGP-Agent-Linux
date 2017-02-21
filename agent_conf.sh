@@ -475,7 +475,7 @@ then
 									fi
 								else
 									echo -e "AuthOrder  mod_auth_file.c" >> ${proFTPdConfFile}
-								fi								
+								fi	
 
 								if egrep -iq "RequireValidShell.*" ${proFTPdConfFile}
 								then
