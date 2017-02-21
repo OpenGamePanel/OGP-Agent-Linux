@@ -426,6 +426,9 @@ then
 						if [ -z $proFTPdConfFile ]
 						then
 							proFTPdConfFile="/etc/proftpd/proftpd.conf"
+							if [ ! -e "$proFTPdConfFile" ]; then
+								proFTPdConfFile="/etc/proftpd.conf"
+							fi
 						fi
 						proFTPdConfPath=$(dirname ${proFTPdConfFile})
 						while [ 1 ]
@@ -472,7 +475,7 @@ then
 									fi
 								else
 									echo -e "AuthOrder  mod_auth_file.c" >> ${proFTPdConfFile}
-								fi
+								fi								
 
 								if egrep -iq "RequireValidShell.*" ${proFTPdConfFile}
 								then
@@ -493,6 +496,14 @@ then
 									sed -i "s#AuthGroupFile.*#AuthGroupFile ${proFTPdConfPath}/ftpd.group#g" ${proFTPdConfFile}
 								else
 									echo -e "AuthGroupFile "${proFTPdConfPath}"/ftpd.group" >> ${proFTPdConfFile}
+								fi
+								
+								# Allow global overwrite (http://opengamepanel.org/forum/viewthread.php?thread_id=5202)
+								if egrep -iq "AllowOverwrite.*" ${proFTPdConfFile}
+								then
+									sed -i "s#AllowOverwrite.*#AllowOverwrite yes#g" ${proFTPdConfFile}
+								else
+									echo -e "<Global>\nAllowOverwrite yes\n</Global>" >> ${proFTPdConfFile}
 								fi
 								
 								if [ ! -e "${proFTPdConfPath}/ftpd.group" ] 
