@@ -208,7 +208,7 @@ update() {
 				echo "The agent is up to date."
 			else
 				URL=https://github.com/OpenGamePanel/${REPONAME}/archive/${REVISION}.zip
-				HEAD=$(curl -L -Os --head -w "%{http_code}" "$URL")
+				HEAD=$(curl -L -s --head -w "%{http_code}" "$URL" -o "ogp_agent_latest.zip")
 				if [ "$HEAD" == "200" ]; then
 					echo "Updating agent using curl."
 					curl -L -s "$URL" -o "ogp_agent_latest.zip"
