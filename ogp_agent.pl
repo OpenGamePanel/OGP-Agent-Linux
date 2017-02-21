@@ -2553,31 +2553,40 @@ sub secure_path
 sub secure_path_without_decrypt
 {   
 	my ($action, $file_path, $returnType) = @_;
+	my $checkIfFileExists = 1;
 	
-	if( -e $file_path )
-	{
-		my $uid = `id -u`;
-		chomp $uid;
-		my $gid = `id -g`;
-		chomp $gid;
-		$file_path =~ s/('+)/'\"$1\"'/g;
-		if($action eq "chattr+i")
-		{
-			if(defined $returnType && $returnType eq "str"){
-				return 'chown -Rf '.$uid.':'.$gid.' \''.$file_path.'\' && chattr -Rf +i \''.$file_path.'\'';
-			}else{
-				return sudo_exec_without_decrypt('chown -Rf '.$uid.':'.$gid.' \''.$file_path.'\' && chattr -Rf +i \''.$file_path.'\'');
-			}
-		}
-		elsif($action eq "chattr-i")
-		{
-			if(defined $returnType && $returnType eq "str"){
-				return 'chattr -Rf -i \''.$file_path.'\' && chown -Rf '.$uid.':'.$gid.' \''.$file_path.'\'';
-			}else{
-				return sudo_exec_without_decrypt('chattr -Rf -i \''.$file_path.'\' && chown -Rf '.$uid.':'.$gid.' \''.$file_path.'\'');
-			}
+	if(defined $returnType && $returnType eq "str"){
+		$checkIfFileExists = 0;
+	}
+	
+	if($checkIfFileExists){
+		if(! -e $file_path){
+			return -1;
 		}
 	}
+	
+	my $uid = `id -u`;
+	chomp $uid;
+	my $gid = `id -g`;
+	chomp $gid;
+	$file_path =~ s/('+)/'\"$1\"'/g;
+	if($action eq "chattr+i")
+	{
+		if(defined $returnType && $returnType eq "str"){
+			return 'chown -Rf '.$uid.':'.$gid.' \''.$file_path.'\' && chattr -Rf +i \''.$file_path.'\'';
+		}else{
+			return sudo_exec_without_decrypt('chown -Rf '.$uid.':'.$gid.' \''.$file_path.'\' && chattr -Rf +i \''.$file_path.'\'');
+		}
+	}
+	elsif($action eq "chattr-i")
+	{
+		if(defined $returnType && $returnType eq "str"){
+			return 'chattr -Rf -i \''.$file_path.'\' && chown -Rf '.$uid.':'.$gid.' \''.$file_path.'\'';
+		}else{
+			return sudo_exec_without_decrypt('chattr -Rf -i \''.$file_path.'\' && chown -Rf '.$uid.':'.$gid.' \''.$file_path.'\'');
+		}
+	}
+	
 	return -1;
 }
 
