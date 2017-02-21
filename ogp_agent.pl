@@ -690,6 +690,9 @@ sub universal_start_without_decrypt
 		$startup_cmd, $server_port, $server_ip, $cpu, $nice, $preStart, $envVars
 	   ) = @_;
 	   
+	# Replace any {OGP_HOME_DIR} in the $start_cmd with the server's home directory path
+	$startup_cmd = replace_OGP_Env_Vars($home_id, $home_path, $startup_cmd);
+	   
 	if (is_screen_running_without_decrypt(SCREEN_TYPE_HOME, $home_id) == 1)
 	{
 		logger "This server is already running (ID: $home_id).";
@@ -1697,33 +1700,21 @@ sub lock_additional_files_logic{
 	my @filesToProcess = split /[\r\n]+/, $filesToLock;
 	foreach my $line (@filesToProcess) {
 		my $fullPath = $homedir . "/" . $line;
-		if (-e "$fullPath"){
-			if($action eq "lock"){
-				if(defined $returnType && $returnType eq "str"){
-					$commandStr .= "echo '".$SUDOPASSWD."' | sudo -S -p \"\" sh -c \"" . secure_path_without_decrypt("chattr+i", $fullPath, $returnType) . "\"\n";
-				}else{
-					secure_path_without_decrypt("chattr+i", $fullPath);
-				}
+		if($action eq "lock"){
+			if(defined $returnType && $returnType eq "str"){
+				$commandStr .= "echo '".$SUDOPASSWD."' | sudo -S -p \"\" sh -c \"" . secure_path_without_decrypt("chattr+i", $fullPath, $returnType) . "\" > /dev/null 2>&1" . "\n";
+				$commandStr .= "echo '".$SUDOPASSWD."' | sudo -S -p \"\" sh -c \"" . secure_path_without_decrypt("chattr+i", $line, $returnType) . "\" > /dev/null 2>&1" . "\n";
 			}else{
-				if(defined $returnType && $returnType eq "str"){
-					$commandStr .= "echo '".$SUDOPASSWD."' | sudo -S -p \"\" sh -c \"" . secure_path_without_decrypt("chattr+i", $fullPath, $returnType) . "\"\n";
-				}else{
-					secure_path_without_decrypt("chattr-i", $fullPath);
-				}
+				secure_path_without_decrypt("chattr+i", $fullPath);
+				secure_path_without_decrypt("chattr+i", $line);
 			}
-		}elsif(-e "$line"){
-			if($action eq "lock"){
-				if(defined $returnType && $returnType eq "str"){
-					$commandStr .= "echo '".$SUDOPASSWD."' | sudo -S -p \"\" sh -c \"" . secure_path_without_decrypt("chattr+i", $fullPath, $returnType) . "\"\n";
-				}else{
-					secure_path_without_decrypt("chattr+i", $line);
-				}
+		}else{
+			if(defined $returnType && $returnType eq "str"){
+				$commandStr .= "echo '".$SUDOPASSWD."' | sudo -S -p \"\" sh -c \"" . secure_path_without_decrypt("chattr-i", $fullPath, $returnType) . "\" > /dev/null 2>&1" . "\n";
+				$commandStr .= "echo '".$SUDOPASSWD."' | sudo -S -p \"\" sh -c \"" . secure_path_without_decrypt("chattr-i", $line, $returnType) . "\" > /dev/null 2>&1" . "\n";
 			}else{
-				if(defined $returnType && $returnType eq "str"){
-					$commandStr .= "echo '".$SUDOPASSWD."' | sudo -S -p \"\" sh -c \"" . secure_path_without_decrypt("chattr+i", $fullPath, $returnType) . "\"\n";
-				}else{
-					secure_path_without_decrypt("chattr-i", $line);
-				}
+				secure_path_without_decrypt("chattr-i", $fullPath);
+				secure_path_without_decrypt("chattr-i", $line);
 			}
 		}
 	}
@@ -1732,7 +1723,7 @@ sub lock_additional_files_logic{
 		return $commandStr;
 	}
 	
-	return 1;
+	return "";
 }
 
 sub run_before_start_commands
