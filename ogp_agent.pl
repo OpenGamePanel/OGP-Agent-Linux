@@ -294,6 +294,9 @@ my $d = Frontier::Daemon::Forking->new(
 				 rfile_exists				 	=> \&rfile_exists,
 				 quick_chk						=> \&quick_chk,
 				 steam_cmd						=> \&steam_cmd,
+				 fetch_steam_version			=> \&fetch_steam_version,
+				 installed_steam_version		=> \&installed_steam_version,
+				 automatic_steam_update			=> \&automatic_steam_update,
 				 get_log					  	=> \&get_log,
 				 stop_server				  	=> \&stop_server,
 				 send_rcon_command				=> \&send_rcon_command,
@@ -2022,13 +2025,19 @@ sub master_server_update
 	return 1;
 }
 
+sub steam_cmd
+{
+	chomp(@_);
+	return "Bad Encryption Key" unless(decrypt_param(pop(@_)) eq "Encryption checking OK");
+	return steam_cmd_without_decrypt(decrypt_params(@_));
+}
+
 #### Run the steam client ####
 ### @return 1 If update started
 ### @return 0 In error case.
-sub steam_cmd
+sub steam_cmd_without_decrypt
 {
-	return "Bad Encryption Key" unless(decrypt_param(pop(@_)) eq "Encryption checking OK");
-	my ($home_id, $home_path, $mod, $modname, $betaname, $betapwd, $user, $pass, $guard, $exec_folder_path, $exec_path, $precmd, $postcmd, $cfg_os, $filesToLockUnlock) = decrypt_params(@_);
+	my ($home_id, $home_path, $mod, $modname, $betaname, $betapwd, $user, $pass, $guard, $exec_folder_path, $exec_path, $precmd, $postcmd, $cfg_os, $filesToLockUnlock) = @_;
 	
 	if ( check_b4_chdir($home_path) != 0)
 	{
@@ -2115,6 +2124,107 @@ sub steam_cmd
 	system($screen_cmd);
 
 	return 1;
+}
+
+sub fetch_steam_version
+{
+	return "Bad Encryption Key" unless(decrypt_param(pop(@_)) eq "Encryption checking OK");
+	my ($appId, $pureOutput) = &decrypt_params(@_);
+
+	my $steam_binary = Path::Class::File->new(STEAMCMD_CLIENT_DIR, "steamcmd.sh");
+	my $steam_options = "+login anonymous +app_info_update 1 +app_info_print \"$appId\" +quit";
+	my $grep = $pureOutput != "0" ? "" : '| grep -EA 1000 "^\s+\"branches\"$" | grep -EA 5 "^\s+\"public\"$" | grep -m 1 -EB 10 "^\s+}$" | grep -E "^\s+\"buildid\"\s+" | tr \'[:blank:]"\' \' \' | tr -s \' \' | cut -d\' \' -f3';
+
+	logger "Getting latest version info for AppId $appId";
+	my $response = `$steam_binary $steam_options $grep`;
+
+	return $response;
+}
+
+sub installed_steam_version
+{
+	return "Bad Encryption Key" unless(decrypt_param(pop(@_)) eq "Encryption checking OK");
+	my ($game_home, $mod, $pureOutput) = &decrypt_params(@_);
+	my $appFile = $game_home."/steamapps/appmanifest_$mod.acf";
+	my $grep = $pureOutput != "0" ? "" : '| grep buildid | tr \'[:blank:]"\' \' \' | tr -s \' \' | cut -d\' \' -f3';
+
+	if ( ! -f $appFile)
+	{
+		return "-10";
+	}
+
+	return `cat $appFile $grep`;
+}
+
+sub automatic_steam_update
+{
+	return "Bad Encryption Key" unless(decrypt_param(pop(@_)) eq "Encryption checking OK");
+	my ($home_id, $game_home, $server_ip, $server_port, $exec_path, $exec_folder_path,
+		$control_protocol, $control_password, $control_type,
+		$appId, $modname, $betaname, $betapwd, $user, $pass, $guard, $precmd, $postcmd, $cfg_os, $filesToLockUnlock,
+		$startup_cmd, $cpu, $nice, $preStart, $envVars) = &decrypt_params(@_);
+
+	# Is the server currently running? if it is, we'll try to start it after updating.
+	my $isServerRunning = is_screen_running_without_decrypt(SCREEN_TYPE_HOME, $home_id) == 1 ? 1 : 0;
+
+	# Check if an update is already happening.
+	if (is_screen_running_without_decrypt(SCREEN_TYPE_UPDATE, $home_id) == 1)
+	{
+		logger("Update already running for server $home_id, unable to start automatic update.");
+		return -10;
+	}
+
+	# Stop the server if it's running.
+	if ($isServerRunning == 1)
+	{
+		logger("Stopping server $home_id for automatic update.");
+
+		if (stop_server_without_decrypt($home_id, $server_ip, $server_port, $control_protocol, $control_password, $control_type, $game_home) != 0)
+		{
+			logger("Failed to stop server $home_id for automatic update. Exiting update procedure.");
+			return -9
+		}
+
+	}
+
+	# steam_cmd: Returns 0 if the update failed, in which case, don't try starting the server - because we may have an incomplete or corrupt installation.
+	if (steam_cmd_without_decrypt($home_id, $game_home, $appId, $modname, $betaname, $betapwd, $user, $pass, $guard, $exec_folder_path, $exec_path, $precmd, $postcmd, $cfg_os, $filesToLockUnlock) == 0)
+	{
+		logger("Failed to start steam_cmd for server $home_id.");
+		return -8;
+
+	} else {
+
+		if ($isServerRunning == 1)
+		{
+			while (1)
+			{
+				# If the update screen for $home_id isn't running, attempt to start the server.
+				if (is_screen_running_without_decrypt(SCREEN_TYPE_UPDATE, $home_id) == 0)
+				{
+
+					if (universal_start_without_decrypt($home_id, $game_home, $exec_path, $exec_folder_path, $startup_cmd, $server_port, $server_ip, $cpu, $nice, $preStart, $envVars) != 1)
+					{
+						logger("Failed to start server $home_id after automatic update.");
+						return -7;
+					} else {
+						logger("Starting server $home_id after automatic update.");
+						return 1;
+					}
+
+					last;
+				}
+
+				sleep 5;
+			}
+
+		} else {
+			# Update was started, but server wasn't initially running.
+			return 2;
+		}
+
+	}
+
 }
 
 sub rsync_progress
