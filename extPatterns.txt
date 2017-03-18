@@ -1,5 +1,6 @@
 cfg
-txt
+conf
+ini
 gam
 properties
-conf
+txt
