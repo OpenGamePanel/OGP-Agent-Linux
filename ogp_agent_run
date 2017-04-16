@@ -7,38 +7,53 @@
 #
 # The ogp_agent_run script should be at the top level of the agent tree
 # Make sure we are in that directory since the script assumes this is the case
-AGENTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-BASH_PREFS_CONF="$AGENTDIR/Cfg/bash_prefs.cfg" 
-chmod -Rf ug+rw $AGENTDIR 2>/dev/null
-if [ -d "$AGENTDIR/steamcmd" ]; then
-	chmod ug+x $AGENTDIR/steamcmd/linux32/* 2>/dev/null
-	chmod ug+x $AGENTDIR/steamcmd/*.sh 2>/dev/null
-fi
-if [ -d "$AGENTDIR/screenlogs" ]; then
-	chmod -Rf ug=rwx $AGENTDIR/screenlogs
-fi
-chmod ug+x $AGENTDIR/ogp_agent.pl 2>/dev/null
-chmod ug+x $AGENTDIR/ogp_agent_run 2>/dev/null
-chmod ug+x $AGENTDIR/agent_conf.sh 2>/dev/null
 
-if test `id -u` -eq 0; then
-	echo
-	echo
-	echo "************** WARNING ***************"
-	echo "Running OGP's agent as root  "
-	echo "is highly discouraged. It is generally"
-	echo "unnecessary to use root privileges to "
-	echo "execute the agent.         "
-	echo "**************************************"
-	echo
-	echo
-	timeout=10
-	while test $timeout -gt 0; do
-		echo -n "The agent will continue to launch in $timeout seconds\r"
-		timeout=`expr $timeout - 1`
-		sleep 1
-	done
-fi
+#####################
+#  Important VARS   #
+#####################
+
+AGENTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+BASH_PREFS_CONF="$AGENTDIR/Cfg/bash_prefs.cfg"
+REPONAME=OGP-Agent-Linux
+GitHubUsername="OpenGamePanel"
+
+#####################
+#     FUNCTIONS     #
+#####################
+
+setupOGPDirPerms(){
+	
+	chmod -Rf ug+rw $AGENTDIR 2>/dev/null
+	if [ -d "$AGENTDIR/steamcmd" ]; then
+		chmod ug+x $AGENTDIR/steamcmd/linux32/* 2>/dev/null
+		chmod ug+x $AGENTDIR/steamcmd/*.sh 2>/dev/null
+	fi
+	if [ -d "$AGENTDIR/screenlogs" ]; then
+		chmod -Rf ug=rwx $AGENTDIR/screenlogs
+	fi
+	chmod ug+x $AGENTDIR/ogp_agent.pl 2>/dev/null
+	chmod ug+x $AGENTDIR/ogp_agent_run 2>/dev/null
+	chmod ug+x $AGENTDIR/agent_conf.sh 2>/dev/null
+
+	if test `id -u` -eq 0; then
+		echo
+		echo
+		echo "************** WARNING ***************"
+		echo "Running OGP's agent as root  "
+		echo "is highly discouraged. It is generally"
+		echo "unnecessary to use root privileges to "
+		echo "execute the agent.         "
+		echo "**************************************"
+		echo
+		echo
+		timeout=10
+		while test $timeout -gt 0; do
+			echo -n "The agent will continue to launch in $timeout seconds\r"
+			timeout=`expr $timeout - 1`
+			sleep 1
+		done
+	fi
+}
 
 ogpGitCleanup(){
 	echo "Cleaning up..."
@@ -121,6 +136,15 @@ init() {
 		then
 			AUTO_UPDATE="yes"
 		fi
+		
+		# Use custom github update address
+		if [ ! -z "$github_update_username" ]; then
+			REVISIONTest=`curl -s https://github.com/${github_update_username}/${REPONAME}/commits/master.atom | egrep -o "([a-f0-9]{40})" | awk 'NR==1{print $1}'`
+			if [ ! -z "$REVISIONTest" ]; then
+				GitHubUsername=${github_update_username}
+			fi
+		fi
+		
 	else
 		AUTO_UPDATE="yes"
 	fi
@@ -182,9 +206,8 @@ update() {
 				mkdir tmp
 			fi
 			cd tmp
-			REPONAME=OGP-Agent-Linux
-			REVISION=`curl -s https://github.com/OpenGamePanel/${REPONAME}/commits/master.atom | egrep -o "([a-f0-9]{40})" | awk 'NR==1{print $1}'`
-			curl -Os https://raw.githubusercontent.com/OpenGamePanel/${REPONAME}/${REVISION}/ogp_agent_run
+			REVISION=`curl -s https://github.com/${GitHubUsername}/${REPONAME}/commits/master.atom | egrep -o "([a-f0-9]{40})" | awk 'NR==1{print $1}'`
+			curl -Os https://raw.githubusercontent.com/${GitHubUsername}/${REPONAME}/${REVISION}/ogp_agent_run
 			currentOGPAgentRunContent=$(cat "./ogp_agent_run")
 			# Check to make sure ogp_agent_run downloaded successfully from GitHub before we attempt to replace it.
 			# This should fix random 404 people have been experiencing
@@ -207,7 +230,7 @@ update() {
 			if [ "$CURRENT" == "$REVISION" ]; then
 				echo "The agent is up to date."
 			else
-				URL=https://github.com/OpenGamePanel/${REPONAME}/archive/${REVISION}.zip
+				URL=https://github.com/${GitHubUsername}/${REPONAME}/archive/${REVISION}.zip
 				HEAD=$(curl -L -s --head -w "%{http_code}" "$URL" -o "ogp_agent_latest.zip")
 				if [ "$HEAD" == "200" ]; then
 					echo "Updating agent using curl."
@@ -310,6 +333,13 @@ quit() {
 	trap - 2
 	kill -2 $$
 }
+
+#####################
+#   MAIN APP CODE   #
+#####################
+
+# Setup OGP and Read Preferences
+setupOGPDirPerms
 
 # Initialise
 init $*
