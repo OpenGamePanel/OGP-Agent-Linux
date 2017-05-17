@@ -25,14 +25,14 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"aarmy"			=> "Americas Army",
 		"aarmy3"		=> "Americas Army 3",
 		"arcasimracing"	=> "Arca Sim Racing",
-		"arkse"         => "Ark Survival Evolved",
+		"arkse"			=> "ARK: Survival Evolved",
 		"arma"			=> "ArmA: Armed Assault",
 		"arma2"			=> "ArmA 2",
 		"arma2oa"		=> "ArmA 2 Operation Arrowhead",
 		"arma2co"		=> "ArmA 2 Combined Operations",
 		"arma3"			=> "ArmA 3",
 		"arma3alpha"	=> "ArmA 3 Alpha",
-		"avorion"	=> "Avorion",
+		"avorion"		=> "Avorion",
 		"avp2"			=> "Aliens VS. Predator 2",
 		"avp2010"		=> "Aliens VS. Predator ( 2010 By Rebellion )",
 		"bfbc2"			=> "Battlefield Bad Company 2",
@@ -48,11 +48,12 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"callofduty4"	=> "Call Of Duty 4",
 		"callofdutymw2"	=> "Call of Duty Modern Warfare 2",
 		"cncrenegade"	=> "Command and Conquer: Renegade",
+		"conanexiles"	=> "Conan Exiles",
 		"crysis"		=> "Crysis",
 		"crysiswars"	=> "Crysis Wars",
 		"cs2d"			=> "Counter-Strike 2D",
 		"cube"			=> "Cube Engine",
-		"dayz_arma2co"	=> "Dayz ArmA 2 Combined Operations",
+		"dayzmod"          => "DayZ Mod",
 		"doomskulltag"	=> "Doom - Skulltag",
 		"doomzdaemon"	=> "Doom - ZDaemon",
 		"doom3"			=> "Doom 3",
@@ -108,9 +109,11 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"quake4"		=> "Quake 4",
 		"ravenshield"	=> "Raven Shield",
 		"redorchestra"	=> "Red Orchestra",
-		"redorchestra2" => "Red Orchestra 2 & Rising Storm",
+		"redorchestra2"	=> "Red Orchestra 2 & Rising Storm",
 		"rfactor"		=> "RFactor",
+		"risingstorm2"	=> "Rising Storm 2: Vietnam",
 		"ror"			=> "Rigs of Rods",
+		"rust"			=> "Rust",
 		"samp"			=> "San Andreas Multiplayer",
 		"savage"		=> "Savage",
 		"savage2"		=> "Savage 2",
@@ -162,7 +165,7 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"aarmy_"		=> "03",
 		"aarmy3"		=> "26",
 		"arcasimracing"	=> "16",
-		"arkse"         => "05",
+		"arkse"			=> "05",
 		"arma"			=> "09",
 		"arma2"			=> "06",
 		"arma2oa"		=> "06",
@@ -185,11 +188,12 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"callofduty4"	=> "02",
 		"callofdutymw2"	=> "02",
 		"cncrenegade"	=> "03",
+		"conanexiles"	=> "05",
 		"crysis"		=> "06",
 		"crysiswars"	=> "06",
 		"cs2d"			=> "29",
 		"cube"			=> "24",
-		"dayz_arma2co"	=> "06",
+		"dayzmod"  => "05",
 		"doomskulltag"	=> "27",
 		"doomzdaemon"	=> "28",
 		"doom3"			=> "10",
@@ -250,8 +254,11 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"quake4"		=> "10",
 		"ravenshield"	=> "04",
 		"redorchestra"	=> "13",
-		"redorchestra2" => "05",
+		"redorchestra2"	=> "05",
 		"rfactor"		=> "16",
+		"risingstorm2"	=> "05",
+		"ror"			=> "36",
+		"rust"			=> "05",
 		"samp"			=> "12",
 		"savage"		=> "17",
 		"savage2"		=> "18",
@@ -284,6 +291,7 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"ut2004"		=> "13",
 		"ut2004_"		=> "03",
 		"ut3"			=> "11",
+		"vbox"			=> "38",
 		"vcmp"			=> "12",
 		"vietcong"		=> "03",
 		"vietcong2"		=> "09",
@@ -294,7 +302,7 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 
 		return $lgsl_protocol_list;
 	}
-
+	 
 //------------------------------------------------------------------------------------------------------------+
 //------------------------------------------------------------------------------------------------------------+
 
@@ -305,14 +313,14 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"aarmy"			=> "qtracker://{IP}:{S_PORT}?game=ArmyOperations&action=show",
 		"aarmy3"		=> "qtracker://{IP}:{S_PORT}?game=AmericasArmy3&action=show",
 		"arcasimracing"	=> "http://en.wikipedia.org/wiki/ARCA_Sim_Racing",
-		"arkse"         => "steam://connect/{IP}:{S_PORT}",
+		"arkse"			=> "steam://connect/{IP}:{Q_PORT}",
 		"arma"			=> "qtracker://{IP}:{S_PORT}?game=ArmedAssault&action=show",
 		"arma2"			=> "http://en.wikipedia.org/wiki/ARMA_2",
 		"arma2oa"		=> "http://en.wikipedia.org/wiki/ARMA_2",
 		"arma2co"		=> "http://en.wikipedia.org/wiki/ARMA_2",
 		"arma3"			=> "steam://connect/{IP}:{S_PORT}",
 		"arma3alpha"	=> "http://en.wikipedia.org/wiki/ARMA_2",
-		"avorion" 	=> "steam://connect/{IP}:{S_PORT}",
+		"avorion"		=> "steam://connect/{IP}:{S_PORT}",
 		"avp2"			=> "qtracker://{IP}:{S_PORT}?game=AliensversusPredator2&action=show",
 		"avp2010"		=> "http://en.wikipedia.org/wiki/Aliens_vs._Predator_%28video_game%29",
 		"bfbc2"			=> "http://en.wikipedia.org/wiki/Battlefield_bad_company_2",
@@ -328,11 +336,12 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"callofduty4"	=> "qtracker://{IP}:{S_PORT}?game=CallOfDuty4&action=show",
 		"callofdutymw2"	=> "aiw://connect/{IP}:{S_PORT}",
 		"cncrenegade"	=> "qtracker://{IP}:{S_PORT}?game=CommandConquerRenegade&action=show",
+		"conanexiles"	=> "steam://connect/{IP}:{S_PORT}",
 		"crysis"		=> "qtracker://{IP}:{S_PORT}?game=Crysis&action=show",
 		"crysiswars"	=> "qtracker://{IP}:{S_PORT}?game=CrysisWars&action=show",
 		"cs2d"			=> "http://www.cs2d.com",
 		"cube"			=> "http://cubeengine.com",
-		"dayz_arma2co"	=> "http://en.wikipedia.org/wiki/ARMA_2",
+		"dayzmod"          => "steam://connect/{IP}:{S_PORT}",
 		"doomskulltag"	=> "http://skulltag.com",
 		"doomzdaemon"	=> "http://www.zdaemon.org",
 		"doom3"			=> "qtracker://{IP}:{S_PORT}?game=Doom3&action=show",
@@ -387,9 +396,11 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"quake4"		=> "qtracker://{IP}:{S_PORT}?game=Quake4&action=show",
 		"ravenshield"	=> "http://en.wikipedia.org/wiki/Tom_Clancy's_Rainbow_Six_3",
 		"redorchestra"	=> "steam://connect/{IP}:{C_PORT}",
-		"redorchestra2" => "steam://connect/{IP}:{S_PORT}",
+		"redorchestra2"	=> "steam://connect/{IP}:{S_PORT}",
 		"rfactor"		=> "rfactor://{IP}:{S_PORT}",
+		"risingstorm2"	=> "steam://connect/{IP}:{S_PORT}",
 		"ror"			=> "http://www.rigsofrods.com/servers/",
+		"rust"			=> "steam://connect/{IP}:{S_PORT}",
 		"samp"			=> "samp://{IP}:{C_PORT}",
 		"savage"		=> "http://en.wikipedia.org/wiki/Savage:_The_Battle_for_Newerth",
 		"savage2"		=> "http://en.wikipedia.org/wiki/Savage_2:_A_Tortured_Soul",
@@ -431,6 +442,9 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		// SOFTWARE PORT IS THE QUERY PORT UNLESS SET
 		if (!$s_port) { $s_port = $q_port; }
 
+		// Force the SimpleXMLElement into a plain string
+		$type = (string) $type;
+
 	   // TRY USING THE STANDARD LAUNCH LINK FOR ALTERNATE PROTOCOLS IF ONE IS NOT SET
 		$type = str_replace("_", "", $type);
 
@@ -449,16 +463,18 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 			case "aarmy"			: $c_to_q = 1;		$c_def = 1716;	$q_def = 1717;	$c_to_s = 0;	break;
 			case "aarmy3"			: $c_to_q = 0;		$c_def = 8777;	$q_def = 39300;	$c_to_s = 0;	break;
 			case "arcasimracing"	: $c_to_q = -100;	$c_def = 34397;	$q_def = 34297;	$c_to_s = 0;	break;
-			case "arkse"			: $c_to_q = 0;		$c_def = 0;		$q_def = 0;		$c_to_s = 0;	break;
+			case "arkse"			: $c_to_q = 19238;	$c_def = 7777;	$q_def = 27015;	$c_to_s = 0;	break;
 			case "arma3"			: $c_to_q = 1; 		$c_def = 2302; 	$q_def = 2303; 	$c_to_s = 0; 	break;
-			case "avorion" 			: $c_to_q = 20; 	$c_def = 27000;	$q_def = 27020; $c_to_s = 0;  	break;
+			case "avorion"			: $c_to_q = 20; 	$c_def = 27000;	$q_def = 27020; $c_to_s = 0;  	break;
 			case "bfbc2"			: $c_to_q = 0;		$c_def = 19567;	$q_def = 48888;	$c_to_s = 0;	break;
 			case "bfvietnam"		: $c_to_q = 0;		$c_def = 15567;	$q_def = 23000;	$c_to_s = 0;	break;
 			case "bf1942"			: $c_to_q = 0;		$c_def = 14567;	$q_def = 23000;	$c_to_s = 0;	break;
 			case "bf2"				: $c_to_q = 13333;	$c_def = 16567;	$q_def = 29900;	$c_to_s = 0;	break;
 			case "bf3"				: $c_to_q = 22000;	$c_def = 25200;	$q_def = 47200;	$c_to_s = 0;	break;
 			case "bf2142"			: $c_to_q = 0;		$c_def = 17567;	$q_def = 29900;	$c_to_s = 0;	break;
+			case "conanexiles"		: $c_to_q = 2;		$c_def = 24000;	$q_def = 24002;	$c_to_s = 0;	break;
 			case "cube"				: $c_to_q = 1;		$c_def = 28785;	$q_def = 28786;	$c_to_s = 0;	break;
+			case "dayzmod"                     : $c_to_q = 1;	  	$c_def = 2302;  $q_def = 2303;  $c_to_s = 0;    break;
 			case "dh2005"			: $c_to_q = 0;		$c_def = 23459;	$q_def = 34567;	$c_to_s = 0;	break;
 			case "farcry"			: $c_to_q = 123;	$c_def = 49001;	$q_def = 49124;	$c_to_s = 0;	break;
 			case "flashpoint"		: $c_to_q = 1;		$c_def = 2302;	$q_def = 2303;	$c_to_s = 0;	break;
@@ -469,7 +485,7 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 			case "hurtworld"		: $c_to_q = 10;		$c_def = 12871;	$q_def = 12881;	$c_to_s = 0;	break;
 			case "kingpin"			: $c_to_q = -10;	$c_def = 31510;	$q_def = 31500;	$c_to_s = 0;	break;
 			case "killingfloor"		: $c_to_q = 1;		$c_def = 7708;	$q_def = 7709;	$c_to_s = 0;	break;
-			case "killingfloor2"		: $c_to_q = 19238; 	$c_def = 7777; 	$q_def = 27015; $c_to_s = 0;  	break;
+			case "killingfloor2"	: $c_to_q = 19238; 	$c_def = 7777; 	$q_def = 27015; $c_to_s = 0;  	break;
 			case "lif"				: $c_to_q = 2;		$c_def = 28000; $q_def = 28002; $c_to_s = 0;	break;
 			case "modernwarfare3"	: $c_to_q = -1;		$c_def = 27015;	$q_def = 27014;	$c_to_s = 0;	break;
 			case "mohaa"			: $c_to_q = 97;		$c_def = 12203;	$q_def = 12300;	$c_to_s = 0;	break;
@@ -482,8 +498,9 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 			case "painkiller"		: $c_to_q = 123;	$c_def = 3455;	$q_def = 3578;	$c_to_s = 0;	break;
 			case "ravenshield"		: $c_to_q = 1000;	$c_def = 7777;	$q_def = 8777;	$c_to_s = 0;	break;
 			case "redorchestra"		: $c_to_q = 1;		$c_def = 7758;	$q_def = 7759;	$c_to_s = 0;	break;
-			case "redorchestra2" 	: $c_to_q = 19238; 	$c_def = 7777; 	$q_def = 27015; $c_to_s = 0;  	break;
+			case "redorchestra2"	: $c_to_q = 19238; 	$c_def = 7777; 	$q_def = 27015; $c_to_s = 0;  	break;
 			case "rfactor"			: $c_to_q = -100;	$c_def = 34397;	$q_def = 34297;	$c_to_s = 0;	break;
+			case "risingstorm2"		: $c_to_q = 19238; 	$c_def = 7777; 	$q_def = 27015; $c_to_s = 0;  	break;
 			case "serioussam"		: $c_to_q = 1;		$c_def = 25600;	$q_def = 25601;	$c_to_s = 0;	break;
 			case "soldat"			: $c_to_q = 123;	$c_def = 23073;	$q_def = 23196;	$c_to_s = 0;	break;
 			case "stalker"			: $c_to_q = 2;		$c_def = 5447;	$q_def = 5445;	$c_to_s = 0;	break;
@@ -521,7 +538,6 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 	function lgsl_query_live($type, $ip, $c_port, $q_port, $s_port, $request)
 	{
 //---------------------------------------------------------+
-
 		if (preg_match("/[^0-9a-z\.\-\[\]\:]/i", $ip))
 		{
 			exit("LGSL PROBLEM: INVALID IP OR HOSTNAME");
@@ -566,9 +582,26 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 			return $server;
 		}
 			//------------------Open Game Panel LGSL FEED CONFIGURATION (found on web settings)-----------------------+ 	 
-		$lgsl_config['feed']['method'] = 0;
+		global $settings;
+		
+		if( isset($_GET['m']) and $_GET['m'] == "lgsl" )
+			$lgsl_config['feed']['method'] = 0;
+		else
+			$lgsl_config['feed']['method'] = $settings['feed_enable'];
+
+		$lgsl_config['feed']['url'] = $settings['feed_url'];
 	//--------------------------------------------------------------------------------------------------------+
-		if ($lgsl_function == "lgsl_query_30")
+		if (!empty($lgsl_config['feed']['method']) && !empty($lgsl_config['feed']['url']))
+		{
+			$response = lgsl_query_feed($server, $request, $lgsl_config['feed']['method'], $lgsl_config['feed']['url']);
+		}
+		elseif (isset($settings['remote_query']) and $settings['remote_query'] == 1)
+		{
+			global $db;
+			$home_info = $db->getGameHomeByIP($ip, $c_port);
+			$response = lgsl_query_feed($server, $request, $lgsl_config['feed']['method'], $lgsl_config['feed']['url'], $home_info);
+		}
+		elseif ($lgsl_function == "lgsl_query_30")
 		{
 			$response = lgsl_query_direct($server, $request, $lgsl_function, "tcp");
 		}
@@ -629,7 +662,8 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		$lgsl_fp = @fsockopen("{$scheme}://{$server['b']['ip']}", $server['b']['q_port'], $errno, $errstr, 1);
 		
 		if (!$lgsl_fp) { return FALSE; }
-		$lgsl_config['timeout'] = 1;
+		$lgsl_config['timeout'] = 0;
+		$lgsl_config['timeout'] = intval($lgsl_config['timeout']);
 		stream_set_timeout($lgsl_fp, $lgsl_config['timeout'], $lgsl_config['timeout'] ? 0 : 500000);
 		stream_set_blocking($lgsl_fp, TRUE);
 	//---------------------------------------------------------+
@@ -1609,7 +1643,7 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 			if (!empty($server['e']['gsgamename'])) { $server['s']['game'] = $server['e']['gsgamename']; } // FEAR
 			if (!empty($server['e']['game_id']))	{ $server['s']['game'] = $server['e']['game_id']; }	// BFVIETNAM
 
-			if ($server['b']['type'] == "arma" || $server['b']['type'] == "arma2" || $server['b']['type'] == "arma2oa" || $server['b']['type'] == "arma2co" || $server['b']['type'] == "dayz_arma2co")
+			if ($server['b']['type'] == "arma" || $server['b']['type'] == "arma2" || $server['b']['type'] == "arma2oa" || $server['b']['type'] == "arma2co" || $server['b']['type'] == "dayzmod")
 			{
 				$server['s']['map'] = $server['e']['mission'];
 			}
@@ -3921,6 +3955,104 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 	}
 //------------------------------------------------------------------------------------------------------------+
 //------------------------------------------------------------------------------------------------------------+
+	function lgsl_query_36(&$server, &$lgsl_need, &$lgsl_fp)
+	{
+		//RoR LGSL parses the log file server.log
+		require_once('modules/gamemanager/home_handling_functions.php');
+		require_once("modules/config_games/server_config_parser.php");
+		require_once('includes/lib_remote.php');
+		global $db;
+		$ip = $server['b']['ip'];
+		$port = $server['b']['c_port'];
+		$home_info = $server_home = $db->getGameHomeByIP($ip, $port);
+		$remote = new OGPRemoteLibrary($home_info['agent_ip'],$home_info['agent_port'],$home_info['encryption_key'],$home_info['timeout']);
+		$server_xml = read_server_config(SERVER_CONFIG_LOCATION."/".$home_info['home_cfg_file']);
+		$data = "";
+		$home_id = sprintf('%09d', $home_info['home_id']);
+		$screenlog = "screenlog.OGP_HOME_".$home_id;
+		$home_log = $remote->remote_readfile($home_info['home_path'].'/'.$server_xml->exe_location.$screenlog,$data);
+		$data = substr($data, -10000, 10000);
+		if ( !empty($data) )
+		{
+			//Parser
+			preg_match_all("(\| INFO\|(.*)\\n)siU", $data, $matches);
+			$matches = array_reverse($matches);
+			$rows = "";
+			foreach ( $matches[1] as $info_row ) 
+			{
+			$rows .= $info_row;
+			$info_row = $info_row."INFO<br>";
+			if (preg_match_all("(servername:(.*)INFO)siU", $info_row, $info))
+			{
+				foreach ( $info[1] as $value ) 
+				{
+					$value = trim($value);
+					$remote->remote_writefile($home_info['home_path'].'/servername.txt',$value);
+					$value = str_replace('_', " ", $value);
+					$server['s']['name'] = $value;
+				}
+			}
+			if (preg_match_all("(terrain:(.*)INFO)siU", $info_row, $info))
+			{
+				foreach ( $info[1] as $value ) 
+				{
+					$value = trim($value);
+					$remote->remote_writefile($home_info['home_path'].'/terrain.txt',$value);
+					$server['s']['map'] = $value;
+				}
+			}
+			if (preg_match_all("(maxclients:(.*)INFO)siU", $info_row, $info))
+			{
+				foreach ( $info[1] as $value ) 
+				{
+					$value = trim($value);
+					$remote->remote_writefile($home_info['home_path'].'/maxclients.txt',$value);
+					$server['s']['playersmax'] = $value;
+				}
+			}
+			}
+			if(empty($server['s']['name']))
+			{
+				$remote->remote_readfile($home_info['home_path'].'/servername.txt',$value2);
+				$value2 = trim($value2);
+				$value2 = str_replace('_', " ", $value2);
+				$server['s']['name'] = $value2;
+				$remote->remote_readfile($home_info['home_path'].'/terrain.txt',$value2);
+				$value2 = trim($value2);
+				$server['s']['map'] = $value2;
+				$remote->remote_readfile($home_info['home_path'].'/maxclients.txt',$value2);
+				$value2 = trim($value2);
+				$server['s']['playersmax'] = $value2;
+			}
+					unset($matches,$info_row);
+			preg_match_all("(----------(.*)\|--------)siU", $rows, $matches);
+			$matches[1] = array_reverse($matches[1]);
+			$info_row = str_replace('-', "", $matches[1][0]);
+			if (preg_match_all("(FO\|(.*)\|.IN)siU", $info_row, $info))
+			{
+				$i = 0;
+				foreach ( $info[1] as $value ) 
+				{
+					$value = trim($value);
+					$value = str_replace('|', "", $value);
+					$player = explode("  ", $value);
+					$playersort = array_reverse($player);
+					$playersort = explode(",", $playersort[0]);
+					$server['p'][$i]['name'] = $playersort[1];
+					$server['p'][$i]['score'] = $playersort[0];
+					$i++;
+				}
+				$server['s']['players'] = $i;
+			}
+			$screen_running = $remote->is_screen_running(OGP_SCREEN_TYPE_HOME,$home_info['home_id']) === 1;
+			if($screen_running)
+			{
+				return TRUE;
+			}
+		}
+	}
+//------------------------------------------------------------------------------------------------------------+
+//------------------------------------------------------------------------------------------------------------+
 	function lgsl_query_37(&$server, &$lgsl_need, &$lgsl_fp)
 	{
 		//Shouhcast Server Query .
@@ -3953,6 +4085,69 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 			$server['s']['map']		 = $xml->SONGTITLE;
 			$server['s']['players']	 = $xml->CURRENTLISTENERS;
 			$server['s']['playersmax']  = $xml->MAXLISTENERS;
+			return TRUE;
+		}
+	}
+//------------------------------------------------------------------------------------------------------------+
+//------------------------------------------------------------------------------------------------------------+
+	function lgsl_query_38(&$server, &$lgsl_need, &$lgsl_fp)
+	{
+		//Virtualbox
+		require_once('includes/lib_remote.php');
+		global $db;
+		$ip = $server['b']['ip'];
+		$port = $server['b']['c_port'];
+		$home_info = $server_home = $db->getGameHomeByIP($ip, $port);
+		$remote = new OGPRemoteLibrary($home_info['agent_ip'],$home_info['agent_port'],$home_info['encryption_key'],$home_info['timeout']);
+		$data = "";
+		$data = $remote->exec("VBoxManage showvminfo \"".$home_info['home_name']."\"");
+		if ( !empty($data) )
+		{
+			$settings = explode("\n", $data);
+			$i = 0;
+			foreach ( $settings as $setting ) 
+			{
+				$setting = trim($setting);
+				$setting = explode(":", $setting);
+				if($setting[0] != "" and $setting[1] != "")
+				{
+					if($setting[0] == "Client name")
+					{
+						$server['p'][$i]['name'] = $setting[0];
+						$server['p'][$i]['score'] = $setting[1];
+						$i++;
+					}
+					if($setting[0] == "User name")
+					{
+						$server['p'][$i]['name'] = $setting[0];
+						$server['p'][$i]['score'] = $setting[1];
+						$i++;
+					}
+					if($setting[0] == "Client IP")
+					{
+						$server['p'][$i]['name'] = $setting[0];
+						$server['p'][$i]['score'] = $setting[1];
+						$i++;
+					}
+					
+					if($setting[0] == "Guest OS")
+					{
+						$map = trim($setting[1]);
+						$server['s']['map'] = $map;
+					}
+					if($setting[0] == "Name")
+					{
+						$map = trim($setting[1]);
+						$server['s']['name'] = $map;
+					}
+				}
+			}
+			$server['s']['players'] = $i;
+			$server['s']['playersmax'] = $i;
+		}		
+		$screen_running = $remote->is_screen_running(OGP_SCREEN_TYPE_HOME,$home_info['home_id']) === 1;
+		if($screen_running)
+		{
 			return TRUE;
 		}
 	}
@@ -4025,6 +4220,231 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 	}
 //------------------------------------------------------------------------------------------------------------+
 //------------------------------------------------------------------------------------------------------------+
+	function lgsl_query_feed(&$server, $request, $lgsl_feed_method, $lgsl_feed_url, $home_info = False)
+	{
+		$lgsl_feed_error = 0;
+		if(is_array($home_info) && !empty($home_info))
+		{
+			require_once('includes/lib_remote.php');
+			$remote = new OGPRemoteLibrary($home_info['agent_ip'], $home_info['agent_port'], $home_info['encryption_key'], $home_info['timeout']);
+			$http_reply = $remote->remote_query('lgsl', $server['b']['type'], $server['b']['ip'], $server['b']['c_port'], $server['b']['q_port'], $server['b']['s_port']);
+			if($http_reply == NULL) exit("REMOTE LGSL: BAD RESPONSE");
+		}
+		else
+		{
+			$host = parse_url($lgsl_feed_url);
+
+			if (empty($host['host']) || empty($host['path'])) { exit("LGSL FEED PROBLEM: INVALID URL"); }
+
+			$host_query = "?type={$server['b']['type']}&ip={$server['b']['ip']}&c_port={$server['b']['c_port']}&q_port={$server['b']['q_port']}&s_port={$server['b']['s_port']}&request={$request}&version=5.8";
+
+			if (function_exists("json_decode")) { $host_query .= function_exists("gzuncompress") ? "&format=4" : "&format=3"; }
+			else								{ $host_query .= function_exists("gzuncompress") ? "&format=2" : "&format=1"; }
+
+			$referrer = preg_replace("/(.*):\/\//i", "", $_SERVER['HTTP_HOST'])."/{$_SERVER['SCRIPT_NAME']}";
+			$scheme = ( isset($_SERVER['HTTPS']) and get_true_boolean($_SERVER['HTTPS']) ) ? "https://" : "http://";
+			$referrer = $scheme.str_replace("//", "/", $referrer);
+			$referrer = empty($_SERVER['QUERY_STRING']) ? $referrer : "{$referrer}?{$_SERVER['QUERY_STRING']}";
+			$destport = isset($host['port']) ? $host['port'] : ( $host['scheme'] == "https" ? "443" : "80" );
+		//---------------------------------------------------------+
+			
+			if (function_exists('curl_init') && function_exists('curl_setopt') && function_exists('curl_exec') && $lgsl_feed_method == 1)
+			{
+				$lgsl_curl = curl_init();
+
+				curl_setopt($lgsl_curl, CURLOPT_HEADER, 0);
+				curl_setopt($lgsl_curl, CURLOPT_HTTPGET, 1);
+				curl_setopt($lgsl_curl, CURLOPT_TIMEOUT, 6);
+				curl_setopt($lgsl_curl, CURLOPT_ENCODING, "");
+				curl_setopt($lgsl_curl, CURLOPT_FORBID_REUSE, 1);
+				curl_setopt($lgsl_curl, CURLOPT_FRESH_CONNECT, 1);
+				curl_setopt($lgsl_curl, CURLOPT_RETURNTRANSFER, 1);
+				curl_setopt($lgsl_curl, CURLOPT_CONNECTTIMEOUT, 6);
+				curl_setopt($lgsl_curl, CURLOPT_REFERER, $referrer);
+				if($host['scheme'] == "https")
+				{
+					curl_setopt($lgsl_curl, CURLOPT_SSL_VERIFYPEER, FALSE);
+					curl_setopt($lgsl_curl, CURLOPT_SSL_VERIFYHOST, FALSE);
+				}
+				curl_setopt($lgsl_curl, CURLOPT_URL, "$host[scheme]://{$host['host']}:$destport{$host['path']}{$host_query}");
+				
+				$http_reply = curl_exec($lgsl_curl);
+
+				if (curl_error($lgsl_curl))
+				{
+					$lgsl_feed_error = 1;
+				}
+
+				curl_close($lgsl_curl);
+			}
+
+		//---------------------------------------------------------+
+
+			elseif (function_exists('fsockopen'))
+			{
+				$ssl = $host['scheme'] == "https" ? "ssl://" : "";
+				$lgsl_fp = @fsockopen($ssl.$host['host'], $destport, $errno, $errstr, 6);
+
+				if (!$lgsl_fp)
+				{
+					$lgsl_feed_error = 1;
+				}
+				else
+				{
+					stream_set_timeout($lgsl_fp, 6, 0);
+					stream_set_blocking($lgsl_fp, TRUE);
+
+					$http_send  = "GET {$host['path']}{$host_query} HTTP/1.0\r\n";
+					$http_send .= "Host: {$host['host']}\r\n";
+					$http_send .= "Referer: {$referrer}\r\n";
+					$http_send .= "Pragma: no-cache\r\n";
+					$http_send .= "Cache-Control: max-age=0\r\n";
+					$http_send .= "Accept-Encoding: \r\n";
+					$http_send .= "Accept-Language: en-us,en;q=0.5\r\n";
+					$http_send .= "Accept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.7\r\n";
+					$http_send .= "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\n";
+					$http_send .= "User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-GB; rv:1.9.1.4) Gecko/20091028\r\n";
+					$http_send .= "Connection: Close\r\n\r\n";
+
+					fwrite($lgsl_fp, $http_send);
+
+					$http_reply = "";
+
+					while (!feof($lgsl_fp))
+					{
+						$http_chunk = fread($lgsl_fp, 4096);
+						if ($http_chunk === "") { break; }
+						$http_reply .= $http_chunk;
+					}
+
+					@fclose($lgsl_fp);
+				}
+			}
+		//---------------------------------------------------------+
+
+			else
+			{
+				exit("LGSL FEED PROBLEM: NO CURL OR FSOCKOPEN SUPPORT");
+			}
+		}
+	//---------------------------------------------------------+
+
+		if (!$lgsl_feed_error)
+		{
+			if (preg_match("/_F([1-4])_(.*)_F([1-4])_/U", $http_reply, $match))
+			{
+				if	 ($match[1] == 4 && $match[3] == 4) { $server = json_decode(gzuncompress(base64_decode($match[2])), TRUE); }
+				elseif ($match[1] == 3 && $match[3] == 3) { $server = json_decode(			(base64_decode($match[2])), TRUE); }
+				elseif ($match[1] == 2 && $match[3] == 2) { $server = unserialize(gzuncompress(base64_decode($match[2]))); }
+				elseif ($match[1] == 1 && $match[3] == 1) { $server = unserialize(			(base64_decode($match[2]))); }
+			}
+			elseif (preg_match("/_SLGSLF_(.*)_SLGSLF_/U", $http_reply, $match))
+			{
+				$server = unserialize($match[1]);
+			}
+			else
+			{
+				$lgsl_feed_error = 2;
+			}
+
+			if (!$lgsl_feed_error && empty($server))
+			{
+				$lgsl_feed_error = 3;
+			}
+		}
+
+	//---------------------------------------------------------+
+
+		switch($lgsl_feed_error)
+		{
+			case 1: // CONNECTION PROBLEM - FEED MAYBE TEMPORARLY OFFLINE
+			$server['s']['name'] = "---";
+			$server['s']['map']  = "---";
+			$server['e'] = array("feed" => "Failed To Connect");
+			$server['p'] = array();
+			break;
+
+			case 2: // NO FEED DATA - MAYBE WRONG FEED URL
+			exit("<div style='width:100%;overflow:auto'>FEED MISSING FROM: {$host['host']}{$host['path']} RETURNED: ".htmlspecialchars($http_reply, ENT_QUOTES)." :END</div>");
+			break;
+
+			case 3: // UNABLE TO UNPACK FEED DATA - MAYBE ERRORS ON FEED
+			exit("<div style='width:100%;overflow:auto'>FEED CORRUPTION FROM: {$host['host']}{$host['path']} RETURNED: ".htmlspecialchars($http_reply, ENT_QUOTES)." :END</div>");
+			break;
+		}
+
+	//---------------------------------------------------------+
+
+		// FALSE IS SO LOCAL OFFLINE CODE TAKES OVER
+		return $server['b']['status'] ? TRUE : FALSE;
+	}
+
+//------------------------------------------------------------------------------------------------------------+
+//------------------------------------------------------------------------------------------------------------+
+
+	function lgsl_parse_color($string, $type)
+	{
+		switch($type)
+		{
+			case "1":
+				$string = preg_replace("/\^x.../", "", $string);
+				$string = preg_replace("/\^./",	"", $string);
+
+				$string_length = strlen($string);
+				for ($i=0; $i<$string_length; $i++)
+				{
+					$char = ord($string[$i]);
+					if ($char > 160) { $char = $char - 128; }
+					if ($char > 126) { $char = 46; }
+					if ($char == 16) { $char = 91; }
+					if ($char == 17) { $char = 93; }
+					if ($char  < 32) { $char = 46; }
+					$string[$i] = chr($char);
+				}
+				break;
+
+			case "2":
+				$string = preg_replace("/\^[\x20-\x7E]/", "", $string);
+				break;
+
+			case "doomskulltag":
+				$string = preg_replace("/\\x1c./", "", $string);
+				break;
+
+			case "farcry":
+				$string = preg_replace("/\\$\d/", "", $string);
+				break;
+
+			case "painkiller":
+				$string = preg_replace("/#./", "", $string);
+				break;
+
+			case "quakeworld":
+				$string_length = strlen($string);
+				for ($i=0; $i<$string_length; $i++)
+				{
+					$char = ord($string[$i]);
+					if ($char > 141) { $char = $char - 128; }
+					if ($char < 32)  { $char = $char + 30;  }
+					$string[$i] = chr($char);
+				}
+				break;
+
+			case "savage":
+				$string = preg_replace("/\^[a-z]/",   "", $string);
+				$string = preg_replace("/\^[0-9]+/",  "", $string);
+				$string = preg_replace("/lan .*\^/U", "", $string);
+				$string = preg_replace("/con .*\^/U", "", $string);
+				break;
+
+			case "swat4":
+				$string = preg_replace("/\[c=......\]/Usi", "", $string);
+				break;
+		}
+		return $string;
+	}
+
+//---------------------------------------------------------+
 
 	function lgsl_time($seconds)
 	{
