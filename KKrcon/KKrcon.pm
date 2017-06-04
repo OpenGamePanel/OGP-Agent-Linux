@@ -69,7 +69,6 @@ sub new
 	$self->{"error"} = "";
 	
 	# Set up socket parameters
-	$self->{"_proto"}  = getprotobyname('udp');
 	$self->{"_ipaddr"} = gethostbyname($self->{"server_host"})
 		or die("KKrcon: could not resolve Host \"" . $self->{"server_host"} . "\"\n");
 	
@@ -128,20 +127,10 @@ sub _sendrecv
 	my $host = $self->{"server_host"};
 	my $port = $self->{"server_port"};
 	my $ipaddr = $self->{"_ipaddr"};
-	my $proto  = $self->{"_proto"};
 	
 	# Open socket
-	socket(RCON, PF_INET, SOCK_DGRAM, $proto)
-		or die("KKrcon: socket: $!\n");
-	
-	# bind causes problems if hostname() gets wrong interface...
-	# and it doesn't seem to be necessary
-	#
-	#my $iaddr = gethostbyname(hostname());
-	#my $paddr = sockaddr_in(0, $iaddr);
-	#bind(RCON, $paddr)
-	#	or die("KKrcon: bind: $!\n");
-	
+	socket(RCON, PF_INET, SOCK_DGRAM, getprotobyname("udp")) or die("KKrcon: socket: $!\n");
+
 	my $hispaddr = sockaddr_in($port, $ipaddr);
 	
 	unless(defined(send(RCON, $msg, 0, $hispaddr)))
@@ -149,26 +138,51 @@ sub _sendrecv
 		die("KKrcon: send $ip:$port : $!");
 	}
 
-	my $rin = "";
+	my $rin;
 	vec($rin, fileno(RCON), 1) = 1;
-	
-	my $ans = "TIMEOUT";
-	if (select($rin, undef, undef, 10.0))
-	{
-		$ans = "";
+	my $ans;
+
+	if (select($rin, undef, undef, 10.0)) {
 		$hispaddr = recv(RCON, $ans, 8192, 0);
-		$ans =~ s/\x00+$//;			# trailing crap
-		$ans =~ s/^\xFF\xFF\xFF\xFFl//;		# HL response
-		$ans =~ s/^\xFF\xFF\xFF\xFFn//;		# QW response
-		$ans =~ s/^\xFF\xFF\xFF\xFF//;		# Q2/Q3 response
-		$ans =~ s/^\xFE\xFF\xFF\xFF.....//;	# old HL bug/feature
+
+		if (defined($ans)) {
+			$ans =~ s/^\xFF\xFF\xFF\xFFprint\n//;    # CoD2 response
+			$ans =~ s/\x00+$//;			# trailing crap
+			$ans =~ s/^\xFF\xFF\xFF\xFFl//;		# HL response
+			$ans =~ s/^\xFF\xFF\xFF\xFFn//;		# QW response
+			$ans =~ s/^\xFF\xFF\xFF\xFF//;		# Q2/Q3 response
+			$ans =~ s/^\xFE\xFF\xFF\xFF.....//;	# old HL bug/feature
+
+			if (length($ans) > 512) {
+				my $tmp;
+				my @explode;
+
+				while (select($rin, undef, undef, 0.05)) {
+					@explode = split(/\n/, $ans);
+					$explode[$#explode] =~ s/^ //;
+					$explode[$#explode] = 'X' . $explode[$#explode];
+					$ans = join("\n", @explode);
+
+					$hispaddr = recv(RCON, $tmp, 8192, 0);
+
+					if (defined($tmp)) {
+						$tmp =~ s/^\xFF\xFF\xFF\xFFprint\n//;    # CoD2 response
+						$tmp =~ s/\x00+$//;			# trailing crap
+						$tmp =~ s/^\xFF\xFF\xFF\xFFl//;		# HL response
+						$tmp =~ s/^\xFF\xFF\xFF\xFFn//;		# QW response
+						$tmp =~ s/^\xFF\xFF\xFF\xFF//;		# Q2/Q3 response
+						$tmp =~ s/^\xFE\xFF\xFF\xFF.....//;	# old HL bug/feature
+						$ans .= $tmp;
+					}
+				}
+			}
+		}
 	}
 	
 	# Close socket
 	close(RCON);
 	
-	if ($ans eq "TIMEOUT")
-	{
+	if (!defined($ans)) {
 		$ans = "";
 		$self->{"error"} = "Rcon timeout";
 	}

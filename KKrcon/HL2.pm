@@ -46,7 +46,7 @@ sub new {
 		elsif ($key eq "port")     { $self->port($val)     }
 		elsif ($key eq "password") { $self->password($val) }
 		elsif ($key eq "timeout")  { $self->timeout($val)  }
-		else { print STDERR "uknown attribute: $key\n" }
+		else { print STDERR "Unknown attribute: $key\n" }
 	}
 
 	return $self;
@@ -104,7 +104,7 @@ sub connect {
 		Timeout		=> $self->timeout(),
 		Proto           => "tcp",
 		Type            => SOCK_STREAM,
-	) || die "failed to connect: $!\n";
+	) || die "Failed to connect: $!\n";
 
 	$self->socket($socket);
 	$self->connected(1);
@@ -168,18 +168,12 @@ sub packet {
 # receive packet
 sub response {
 	my $self = shift;
+	my $payload = $self->read();
 
-	my $size = unpack("V", $self->read(4));
+	# remove protocol cruft and null terminators
+	$payload =~ s/\x00{2}$//;
 
-	if ($size) {
-		my $payload = $self->read($size);
-
-		# remove protocol cruft and null terminators
-		$payload =~ s/^.{8}//;
-		$payload =~ s/\x00{2}$//;
-
-		return $payload;
-	}
+	return $payload;
 }
 
 # read length of bytes from socket with timeout
@@ -191,10 +185,24 @@ sub read {
 	my $timeout = $self->timeout();
 	my $select = IO::Select->new($socket);
 
-	if ($select->can_read($timeout)) {
-		$socket->sysread(my $read, $length, 0);
-		return $read;
+	my $reply = "";
+	my $buffer;
+
+	my ($size, $request_id, $command_response, $data);
+
+	while ($select->can_read(0.5)) {
+		$socket->recv($buffer, 4, MSG_PEEK);
+		$size = unpack("V", $buffer);
+		last if (!defined($size));
+		$socket->recv($buffer, $size+4, MSG_WAITALL);
+
+		($size, $request_id, $command_response, $data) =
+			unpack('VVVZ*x', $buffer);
+
+		$reply .= "$data";
 	}
+
+	return $reply;
 }
 
 1;
