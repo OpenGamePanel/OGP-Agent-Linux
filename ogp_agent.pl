@@ -459,6 +459,7 @@ sub create_screen_cmd
 {
 	my ($screen_id, $exec_cmd) = @_;
 	$exec_cmd = replace_OGP_Vars($screen_id, $exec_cmd);
+	
 	return
 	  sprintf('export WINEDEBUG="fixme-all" && export DISPLAY=:1 && screen -d -m -t "%1$s" -c ' . SCREENRC_FILE . ' -S %1$s %2$s',
 			  $screen_id, $exec_cmd);
@@ -467,7 +468,7 @@ sub create_screen_cmd
 
 sub create_screen_cmd_loop
 {
-	my ($screen_id, $exec_cmd, $envVars) = @_;
+	my ($screen_id, $exec_cmd, $envVars, $skipLoop) = @_;
 	my $server_start_bashfile = $screen_id . "_startup_scr.sh";
 	
 	$exec_cmd = replace_OGP_Vars($screen_id, $exec_cmd);
@@ -481,29 +482,36 @@ sub create_screen_cmd_loop
 	# If it crashes without user intervention, it will restart
 	open (SERV_START_SCRIPT, '>', $server_start_bashfile);
 	
-	my $respawn_server_command = "#!/bin/bash" . "\n" 
-	. "function startServer(){" . "\n" ;
+	my $respawn_server_command = "#!/bin/bash" . "\n";
+	
+	if(!$skipLoop){
+		$respawn_server_command .= "function startServer(){" . "\n";
+	}
 	
 	if(defined $envVars && $envVars ne ""){
 		$respawn_server_command .= $envVars;
 	}
 	
-	$respawn_server_command .= "NUMSECONDS=`expr \$(date +%s)`" . "\n"
-	. "until " . $exec_cmd . "; do" . "\n" 
-	. "let DIFF=(`date +%s` - \"\$NUMSECONDS\")" . "\n"
-	. "if [ \"\$DIFF\" -gt 15 ]; then" . "\n" 
-	. "NUMSECONDS=`expr \$(date +%s)`" . "\n"
-	. "echo \"Server '" . $exec_cmd . "' crashed with exit code \$?.  Respawning...\" >&2 " . "\n" 
-	. "fi" . "\n" 
-	. "sleep 3" . "\n" 
-	. "done" . "\n" 
-	. "let DIFF=(`date +%s` - \"\$NUMSECONDS\")" . "\n"
-	
-	. "if [ ! -e \"SERVER_STOPPED\" ] && [ \"\$DIFF\" -gt 15 ]; then" . "\n"
-	. "startServer" . "\n"
-	. "fi" . "\n"
-	. "}" . "\n"
-	. "startServer" . "\n";
+	if(!$skipLoop){
+		$respawn_server_command .= "NUMSECONDS=`expr \$(date +%s)`" . "\n"
+		. "until " . $exec_cmd . "; do" . "\n" 
+		. "let DIFF=(`date +%s` - \"\$NUMSECONDS\")" . "\n"
+		. "if [ \"\$DIFF\" -gt 15 ]; then" . "\n" 
+		. "NUMSECONDS=`expr \$(date +%s)`" . "\n"
+		. "echo \"Server '" . $exec_cmd . "' crashed with exit code \$?.  Respawning...\" >&2 " . "\n" 
+		. "fi" . "\n" 
+		. "sleep 3" . "\n" 
+		. "done" . "\n" 
+		. "let DIFF=(`date +%s` - \"\$NUMSECONDS\")" . "\n"
+		
+		. "if [ ! -e \"SERVER_STOPPED\" ] && [ \"\$DIFF\" -gt 15 ]; then" . "\n"
+		. "startServer" . "\n"
+		. "fi" . "\n"
+		. "}" . "\n"
+		. "startServer" . "\n";
+	}else{
+		$respawn_server_command .= $exec_cmd . "\n";
+	}
 	
 	print SERV_START_SCRIPT $respawn_server_command;
 	close (SERV_START_SCRIPT);
@@ -815,7 +823,7 @@ sub universal_start_without_decrypt
 			deleteStoppedStatFile($home_path);
 			$cli_bin = create_screen_cmd_loop($screen_id, $command, $envVars);
 		}else{
-			$cli_bin = create_screen_cmd($screen_id, $command);
+			$cli_bin = create_screen_cmd_loop($screen_id, $command, $envVars, 1);
 		}
 	}
 	elsif($file_extension eq ".jar")
@@ -831,7 +839,7 @@ sub universal_start_without_decrypt
 			deleteStoppedStatFile($home_path);
 			$cli_bin = create_screen_cmd_loop($screen_id, $command, $envVars);
 		}else{
-			$cli_bin = create_screen_cmd($screen_id, $command);
+			$cli_bin = create_screen_cmd_loop($screen_id, $command, $envVars, 1);
 		}
 	}
 	else
@@ -847,7 +855,7 @@ sub universal_start_without_decrypt
 			deleteStoppedStatFile($home_path);
 			$cli_bin = create_screen_cmd_loop($screen_id, $command, $envVars);
 		}else{
-			$cli_bin = create_screen_cmd($screen_id, $command);
+			$cli_bin = create_screen_cmd_loop($screen_id, $command, $envVars, 1);
 		}
 	}
 		
@@ -857,8 +865,8 @@ sub universal_start_without_decrypt
 	logger
 	  "Startup command [ $cli_bin ] will be executed in dir $game_binary_dir.";
 	
-	# Run before start script and set environment variables which will affect create_screen_cmd only... loop already has the envvars as well
-	$run_before_start = run_before_start_commands($home_id, $home_path, $preStart, $envVars);
+	# Run before start script
+	$run_before_start = run_before_start_commands($home_id, $home_path, $preStart);
 	
 	system($cli_bin);
 	
@@ -1732,7 +1740,7 @@ sub lock_additional_files_logic{
 sub run_before_start_commands
 {
 	#return "Bad Encryption Key" unless(decrypt_param(pop(@_)) eq "Encryption checking OK");
-	my ($server_id, $homedir, $beforestartcmd, $envVars) = @_;
+	my ($server_id, $homedir, $beforestartcmd) = @_;
 	
 	if ($homedir ne "" && $server_id ne ""){
 		# Run any prestart scripts
@@ -1751,21 +1759,7 @@ sub run_before_start_commands
 			close FILE;
 			chmod 0755, $prestartcmdfile;
 			system("bash $prestartcmdfile");
-		}
-		
-		
-		# Set and export any environment variables for game server developers unwilling to properly learn Linux
-		if (defined $envVars && $envVars ne ""){
-			my @prestartenvvars = split /[\r\n]+/, $envVars;
-			foreach my $line (@prestartenvvars) {
-				$line = replace_OGP_Env_Vars($server_id, $homedir, $line);
-				if($line ne ""){
-					logger "Configuring environment variable: $line";
-					system($line);
-				}
-			}
-		}
-		
+		}		
 	}else{
 		return -2;
 	}
@@ -1778,6 +1772,12 @@ sub multiline_to_startup_comma_format{
 	$multiLineVar =~ s/,//g; # commas are invalid anyways in bash
 	$multiLineVar =~ s/[\r]+//g;
 	$multiLineVar =~ s/[\n]+/{OGPNEWLINE}/g;
+	return $multiLineVar;
+}
+
+sub multiline_to_bash_commands{
+	my ($multiLineVar) = @_;
+	$multiLineVar =~ s/[\n]+/ && /g;
 	return $multiLineVar;
 }
 
