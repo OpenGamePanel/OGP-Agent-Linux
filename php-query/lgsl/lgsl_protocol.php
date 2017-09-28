@@ -25,14 +25,14 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"aarmy"			=> "Americas Army",
 		"aarmy3"		=> "Americas Army 3",
 		"arcasimracing"	=> "Arca Sim Racing",
-		"arkse"         => "Ark Survival Evolved",
+		"arkse"			=> "ARK: Survival Evolved",
 		"arma"			=> "ArmA: Armed Assault",
 		"arma2"			=> "ArmA 2",
 		"arma2oa"		=> "ArmA 2 Operation Arrowhead",
 		"arma2co"		=> "ArmA 2 Combined Operations",
 		"arma3"			=> "ArmA 3",
 		"arma3alpha"	=> "ArmA 3 Alpha",
-		"avorion"	=> "Avorion",
+		"avorion"		=> "Avorion",
 		"avp2"			=> "Aliens VS. Predator 2",
 		"avp2010"		=> "Aliens VS. Predator ( 2010 By Rebellion )",
 		"bfbc2"			=> "Battlefield Bad Company 2",
@@ -48,11 +48,12 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"callofduty4"	=> "Call Of Duty 4",
 		"callofdutymw2"	=> "Call of Duty Modern Warfare 2",
 		"cncrenegade"	=> "Command and Conquer: Renegade",
+		"conanexiles"	=> "Conan Exiles",
 		"crysis"		=> "Crysis",
 		"crysiswars"	=> "Crysis Wars",
 		"cs2d"			=> "Counter-Strike 2D",
 		"cube"			=> "Cube Engine",
-		"dayz_arma2co"	=> "Dayz ArmA 2 Combined Operations",
+		"dayzmod"          => "DayZ Mod",
 		"doomskulltag"	=> "Doom - Skulltag",
 		"doomzdaemon"	=> "Doom - ZDaemon",
 		"doom3"			=> "Doom 3",
@@ -108,9 +109,11 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"quake4"		=> "Quake 4",
 		"ravenshield"	=> "Raven Shield",
 		"redorchestra"	=> "Red Orchestra",
-		"redorchestra2" => "Red Orchestra 2 & Rising Storm",
+		"redorchestra2"	=> "Red Orchestra 2 & Rising Storm",
 		"rfactor"		=> "RFactor",
+		"risingstorm2"	=> "Rising Storm 2: Vietnam",
 		"ror"			=> "Rigs of Rods",
+		"rust"			=> "Rust",
 		"samp"			=> "San Andreas Multiplayer",
 		"savage"		=> "Savage",
 		"savage2"		=> "Savage 2",
@@ -162,7 +165,7 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"aarmy_"		=> "03",
 		"aarmy3"		=> "26",
 		"arcasimracing"	=> "16",
-		"arkse"         => "05",
+		"arkse"			=> "05",
 		"arma"			=> "09",
 		"arma2"			=> "06",
 		"arma2oa"		=> "06",
@@ -185,11 +188,12 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"callofduty4"	=> "02",
 		"callofdutymw2"	=> "02",
 		"cncrenegade"	=> "03",
+		"conanexiles"	=> "05",
 		"crysis"		=> "06",
 		"crysiswars"	=> "06",
 		"cs2d"			=> "29",
 		"cube"			=> "24",
-		"dayz_arma2co"	=> "06",
+		"dayzmod"  => "05",
 		"doomskulltag"	=> "27",
 		"doomzdaemon"	=> "28",
 		"doom3"			=> "10",
@@ -250,8 +254,11 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"quake4"		=> "10",
 		"ravenshield"	=> "04",
 		"redorchestra"	=> "13",
-		"redorchestra2" => "05",
+		"redorchestra2"	=> "05",
 		"rfactor"		=> "16",
+		"risingstorm2"	=> "05",
+		"ror"			=> "36",
+		"rust"			=> "05",
 		"samp"			=> "12",
 		"savage"		=> "17",
 		"savage2"		=> "18",
@@ -284,6 +291,7 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"ut2004"		=> "13",
 		"ut2004_"		=> "03",
 		"ut3"			=> "11",
+		"vbox"			=> "38",
 		"vcmp"			=> "12",
 		"vietcong"		=> "03",
 		"vietcong2"		=> "09",
@@ -305,14 +313,14 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"aarmy"			=> "qtracker://{IP}:{S_PORT}?game=ArmyOperations&action=show",
 		"aarmy3"		=> "qtracker://{IP}:{S_PORT}?game=AmericasArmy3&action=show",
 		"arcasimracing"	=> "http://en.wikipedia.org/wiki/ARCA_Sim_Racing",
-		"arkse"         => "steam://connect/{IP}:{S_PORT}",
+		"arkse"			=> "steam://connect/{IP}:{Q_PORT}",
 		"arma"			=> "qtracker://{IP}:{S_PORT}?game=ArmedAssault&action=show",
 		"arma2"			=> "http://en.wikipedia.org/wiki/ARMA_2",
 		"arma2oa"		=> "http://en.wikipedia.org/wiki/ARMA_2",
 		"arma2co"		=> "http://en.wikipedia.org/wiki/ARMA_2",
 		"arma3"			=> "steam://connect/{IP}:{S_PORT}",
 		"arma3alpha"	=> "http://en.wikipedia.org/wiki/ARMA_2",
-		"avorion" 	=> "steam://connect/{IP}:{S_PORT}",
+		"avorion"		=> "steam://connect/{IP}:{S_PORT}",
 		"avp2"			=> "qtracker://{IP}:{S_PORT}?game=AliensversusPredator2&action=show",
 		"avp2010"		=> "http://en.wikipedia.org/wiki/Aliens_vs._Predator_%28video_game%29",
 		"bfbc2"			=> "http://en.wikipedia.org/wiki/Battlefield_bad_company_2",
@@ -328,11 +336,12 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"callofduty4"	=> "qtracker://{IP}:{S_PORT}?game=CallOfDuty4&action=show",
 		"callofdutymw2"	=> "aiw://connect/{IP}:{S_PORT}",
 		"cncrenegade"	=> "qtracker://{IP}:{S_PORT}?game=CommandConquerRenegade&action=show",
+		"conanexiles"	=> "steam://connect/{IP}:{S_PORT}",
 		"crysis"		=> "qtracker://{IP}:{S_PORT}?game=Crysis&action=show",
 		"crysiswars"	=> "qtracker://{IP}:{S_PORT}?game=CrysisWars&action=show",
 		"cs2d"			=> "http://www.cs2d.com",
 		"cube"			=> "http://cubeengine.com",
-		"dayz_arma2co"	=> "http://en.wikipedia.org/wiki/ARMA_2",
+		"dayzmod"          => "steam://connect/{IP}:{S_PORT}",
 		"doomskulltag"	=> "http://skulltag.com",
 		"doomzdaemon"	=> "http://www.zdaemon.org",
 		"doom3"			=> "qtracker://{IP}:{S_PORT}?game=Doom3&action=show",
@@ -387,9 +396,11 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"quake4"		=> "qtracker://{IP}:{S_PORT}?game=Quake4&action=show",
 		"ravenshield"	=> "http://en.wikipedia.org/wiki/Tom_Clancy's_Rainbow_Six_3",
 		"redorchestra"	=> "steam://connect/{IP}:{C_PORT}",
-		"redorchestra2" => "steam://connect/{IP}:{S_PORT}",
+		"redorchestra2"	=> "steam://connect/{IP}:{S_PORT}",
 		"rfactor"		=> "rfactor://{IP}:{S_PORT}",
+		"risingstorm2"	=> "steam://connect/{IP}:{S_PORT}",
 		"ror"			=> "http://www.rigsofrods.com/servers/",
+		"rust"			=> "steam://connect/{IP}:{S_PORT}",
 		"samp"			=> "samp://{IP}:{C_PORT}",
 		"savage"		=> "http://en.wikipedia.org/wiki/Savage:_The_Battle_for_Newerth",
 		"savage2"		=> "http://en.wikipedia.org/wiki/Savage_2:_A_Tortured_Soul",
@@ -431,6 +442,9 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		// SOFTWARE PORT IS THE QUERY PORT UNLESS SET
 		if (!$s_port) { $s_port = $q_port; }
 
+		// Force the SimpleXMLElement into a plain string
+		$type = (string) $type;
+
 	   // TRY USING THE STANDARD LAUNCH LINK FOR ALTERNATE PROTOCOLS IF ONE IS NOT SET
 		$type = str_replace("_", "", $type);
 
@@ -449,16 +463,18 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 			case "aarmy"			: $c_to_q = 1;		$c_def = 1716;	$q_def = 1717;	$c_to_s = 0;	break;
 			case "aarmy3"			: $c_to_q = 0;		$c_def = 8777;	$q_def = 39300;	$c_to_s = 0;	break;
 			case "arcasimracing"	: $c_to_q = -100;	$c_def = 34397;	$q_def = 34297;	$c_to_s = 0;	break;
-			case "arkse"			: $c_to_q = 0;		$c_def = 0;		$q_def = 0;		$c_to_s = 0;	break;
+			case "arkse"			: $c_to_q = 19238;	$c_def = 7777;	$q_def = 27015;	$c_to_s = 0;	break;
 			case "arma3"			: $c_to_q = 1; 		$c_def = 2302; 	$q_def = 2303; 	$c_to_s = 0; 	break;
-			case "avorion" 			: $c_to_q = 20; 	$c_def = 27000;	$q_def = 27020; $c_to_s = 0;  	break;
+			case "avorion"			: $c_to_q = 20; 	$c_def = 27000;	$q_def = 27020; $c_to_s = 0;  	break;
 			case "bfbc2"			: $c_to_q = 0;		$c_def = 19567;	$q_def = 48888;	$c_to_s = 0;	break;
 			case "bfvietnam"		: $c_to_q = 0;		$c_def = 15567;	$q_def = 23000;	$c_to_s = 0;	break;
 			case "bf1942"			: $c_to_q = 0;		$c_def = 14567;	$q_def = 23000;	$c_to_s = 0;	break;
 			case "bf2"				: $c_to_q = 13333;	$c_def = 16567;	$q_def = 29900;	$c_to_s = 0;	break;
 			case "bf3"				: $c_to_q = 22000;	$c_def = 25200;	$q_def = 47200;	$c_to_s = 0;	break;
 			case "bf2142"			: $c_to_q = 0;		$c_def = 17567;	$q_def = 29900;	$c_to_s = 0;	break;
+			case "conanexiles"		: $c_to_q = 2;		$c_def = 24000;	$q_def = 24002;	$c_to_s = 0;	break;
 			case "cube"				: $c_to_q = 1;		$c_def = 28785;	$q_def = 28786;	$c_to_s = 0;	break;
+			case "dayzmod"                     : $c_to_q = 1;	  	$c_def = 2302;  $q_def = 2303;  $c_to_s = 0;    break;
 			case "dh2005"			: $c_to_q = 0;		$c_def = 23459;	$q_def = 34567;	$c_to_s = 0;	break;
 			case "farcry"			: $c_to_q = 123;	$c_def = 49001;	$q_def = 49124;	$c_to_s = 0;	break;
 			case "flashpoint"		: $c_to_q = 1;		$c_def = 2302;	$q_def = 2303;	$c_to_s = 0;	break;
@@ -484,6 +500,7 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 			case "redorchestra"		: $c_to_q = 1;		$c_def = 7758;	$q_def = 7759;	$c_to_s = 0;	break;
 			case "redorchestra2" 	: $c_to_q = 19238; 	$c_def = 7777; 	$q_def = 27015; $c_to_s = 0;  	break;
 			case "rfactor"			: $c_to_q = -100;	$c_def = 34397;	$q_def = 34297;	$c_to_s = 0;	break;
+			case "risingstorm2"		: $c_to_q = 19238; 	$c_def = 7777; 	$q_def = 27015; $c_to_s = 0;  	break;
 			case "serioussam"		: $c_to_q = 1;		$c_def = 25600;	$q_def = 25601;	$c_to_s = 0;	break;
 			case "soldat"			: $c_to_q = 123;	$c_def = 23073;	$q_def = 23196;	$c_to_s = 0;	break;
 			case "stalker"			: $c_to_q = 2;		$c_def = 5447;	$q_def = 5445;	$c_to_s = 0;	break;
@@ -521,7 +538,6 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 	function lgsl_query_live($type, $ip, $c_port, $q_port, $s_port, $request)
 	{
 //---------------------------------------------------------+
-
 		if (preg_match("/[^0-9a-z\.\-\[\]\:]/i", $ip))
 		{
 			exit("LGSL PROBLEM: INVALID IP OR HOSTNAME");
@@ -1609,7 +1625,7 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 			if (!empty($server['e']['gsgamename'])) { $server['s']['game'] = $server['e']['gsgamename']; } // FEAR
 			if (!empty($server['e']['game_id']))	{ $server['s']['game'] = $server['e']['game_id']; }	// BFVIETNAM
 
-			if ($server['b']['type'] == "arma" || $server['b']['type'] == "arma2" || $server['b']['type'] == "arma2oa" || $server['b']['type'] == "arma2co" || $server['b']['type'] == "dayz_arma2co")
+			if ($server['b']['type'] == "arma" || $server['b']['type'] == "arma2" || $server['b']['type'] == "arma2oa" || $server['b']['type'] == "arma2co" || $server['b']['type'] == "dayzmod")
 			{
 				$server['s']['map'] = $server['e']['mission'];
 			}
