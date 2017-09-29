@@ -264,6 +264,10 @@ then
     init_dir=${DEFAULT_INIT_DIR}
 fi
 init_dir=${init_dir%/}
+echo 'export AGENTDIRECT=${agent_home}' >> /home/${username}/.profile # Make Permanently Environment for Agent Directory , Usage : Game Addons and etc...
+echo 'export AGENTUSERNM=${username}' >> /home/${username}/.profile # Make Permanently Environment for Agent UserName , Usage : Game Addons and etc...
+echo 'export AGENTPW=$(cat "$AGENTDIRECT/Cfg/Config.pm" | grep -o "sudo_password.*" | grep -ow "[^sudo_password( \)*=>( \)*].*" | grep -o "[^'].*[^',]")' >> /home/${username}/.profile #Usage : Sudo Permission For Addons and etc... , Example : sudo -u $AGENTUSERNM command | echo $AGENTPW 
+
 echo "Copying files..."
 
 cp -avf systemd Crypt EHCP FastDownload File Frontier IspConfig KKrcon php-query Schedule Time ogp_agent.pl ogp_screenrc ogp_agent_run agent_conf.sh extPatterns.txt ${agent_home}/ || failed "Failed to copy agent files to ${agent_home}."
