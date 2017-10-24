@@ -1664,19 +1664,14 @@ sub start_file_download
 				my $postcmdfile = $destination."/".'postinstall.sh';
 				open  FILE, '>', $postcmdfile;
 				print FILE "cd $destination\n";
-				print FILE "while kill -0 $pid >/dev/null 2>&1\n";
-				print FILE "do\n";
-				print FILE "	sleep 1\n";
-				print FILE "done\n";
 				foreach my $line (@postcmdlines) {
 					print FILE "$line\n";
+					logger "Postscript command received \"" . $line ."\".";
 				}
 				print FILE "rm -f $destination/postinstall.sh\n";
 				close FILE;
 				chmod 0755, $postcmdfile;
-				my $screen_id = create_screen_id("post_script", $pid);
-				my $cli_bin = create_screen_cmd($screen_id, "bash $postcmdfile");
-				system($cli_bin);
+				sudo_exec_without_decrypt("bash $postcmdfile");
 			}
 		}
 		else
@@ -1691,27 +1686,6 @@ sub start_file_download
 	}
 	else
 	{
-		if ($post_script ne "")
-		{
-			logger "Running postscript commands.";
-			my @postcmdlines = split /[\r\n]+/, $post_script;
-			my $postcmdfile = $destination."/".'postinstall.sh';
-			open  FILE, '>', $postcmdfile;
-			print FILE "cd $destination\n";
-			print FILE "while kill -0 $pid >/dev/null 2>&1\n";
-			print FILE "do\n";
-			print FILE "	sleep 1\n";
-			print FILE "done\n";
-			foreach my $line (@postcmdlines) {
-				print FILE "$line\n";
-			}
-			print FILE "rm -f $destination/postinstall.sh\n";
-			close FILE;
-			chmod 0755, $postcmdfile;
-			my $screen_id = create_screen_id("post_script", $pid);
-			my $cli_bin = create_screen_cmd($screen_id, "bash $postcmdfile");
-			system($cli_bin);
-		}
 		logger "Download process for $download_file_path has pid number $pid.";
 		return "$pid";
 	}
@@ -2664,6 +2638,7 @@ sub sudo_exec_without_decrypt
 {
 	my ($sudo_exec) = @_;
 	$sudo_exec =~ s/('+)/'"$1"'/g;
+	logger "Running the following command \"" . $sudo_exec . "\" with sudo.";
 	my $command = "echo '$SUDOPASSWD'|sudo -kS -p \"\" su -c '$sudo_exec;echo \$?' root 2>&1";
 	my @cmdret = qx($command);
 	chomp(@cmdret);
@@ -2671,8 +2646,10 @@ sub sudo_exec_without_decrypt
 	chomp($ret);
 	if ("X$ret" eq "X0")
 	{
+		logger "Command \"" . $sudo_exec . "\" was successfully run with sudo.";
 		return "1;".encode_list(@cmdret);
 	}
+	logger "Command \"" . $sudo_exec . "\" run with sudo failed with exit code $ret.";
 	return -1;
 }
 
