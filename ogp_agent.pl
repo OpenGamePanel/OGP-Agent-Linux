@@ -545,6 +545,18 @@ sub replace_OGP_Vars{
 	return $exec_cmd;
 }
 
+sub handle_lock_command_line{
+	my ($command) = @_;
+	if(defined $command && $command ne ""){
+		if ($command =~ m/{OGP_LOCK_FILE}/) {
+			$command =~ s/{OGP_LOCK_FILE}\s*//g;
+			return secure_path_without_decrypt("chattr+i", $command);
+		}
+	}
+	
+	return 0;
+}
+
 sub replace_OGP_Env_Vars{
 	# This function replaces constants from environment variables set in the XML
 	my ($homeid, $homepath, $strToReplace) = @_;
@@ -1665,13 +1677,18 @@ sub start_file_download
 				open  FILE, '>', $postcmdfile;
 				print FILE "cd $destination\n";
 				foreach my $line (@postcmdlines) {
-					print FILE "$line\n";
 					logger "Postscript command received \"" . $line ."\".";
+					if(handle_lock_command_line($line) == 0){
+						print FILE "$line\n";
+					}else{
+						logger "Lock command completed successfully";					}
 				}
 				print FILE "rm -f $destination/postinstall.sh\n";
 				close FILE;
 				chmod 0755, $postcmdfile;
-				sudo_exec_without_decrypt("bash $postcmdfile");
+				my $screen_id = create_screen_id("post_script", $pid);
+				my $cli_bin = create_screen_cmd($screen_id, "bash $postcmdfile");
+				system($cli_bin);
 			}
 		}
 		else
