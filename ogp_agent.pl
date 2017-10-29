@@ -1681,7 +1681,8 @@ sub start_file_download
 					if(handle_lock_command_line($line) == 0){
 						print FILE "$line\n";
 					}else{
-						logger "Lock command completed successfully";					}
+						logger "Lock command completed successfully";					
+					}
 				}
 				print FILE "rm -f $destination/postinstall.sh\n";
 				close FILE;
