@@ -1687,7 +1687,7 @@ sub start_file_download
 				print FILE "rm -f $destination/postinstall.sh\n";
 				close FILE;
 				chmod 0755, $postcmdfile;
-				my $screen_id = create_screen_id("post_script", $pid);
+				my $screen_id = create_screen_id("post_script", $$);
 				my $cli_bin = create_screen_cmd($screen_id, "bash $postcmdfile");
 				system($cli_bin);
 			}
