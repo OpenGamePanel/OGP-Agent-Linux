@@ -46,7 +46,6 @@ use Schedule::Cron; # Used for scheduling tasks
 
 # Compression tools
 use IO::Compress::Bzip2 qw(bzip2 $Bzip2Error); # Used to compress files to bz2.
-use IO::Uncompress::Unzip qw(unzip $UnzipError);
 use Compress::Zlib; # Used to compress file download buffers to zlib.
 use Archive::Tar; # Used to create tar, tgz or tbz archives.
 use Archive::Zip qw( :ERROR_CODES :CONSTANTS ); # Used to create zip archives.
@@ -2340,50 +2339,6 @@ sub uncompress_file_without_decrypt
 	}
 	
 	return 1;
-}
-
-sub unzip_large_file{
-	my ($file, $dest) = @_;
-
-    $dest = "." unless defined $dest;
-
-    my $u = IO::Uncompress::Unzip->new($file)
-        or logger "Cannot open $file: $UnzipError";
-
-    my $status;
-    for ($status = 1; $status > 0; $status = $u->nextStream()) {
-        my $header = $u->getHeaderInfo();
-        my (undef, $path, $name) = splitpath($header->{Name});
-        my $destdir = "$dest/$path";
-
-        unless (-d $destdir) {
-            mkpath($destdir) or die "Couldn't mkdir $destdir: $!";
-        }
-
-        if ($name =~ m!/$!) {
-            last if $status < 0;
-            next;
-        }
-
-        my $destfile = "$dest/$path/$name";
-        my $buff;
-        my $fh = IO::File->new($destfile, "w")
-            or logger "Couldn't write to $destfile: $!";
-        while (($status = $u->read($buff)) > 0) {
-            $fh->write($buff);
-        }
-        $fh->close();
-        my $stored_time = $header->{'Time'};
-        utime ($stored_time, $stored_time, $destfile)
-            or logger "Couldn't touch $destfile: $!";
-    }
-
-	if($status < 0){
-		logger "Error processing $file: $!\n";
-		return -1;
-	}
-
-    return 1;
 }
 
 ### \return 1 If files are compressed succesfully.
