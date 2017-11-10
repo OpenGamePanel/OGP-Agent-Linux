@@ -46,6 +46,7 @@ use Schedule::Cron; # Used for scheduling tasks
 
 # Compression tools
 use IO::Compress::Bzip2 qw(bzip2 $Bzip2Error); # Used to compress files to bz2.
+use IO::Uncompress::Unzip qw(unzip $UnzipError);
 use Compress::Zlib; # Used to compress file download buffers to zlib.
 use Archive::Tar; # Used to create tar, tgz or tbz archives.
 use Archive::Zip qw( :ERROR_CODES :CONSTANTS ); # Used to create zip archives.
@@ -2285,6 +2286,8 @@ sub uncompress_file
 
 sub uncompress_file_without_decrypt
 {
+	# Globals
+	$Archive::Extract::PREFER_BIN = 1;
 
 	# File must include full path.
 	my ($file, $destination) = @_;
@@ -2307,24 +2310,80 @@ sub uncompress_file_without_decrypt
 		}
 	}
 
-	my $ae = Archive::Extract->new(archive => $file);
+	my $filesize = (stat($file))[7];
+	
+	if($filesize >= 3221225472 && $file =~ /\.zip$/i){
+		# Archive::Extract seems to have problems with large zip files, so for files greater than 3GB in size, let the system handle it
+		system("unzip $file -d $destination");
+		if($? != 0){
+			return -1; 
+		}
+	}else{
 
-	if (!$ae)
-	{
-		logger "Could not create archive instance for file $file.";
-		return -1;
+		my $ae = Archive::Extract->new(archive => $file);
+
+		if (!$ae)
+		{
+			logger "Could not create archive instance for file $file.";
+			return -1;
+		}
+
+		my $ok = $ae->extract(to => $destination);
+
+		if (!$ok)
+		{
+			logger "File $file could not be uncompressed.";
+			return -1;
+		}
+
+		logger "File uncompressed/extracted successfully.";
 	}
-
-	my $ok = $ae->extract(to => $destination);
-
-	if (!$ok)
-	{
-		logger "File $file could not be uncompressed.";
-		return -1;
-	}
-
-	logger "File uncompressed/extracted successfully.";
+	
 	return 1;
+}
+
+sub unzip_large_file{
+	my ($file, $dest) = @_;
+
+    $dest = "." unless defined $dest;
+
+    my $u = IO::Uncompress::Unzip->new($file)
+        or logger "Cannot open $file: $UnzipError";
+
+    my $status;
+    for ($status = 1; $status > 0; $status = $u->nextStream()) {
+        my $header = $u->getHeaderInfo();
+        my (undef, $path, $name) = splitpath($header->{Name});
+        my $destdir = "$dest/$path";
+
+        unless (-d $destdir) {
+            mkpath($destdir) or die "Couldn't mkdir $destdir: $!";
+        }
+
+        if ($name =~ m!/$!) {
+            last if $status < 0;
+            next;
+        }
+
+        my $destfile = "$dest/$path/$name";
+        my $buff;
+        my $fh = IO::File->new($destfile, "w")
+            or logger "Couldn't write to $destfile: $!";
+        while (($status = $u->read($buff)) > 0) {
+            $fh->write($buff);
+        }
+        $fh->close();
+        my $stored_time = $header->{'Time'};
+        utime ($stored_time, $stored_time, $destfile)
+            or logger "Couldn't touch $destfile: $!";
+    }
+
+	if($status < 0){
+		logger "Error processing $file: $!\n";
+		return -1;
+	}
+
+    return 1;
 }
 
 ### \return 1 If files are compressed succesfully.
