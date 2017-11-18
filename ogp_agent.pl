@@ -2313,8 +2313,10 @@ sub uncompress_file_without_decrypt
 	
 	if($filesize >= 3221225472 && $file =~ /\.zip$/i){
 		# Archive::Extract seems to have problems with large zip files, so for files greater than 3GB in size, let the system handle it
-		system("unzip $file -d $destination");
+		logger "Using system call to unzip.";
+		system("unzip -o $file -d $destination");
 		if($? != 0){
+			logger "Done.";
 			return -1; 
 		}
 	}else{
