@@ -573,7 +573,8 @@ sub replace_OGP_Env_Vars{
 	
 	# Handle global game shared directory replacement
 	if(defined $game_key && $game_key ne ""){
-		my $shared_path = Path::Class::Dir->new(SHARED_GAME_TMP_DIR, $game_key);
+		my $readable_game_key = lc(substr($game_key, 0, rindex($game_key,"_")));		
+		my $shared_path = Path::Class::Dir->new(SHARED_GAME_TMP_DIR, $readable_game_key);
 		# Create the folder if it doesn't exist
 		if (!-d $shared_path && !mkdir $shared_path)
 		{

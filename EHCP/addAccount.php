@@ -63,7 +63,7 @@ if (isset($ftp_username) && isset($ftp_pass) && isset($rDir)) {
     // If the last character in the path is a slash (/) - Remove it from the string
     
     if (substr_count($rDir, '/') >= 2 && $rDir[strlen($rDir) - 1] == "/") {
-        $end = strlen($rDir) - 2;
+        $end = strlen($rDir) - 1;
         $rDir = substr($rDir, 0, $end);
     }
     
