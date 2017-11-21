@@ -228,7 +228,7 @@ elsif ($no_startups != 1)
 			my (
 				$home_id,   $home_path,   $server_exe,
 				$run_dir,   $startup_cmd, $server_port,
-				$server_ip, $cpu, $nice, $preStart, $envVars
+				$server_ip, $cpu, $nice, $preStart, $envVars, $game_key
 			   ) = split(',', $_);
 
 			if (is_screen_running_without_decrypt(SCREEN_TYPE_HOME, $home_id) ==
@@ -243,7 +243,7 @@ elsif ($no_startups != 1)
 			universal_start_without_decrypt(
 										 $home_id,   $home_path,   $server_exe,
 										 $run_dir,   $startup_cmd, $server_port,
-										 $server_ip, $cpu,	$nice, $preStart, $envVars
+										 $server_ip, $cpu,	$nice, $preStart, $envVars, $game_key
 										   );
 		}
 		close(STARTFILE);
@@ -710,7 +710,7 @@ sub universal_start_without_decrypt
 {
 	my (
 		$home_id, $home_path, $server_exe, $run_dir,
-		$startup_cmd, $server_port, $server_ip, $cpu, $nice, $preStart, $envVars
+		$startup_cmd, $server_port, $server_ip, $cpu, $nice, $preStart, $envVars, $game_key
 	   ) = @_;
 	   
 	# Replace any {OGP_HOME_DIR} in the $start_cmd with the server's home directory path
@@ -2177,7 +2177,7 @@ sub automatic_steam_update
 	my ($home_id, $game_home, $server_ip, $server_port, $exec_path, $exec_folder_path,
 		$control_protocol, $control_password, $control_type,
 		$appId, $modname, $betaname, $betapwd, $user, $pass, $guard, $precmd, $postcmd, $cfg_os, $filesToLockUnlock,
-		$startup_cmd, $cpu, $nice, $preStart, $envVars) = &decrypt_params(@_);
+		$startup_cmd, $cpu, $nice, $preStart, $envVars, $game_key) = &decrypt_params(@_);
 
 	# Is the server currently running? if it is, we'll try to start it after updating.
 	my $isServerRunning = is_screen_running_without_decrypt(SCREEN_TYPE_HOME, $home_id) == 1 ? 1 : 0;
@@ -2218,7 +2218,7 @@ sub automatic_steam_update
 				if (is_screen_running_without_decrypt(SCREEN_TYPE_UPDATE, $home_id) == 0)
 				{
 
-					if (universal_start_without_decrypt($home_id, $game_home, $exec_path, $exec_folder_path, $startup_cmd, $server_port, $server_ip, $cpu, $nice, $preStart, $envVars) != 1)
+					if (universal_start_without_decrypt($home_id, $game_home, $exec_path, $exec_folder_path, $startup_cmd, $server_port, $server_ip, $cpu, $nice, $preStart, $envVars, $game_key) != 1)
 					{
 						logger("Failed to start server $home_id after automatic update.");
 						return -7;
@@ -2639,14 +2639,14 @@ sub restart_server_without_decrypt
 {
 	my ($home_id, $server_ip, $server_port, $control_protocol,
 		$control_password, $control_type, $home_path, $server_exe, $run_dir,
-		$cmd, $cpu, $nice, $preStart, $envVars) = @_;
+		$cmd, $cpu, $nice, $preStart, $envVars, $game_key) = @_;
 
 	if (stop_server_without_decrypt($home_id, $server_ip, 
 									$server_port, $control_protocol,
 									$control_password, $control_type, $home_path) == 0)
 	{
 		if (universal_start_without_decrypt($home_id, $home_path, $server_exe, $run_dir,
-											$cmd, $server_port, $server_ip, $cpu, $nice, $preStart, $envVars) == 1)
+											$cmd, $server_port, $server_ip, $cpu, $nice, $preStart, $envVars, $game_key) == 1)
 		{
 			return 1;
 		}
