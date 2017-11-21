@@ -173,6 +173,13 @@ if (!-d SCREEN_LOGS_DIR && !mkdir SCREEN_LOGS_DIR)
 	exit -1;
 }
 
+# Check the global shared games folder
+if (!-d SHARED_GAME_TMP_DIR && !mkdir SHARED_GAME_TMP_DIR)
+{
+	logger "Could not create " . SHARED_GAME_TMP_DIR . " directory $!.", 1;
+	exit -1;
+}
+
 if (check_steam_cmd_client() == -1)
 {
 	print "ERROR: You must download and uncompress the new steamcmd package.";
@@ -567,6 +574,11 @@ sub replace_OGP_Env_Vars{
 	# Handle global game shared directory replacement
 	if(defined $game_key && $game_key ne ""){
 		my $shared_path = Path::Class::Dir->new(SHARED_GAME_TMP_DIR, $game_key);
+		# Create the folder if it doesn't exist
+		if (!-d $shared_path && !mkdir $shared_path)
+		{
+			logger "Could not create " . $shared_path . " directory $!.", 1;
+		}
 		$exec_cmd =~ s/{OGP_GAME_SHARED_DIR}/$shared_path/g;
 	}
 	
