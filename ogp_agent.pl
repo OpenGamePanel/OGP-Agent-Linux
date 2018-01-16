@@ -1215,6 +1215,23 @@ sub stop_server_without_decrypt
 			my $rconCommand = "quit";
 			$rcon2->run($rconCommand);
 		}
+		elsif ($control_protocol eq "armabe")
+		{
+			use ArmaBE::ArmaBE;
+			my $armabe = new ArmaBE(
+								  hostname => $server_ip,
+								  port	 => $server_port, # Uses server port for now (Arma 2), Arma 3 BE uses a different, user definable port
+								  password => $control_password,
+								  timeout  => 2
+								 );
+
+			my $rconCommand = "#shutdown";
+			my $armabe_result = $armabe->run($rconCommand);
+			if ($armabe_result) {
+				logger "ArmaBE Shutdown command sent successfully - Waiting 5s";
+				sleep(5); # Arma servers take some time to shut down
+			}
+		}
 		
 		if (is_screen_running_without_decrypt(SCREEN_TYPE_HOME, $home_id) == 0)
 		{
@@ -1336,24 +1353,37 @@ sub send_rcon_command
 			my $encoded_content = encode_list(@modedlines);
 			return "1;" . $encoded_content;
 		}
-		else
-		{		
-			if ($control_protocol eq "rcon2")
-			{
-				use KKrcon::HL2;
-				my $rcon2 = new HL2(
-									  hostname => $server_ip,
-									  port	 => $server_port,
-									  password => $control_password,
-									  timeout  => 2
-									 );
-													
-				logger "Sending RCON command to $server_ip:$server_port: \n $rconCommand \n  .";
-						
-				my(@modedlines) = $rcon2->run($rconCommand);
-				my $encoded_content = encode_list(@modedlines);
-				return "1;" . $encoded_content;
-			}
+		elsif ($control_protocol eq "rcon2")
+		{
+			use KKrcon::HL2;
+			my $rcon2 = new HL2(
+								  hostname => $server_ip,
+								  port	 => $server_port,
+								  password => $control_password,
+								  timeout  => 2
+								 );
+			
+			logger "Sending RCON command to $server_ip:$server_port: \n $rconCommand \n  .";
+					
+			my(@modedlines) = $rcon2->run($rconCommand);
+			my $encoded_content = encode_list(@modedlines);
+			return "1;" . $encoded_content;
+		}
+		elsif ($control_protocol eq "armabe")
+		{
+			use ArmaBE::ArmaBE;
+			my $armabe = new ArmaBE(
+								  hostname => $server_ip,
+								  port	 => $server_port, # Uses server port for now (Arma 2), Arma 3 BE uses a different, user definable port
+								  password => $control_password,
+								  timeout  => 2
+								 );
+			
+			logger "Sending RCON command to $server_ip:$server_port: \n $rconCommand \n  .";
+					
+			my(@modedlines) = $armabe->run($rconCommand);
+			my $encoded_content = encode_list(@modedlines);
+			return "1;" . $encoded_content;
 		}
 	}
 	else
