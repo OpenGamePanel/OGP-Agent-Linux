@@ -1156,6 +1156,8 @@ sub stop_server_without_decrypt
 	my ($home_id, $server_ip, $server_port, $control_protocol,
 		$control_password, $control_type, $home_path) = @_;
 		
+	my $usedProtocolToStop = 0;
+		
 	my $startup_file = Path::Class::File->new(GAME_STARTUP_DIR, "$server_ip-$server_port");
 	
 	if (-e $startup_file)
@@ -1201,6 +1203,7 @@ sub stop_server_without_decrypt
 
 			my $rconCommand = "quit";
 			$rcon->execute($rconCommand);
+			$usedProtocolToStop = 1;
 		}
 		elsif ($control_protocol eq "rcon2")
 		{
@@ -1214,6 +1217,7 @@ sub stop_server_without_decrypt
 
 			my $rconCommand = "quit";
 			$rcon2->run($rconCommand);
+			$usedProtocolToStop = 1;
 		}
 		elsif ($control_protocol eq "armabe")
 		{
@@ -1228,8 +1232,26 @@ sub stop_server_without_decrypt
 			my $rconCommand = "#shutdown";
 			my $armabe_result = $armabe->run($rconCommand);
 			if ($armabe_result) {
-				logger "ArmaBE Shutdown command sent successfully - Waiting 5s";
-				sleep(5); # Arma servers take some time to shut down
+				logger "ArmaBE Shutdown command sent successfully";		
+				$usedProtocolToStop = 1;
+			}
+		}
+		
+		my @server_pids = get_home_pids($home_id);
+		
+		# Gives the server time to shutdown with rcon in case it takes a while for the server to shutdown (arma for example) before we forcefully kill it
+		if ($usedProtocolToStop == 1){
+			my $timeWaited = 0;
+			my $pidSize = @server_pids;
+			while ($pidSize > 0 && $timeWaited < 5) {
+				select(undef, undef, undef, 0.25); # Sleeps for 250ms
+				
+				# Add to time waited
+				$timeWaited += 0.25;
+				
+				# Recheck server home PIDs
+				@server_pids = get_home_pids($home_id);
+				$pidSize = @server_pids;
 			}
 		}
 		
@@ -1242,8 +1264,8 @@ sub stop_server_without_decrypt
 		{
 			logger "Failed to send rcon quit. Stopping server with kill command.";
 		}
-
-		my @server_pids = get_home_pids($home_id);
+		
+		@server_pids = get_home_pids($home_id);
 		
 		my $cnt;
 		foreach my $pid (@server_pids)
@@ -2102,7 +2124,7 @@ sub steam_cmd
 ### @return 0 In error case.
 sub steam_cmd_without_decrypt
 {
-	my ($home_id, $home_path, $mod, $modname, $betaname, $betapwd, $user, $pass, $guard, $exec_folder_path, $exec_path, $precmd, $postcmd, $cfg_os, $filesToLockUnlock) = @_;
+	my ($home_id, $home_path, $mod, $modname, $betaname, $betapwd, $user, $pass, $guard, $exec_folder_path, $exec_path, $precmd, $postcmd, $cfg_os, $filesToLockUnlock, $arch_bits) = @_;
 	
 	if ( check_b4_chdir($home_path) != 0)
 	{
@@ -2133,6 +2155,12 @@ sub steam_cmd_without_decrypt
 	{
 		print FILE "\@sSteamCmdForcePlatformType windows\n";
 	}
+	
+	# Handle requested SteamCMD architecture
+	if(defined $arch_bits && $arch_bits ne ""){
+		print FILE "\@sSteamCmdForcePlatformBitness =\"" . $arch_bits . "\"\n";
+	}
+	
 	if($guard ne '')
 	{
 		print FILE "set_steam_guard_code $guard\n";
@@ -2227,7 +2255,7 @@ sub automatic_steam_update
 	my ($home_id, $game_home, $server_ip, $server_port, $exec_path, $exec_folder_path,
 		$control_protocol, $control_password, $control_type,
 		$appId, $modname, $betaname, $betapwd, $user, $pass, $guard, $precmd, $postcmd, $cfg_os, $filesToLockUnlock,
-		$startup_cmd, $cpu, $nice, $preStart, $envVars, $game_key) = &decrypt_params(@_);
+		$startup_cmd, $cpu, $nice, $preStart, $envVars, $game_key, $arch_bits) = &decrypt_params(@_);
 
 	# Is the server currently running? if it is, we'll try to start it after updating.
 	my $isServerRunning = is_screen_running_without_decrypt(SCREEN_TYPE_HOME, $home_id) == 1 ? 1 : 0;
@@ -2253,7 +2281,7 @@ sub automatic_steam_update
 	}
 
 	# steam_cmd: Returns 0 if the update failed, in which case, don't try starting the server - because we may have an incomplete or corrupt installation.
-	if (steam_cmd_without_decrypt($home_id, $game_home, $appId, $modname, $betaname, $betapwd, $user, $pass, $guard, $exec_folder_path, $exec_path, $precmd, $postcmd, $cfg_os, $filesToLockUnlock) == 0)
+	if (steam_cmd_without_decrypt($home_id, $game_home, $appId, $modname, $betaname, $betapwd, $user, $pass, $guard, $exec_folder_path, $exec_path, $precmd, $postcmd, $cfg_os, $filesToLockUnlock, $arch_bits) == 0)
 	{
 		logger("Failed to start steam_cmd for server $home_id.");
 		return -8;
