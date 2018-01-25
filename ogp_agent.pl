@@ -2165,7 +2165,7 @@ sub steam_cmd_without_decrypt
 	
 	# Handle requested SteamCMD architecture
 	if(defined $arch_bits && $arch_bits ne ""){
-		print FILE "\@sSteamCmdForcePlatformBitness =\"" . $arch_bits . "\"\n";
+		print FILE "\@sSteamCmdForcePlatformBitness " . $arch_bits . "\n";
 	}
 	
 	if($guard ne '')
