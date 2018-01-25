@@ -1243,7 +1243,14 @@ sub stop_server_without_decrypt
 		if ($usedProtocolToStop == 1){
 			my $timeWaited = 0;
 			my $pidSize = @server_pids;
-			while ($pidSize > 0 && $timeWaited < 5) {
+			my $maxWaitTime = 5;
+			
+			# Maximum time to wait can now be configured as a preference
+			if(defined($Cfg::Preferences{protocol_shutdown_waittime}) && $Cfg::Preferences{protocol_shutdown_waittime} =~ /^\d+?$/){
+				$maxWaitTime = $Cfg::Preferences{protocol_shutdown_waittime};
+			}
+			
+			while ($pidSize > 0 && $timeWaited < $maxWaitTime) {
 				select(undef, undef, undef, 0.25); # Sleeps for 250ms
 				
 				# Add to time waited
