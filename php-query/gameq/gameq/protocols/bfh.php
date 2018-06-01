@@ -17,30 +17,30 @@
  */
 
 /**
- * Rust Protocol Class
- *
- * Seems to respond to A2S but no rules, unsure if players is complete
+ * Battlefield Hardline Protocol Class
  *
  * @author Austin Bischoff <austin@codebeard.com>
  */
-class GameQ_Protocols_Rust extends GameQ_Protocols_Source
+class GameQ_Protocols_Bfh extends GameQ_Protocols_Bf4
 {
-	protected $name = "rust";
-	protected $name_long = "Rust";
+	/**
+	 * The protocol being used
+	 *
+	 * @var string
+	 */
+	protected $protocol = 'bfh';
 
 	/**
-	 * Overload for client port
+	 * String name of this protocol class
 	 *
-	 * @param string $ip
-	 * @param integer $port
-	 * @param array $options
+	 * @var string
 	 */
-	public function __construct($ip = FALSE, $port = FALSE, $options = array())
-	{
-	    // Got to do this first
-	    parent::__construct($ip, $port, $options);
+	protected $name = 'bfh';
 
-	    // Correct the client port since query_port = client_port + 1
-       $this->port(($this->port() - 1));
-	}
+	/**
+	 * Longer string name of this protocol class
+	 *
+	 * @var string
+	 */
+	protected $name_long = "Battlefield Hardline";
 }
