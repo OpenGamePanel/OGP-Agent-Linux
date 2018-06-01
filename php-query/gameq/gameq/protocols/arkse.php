@@ -17,30 +17,12 @@
  */
 
 /**
- * Rust Protocol Class
+ * Ark Survival Evolved Protocol Class
  *
- * Seems to respond to A2S but no rules, unsure if players is complete
- *
- * @author Austin Bischoff <austin@codebeard.com>
+ * @author Mikael Nielsen <miscni@ghostmail.com>
  */
-class GameQ_Protocols_Rust extends GameQ_Protocols_Source
+class GameQ_Protocols_ase extends GameQ_Protocols_Source
 {
-	protected $name = "rust";
-	protected $name_long = "Rust";
-
-	/**
-	 * Overload for client port
-	 *
-	 * @param string $ip
-	 * @param integer $port
-	 * @param array $options
-	 */
-	public function __construct($ip = FALSE, $port = FALSE, $options = array())
-	{
-	    // Got to do this first
-	    parent::__construct($ip, $port, $options);
-
-	    // Correct the client port since query_port = client_port + 1
-       $this->port(($this->port() - 1));
-	}
+	protected $name = "arkse";
+	protected $name_long = "Ark Survival Evolved";
 }
