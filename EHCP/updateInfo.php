@@ -85,7 +85,7 @@ if (!isset($ftp_username) || !isset($update_dir)) {
     // If the last character in the path is a slash (/) - Remove it from the string
     
     if (substr_count($update_dir, '/') > 2 && $update_dir[strlen($update_dir) - 1] == "/") {
-        $end = strlen($update_dir) - 2;
+        $end = strlen($update_dir) - 1;
         $update_dir = substr($update_dir, 0, $end);
     }
     
