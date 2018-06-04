@@ -1,4 +1,4 @@
-package Frontier::Daemon::Forking;
+package Frontier::Daemon::OGP::Forking;
 # $Id: Forking.pm,v 1.6 2004/01/23 19:48:33 tcaine Exp $
 
 use strict;
