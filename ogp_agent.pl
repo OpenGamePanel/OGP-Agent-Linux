@@ -348,7 +348,8 @@ my $d = Frontier::Daemon::OGP::Forking->new(
 				 get_file_part					=> \&get_file_part,
 				 stop_update					=> \&stop_update,
 				 shell_action					=> \&shell_action,
-				 remote_query					=> \&remote_query
+				 remote_query					=> \&remote_query,
+				 send_steam_guard_code  		=> \&send_steam_guard_code
 			 },
 			 debug	 => 4,
 			 LocalPort => AGENT_PORT,
@@ -4017,4 +4018,17 @@ sub remote_query
 		return encode_base64($response, "");
 	}
 	return -1;
+}
+
+sub send_steam_guard_code
+{
+	return "Bad Encryption Key" unless(decrypt_param(pop(@_)) eq "Encryption checking OK");
+	my ($home_id, $sgc) = decrypt_params(@_);
+	my $screen_id = create_screen_id(SCREEN_TYPE_UPDATE, $home_id);
+	system('screen -S '.$screen_id.' -p 0 -X stuff "'.$sgc.'$(printf \\\\r)"');
+	if ($? == 0)
+	{
+		return 0;
+	}
+	return 1
 }
