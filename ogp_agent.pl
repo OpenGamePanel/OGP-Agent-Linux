@@ -1238,10 +1238,11 @@ sub stop_server_without_decrypt
 			}
 		}
 		
-		my @server_pids = get_home_pids($home_id);
+		my @server_pids;
 		
 		# Gives the server time to shutdown with rcon in case it takes a while for the server to shutdown (arma for example) before we forcefully kill it
-		if ($usedProtocolToStop == 1){
+		if ($usedProtocolToStop == 1 && is_screen_running_without_decrypt(SCREEN_TYPE_HOME, $home_id) == 1){
+			@server_pids = get_home_pids($home_id);
 			my $timeWaited = 0;
 			my $pidSize = @server_pids;
 			my $maxWaitTime = 5;
@@ -1251,7 +1252,7 @@ sub stop_server_without_decrypt
 				$maxWaitTime = $Cfg::Preferences{protocol_shutdown_waittime};
 			}
 			
-			while ($pidSize > 0 && $timeWaited < $maxWaitTime) {
+			while ($pidSize > 0 && $timeWaited < $maxWaitTime && is_screen_running_without_decrypt(SCREEN_TYPE_HOME, $home_id) == 1) {
 				select(undef, undef, undef, 0.25); # Sleeps for 250ms
 				
 				# Add to time waited
