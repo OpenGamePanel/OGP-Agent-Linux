@@ -63,7 +63,7 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"egs"			=> "Empyrion - Galactic Survival",
 		"farcry"		=> "Far Cry",
 		"fear"			=> "F.E.A.R.",
-		"fivem"			=>	"GTA FiveM",
+		"fivem"			=> "GTA FiveM",
 		"flashpoint"	=> "Operation Flashpoint",
 		"freelancer"	=> "Freelancer",
 		"frontlines"	=> "Frontlines: Fuel Of War",
@@ -203,7 +203,7 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"crysiswars"	=> "06",
 		"cs2d"			=> "29",
 		"cube"			=> "24",
-		"dayzmod"  => "05",
+		"dayzmod"		=> "05",
 		"doomskulltag"	=> "27",
 		"doomzdaemon"	=> "28",
 		"doom3"			=> "10",
@@ -4073,6 +4073,126 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 	}
 //------------------------------------------------------------------------------------------------------------+
 //------------------------------------------------------------------------------------------------------------+
+	function lgsl_query_41(&$server, &$lgsl_need, &$lgsl_fp)
+	{
+		fwrite($lgsl_fp, "\xFF\xFF\xFF\xFFgetinfo xxx");
+		$buffer = fread($lgsl_fp, 4096);
+
+		if (!$buffer) {
+			return false;
+		}
+
+		lgsl_cut_byte($buffer, 18);
+
+		$data = explode('\\', $buffer);
+
+		for ($i = 0; $i < count($data); $i += 2) {
+			if ($data[$i] == 'sv_maxclients') {
+				$server['s']['playersmax'] = $data[$i + 1];
+			}
+
+			if ($data[$i] == 'clients') {
+				$server['s']['players'] = $data[$i + 1];
+			}
+
+			if ($data[$i] == 'challenge') {
+				$server['e']['challenge'] = $data[$i + 1];
+			}
+
+			if ($data[$i] == 'gamename') {
+				$server['e']['gamename'] = $data[$i + 1];
+			}
+
+			if ($data[$i] == 'protocol') {
+				$server['e']['protocol'] = $data[$i + 1];
+			}
+
+			if ($data[$i] == 'hostname') {
+				$server['s']['name'] = $data[$i + 1];
+			}
+
+			if ($data[$i] == 'gametype') {
+				$server['s']['game'] = $data[$i + 1];
+			}
+
+			if ($data[$i] == 'mapname') {
+				$server['s']['map'] = $data[$i + 1];
+			}
+
+			if ($data[$i] == 'iv') {
+				$server['e']['iv'] = $data[$i + 1];
+			}
+
+		}
+
+		return true;
+	}
+//------------------------------------------------------------------------------------------------------------+
+//------------------------------------------------------------------------------------------------------------+
+
+	function lgsl_parse_color($string, $type)
+	{
+		switch($type)
+		{
+			case "1":
+				$string = preg_replace("/\^x.../", "", $string);
+				$string = preg_replace("/\^./",	"", $string);
+
+				$string_length = strlen($string);
+				for ($i=0; $i<$string_length; $i++)
+				{
+					$char = ord($string[$i]);
+					if ($char > 160) { $char = $char - 128; }
+					if ($char > 126) { $char = 46; }
+					if ($char == 16) { $char = 91; }
+					if ($char == 17) { $char = 93; }
+					if ($char  < 32) { $char = 46; }
+					$string[$i] = chr($char);
+				}
+				break;
+
+			case "2":
+				$string = preg_replace("/\^[\x20-\x7E]/", "", $string);
+				break;
+
+			case "doomskulltag":
+				$string = preg_replace("/\\x1c./", "", $string);
+				break;
+
+			case "farcry":
+				$string = preg_replace("/\\$\d/", "", $string);
+				break;
+
+			case "painkiller":
+				$string = preg_replace("/#./", "", $string);
+				break;
+
+			case "quakeworld":
+				$string_length = strlen($string);
+				for ($i=0; $i<$string_length; $i++)
+				{
+					$char = ord($string[$i]);
+					if ($char > 141) { $char = $char - 128; }
+					if ($char < 32)  { $char = $char + 30;  }
+					$string[$i] = chr($char);
+				}
+				break;
+
+			case "savage":
+				$string = preg_replace("/\^[a-z]/",   "", $string);
+				$string = preg_replace("/\^[0-9]+/",  "", $string);
+				$string = preg_replace("/lan .*\^/U", "", $string);
+				$string = preg_replace("/con .*\^/U", "", $string);
+				break;
+
+			case "swat4":
+				$string = preg_replace("/\[c=......\]/Usi", "", $string);
+				break;
+		}
+		return $string;
+	}
+
+//---------------------------------------------------------+
 
 	function lgsl_time($seconds)
 	{

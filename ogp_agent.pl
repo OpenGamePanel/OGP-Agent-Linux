@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #
 # OGP - Open Game Panel
-# Copyright (C) 2008 - 2014 The OGP Development Team
+# Copyright (C) 2008 - 2018 The OGP Development Team
 #
 # http://www.opengamepanel.org/
 #
@@ -25,7 +25,7 @@ use strict;
 
 use Cwd;			 # Fast way to get the current directory
 use lib getcwd();
-use Frontier::Daemon::Forking;	# Forking XML-RPC server
+use Frontier::Daemon::OGP::Forking;	# Forking XML-RPC server
 use File::Copy;				   # Simple file copy functions
 use File::Copy::Recursive
   qw(fcopy rcopy dircopy fmove rmove dirmove pathempty pathrmdir)
@@ -293,7 +293,7 @@ if(-e Path::Class::File->new(FD_DIR, 'Settings.pm'))
 	}
 }
 
-my $d = Frontier::Daemon::Forking->new(
+my $d = Frontier::Daemon::OGP::Forking->new(
 			 methods => {
 				 is_screen_running				=> \&is_screen_running,
 				 universal_start			  	=> \&universal_start,
@@ -348,7 +348,8 @@ my $d = Frontier::Daemon::Forking->new(
 				 get_file_part					=> \&get_file_part,
 				 stop_update					=> \&stop_update,
 				 shell_action					=> \&shell_action,
-				 remote_query					=> \&remote_query
+				 remote_query					=> \&remote_query,
+				 send_steam_guard_code  		=> \&send_steam_guard_code
 			 },
 			 debug	 => 4,
 			 LocalPort => AGENT_PORT,
@@ -1237,10 +1238,11 @@ sub stop_server_without_decrypt
 			}
 		}
 		
-		my @server_pids = get_home_pids($home_id);
+		my @server_pids;
 		
 		# Gives the server time to shutdown with rcon in case it takes a while for the server to shutdown (arma for example) before we forcefully kill it
-		if ($usedProtocolToStop == 1){
+		if ($usedProtocolToStop == 1 && is_screen_running_without_decrypt(SCREEN_TYPE_HOME, $home_id) == 1){
+			@server_pids = get_home_pids($home_id);
 			my $timeWaited = 0;
 			my $pidSize = @server_pids;
 			my $maxWaitTime = 5;
@@ -1250,7 +1252,7 @@ sub stop_server_without_decrypt
 				$maxWaitTime = $Cfg::Preferences{protocol_shutdown_waittime};
 			}
 			
-			while ($pidSize > 0 && $timeWaited < $maxWaitTime) {
+			while ($pidSize > 0 && $timeWaited < $maxWaitTime && is_screen_running_without_decrypt(SCREEN_TYPE_HOME, $home_id) == 1) {
 				select(undef, undef, undef, 0.25); # Sleeps for 250ms
 				
 				# Add to time waited
@@ -4017,4 +4019,17 @@ sub remote_query
 		return encode_base64($response, "");
 	}
 	return -1;
+}
+
+sub send_steam_guard_code
+{
+	return "Bad Encryption Key" unless(decrypt_param(pop(@_)) eq "Encryption checking OK");
+	my ($home_id, $sgc) = decrypt_params(@_);
+	my $screen_id = create_screen_id(SCREEN_TYPE_UPDATE, $home_id);
+	system('screen -S '.$screen_id.' -p 0 -X stuff "'.$sgc.'$(printf \\\\r)"');
+	if ($? == 0)
+	{
+		return 0;
+	}
+	return 1
 }
