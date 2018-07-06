@@ -2760,10 +2760,11 @@ sub sudo_exec_without_decrypt
 	my ($sudo_exec) = @_;
 	$sudo_exec =~ s/('+)/'"$1"'/g;
 	logger "Running the following command \"" . $sudo_exec . "\" with sudo.";
-	my $command = "echo '$SUDOPASSWD'|sudo -kS -p \"\" su -c '$sudo_exec;echo \$?' root 2>&1";
+	my $command = "echo '$SUDOPASSWD'|sudo -kS -p \"<prompt>\" su -c '$sudo_exec;echo \$?' root 2>&1";
 	my @cmdret = qx($command);
 	chomp(@cmdret);
 	my $ret = pop(@cmdret);
+	$cmdret[0] =~ s/<prompt>//g;
 	chomp($ret);
 	if ("X$ret" eq "X0")
 	{
