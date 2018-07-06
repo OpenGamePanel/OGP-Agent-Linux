@@ -2765,7 +2765,6 @@ sub sudo_exec_without_decrypt
 	$cmdret[0] =~ s/^<prompt>//g if defined $cmdret[0];
 	chomp(@cmdret);
 	my $ret = pop(@cmdret);
-	my $cmdret_length = @cmdret;
 	chomp($ret);
 	
 	if ("X$ret" eq "X0")
