@@ -1809,16 +1809,16 @@ sub lock_additional_files_logic{
 		my $fullPath = $homedir . "/" . $line;
 		if($action eq "lock"){
 			if(defined $returnType && $returnType eq "str"){
-				$commandStr .= "echo '".$SUDOPASSWD."' | sudo -S -p \"\" sh -c \"" . secure_path_without_decrypt("chattr+i", $fullPath, $returnType) . "\" > /dev/null 2>&1" . "\n";
-				$commandStr .= "echo '".$SUDOPASSWD."' | sudo -S -p \"\" sh -c \"" . secure_path_without_decrypt("chattr+i", $line, $returnType) . "\" > /dev/null 2>&1" . "\n";
+				$commandStr .= "echo '".$SUDOPASSWD."' | sudo -S -p \" \" sh -c \"" . secure_path_without_decrypt("chattr+i", $fullPath, $returnType) . "\" > /dev/null 2>&1" . "\n";
+				$commandStr .= "echo '".$SUDOPASSWD."' | sudo -S -p \" \" sh -c \"" . secure_path_without_decrypt("chattr+i", $line, $returnType) . "\" > /dev/null 2>&1" . "\n";
 			}else{
 				secure_path_without_decrypt("chattr+i", $fullPath);
 				secure_path_without_decrypt("chattr+i", $line);
 			}
 		}else{
 			if(defined $returnType && $returnType eq "str"){
-				$commandStr .= "echo '".$SUDOPASSWD."' | sudo -S -p \"\" sh -c \"" . secure_path_without_decrypt("chattr-i", $fullPath, $returnType) . "\" > /dev/null 2>&1" . "\n";
-				$commandStr .= "echo '".$SUDOPASSWD."' | sudo -S -p \"\" sh -c \"" . secure_path_without_decrypt("chattr-i", $line, $returnType) . "\" > /dev/null 2>&1" . "\n";
+				$commandStr .= "echo '".$SUDOPASSWD."' | sudo -S -p \" \" sh -c \"" . secure_path_without_decrypt("chattr-i", $fullPath, $returnType) . "\" > /dev/null 2>&1" . "\n";
+				$commandStr .= "echo '".$SUDOPASSWD."' | sudo -S -p \" \" sh -c \"" . secure_path_without_decrypt("chattr-i", $line, $returnType) . "\" > /dev/null 2>&1" . "\n";
 			}else{
 				secure_path_without_decrypt("chattr-i", $fullPath);
 				secure_path_without_decrypt("chattr-i", $line);
@@ -1969,7 +1969,7 @@ sub create_bash_scripts
 		print FILE "$line\n";
 	}
 	print FILE "cd '$home_path'\n".
-			   "echo '".$SUDOPASSWD."' | sudo -S -p \"\" bash secure.sh\n".
+			   "echo '".$SUDOPASSWD."' | sudo -S -p \" \" bash secure.sh\n".
 			   "rm -f secure.sh\n".
 			   "cd '$bash_scripts_path'\n".
 			   "rm -f preinstall.sh\n".
@@ -2762,10 +2762,12 @@ sub sudo_exec_without_decrypt
 	logger "Running the following command \"" . $sudo_exec . "\" with sudo.";
 	my $command = "echo '$SUDOPASSWD'|sudo -kS -p \"<prompt>\" su -c '$sudo_exec;echo \$?' root 2>&1";
 	my @cmdret = qx($command);
+	$cmdret[0] =~ s/^<prompt>//g if defined $cmdret[0];
 	chomp(@cmdret);
 	my $ret = pop(@cmdret);
-	$cmdret[0] =~ s/<prompt>//g;
+	my $cmdret_length = @cmdret;
 	chomp($ret);
+	
 	if ("X$ret" eq "X0")
 	{
 		logger "Command \"" . $sudo_exec . "\" was successfully run with sudo.";
