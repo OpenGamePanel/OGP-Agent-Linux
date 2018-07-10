@@ -349,7 +349,8 @@ my $d = Frontier::Daemon::OGP::Forking->new(
 				 stop_update					=> \&stop_update,
 				 shell_action					=> \&shell_action,
 				 remote_query					=> \&remote_query,
-				 send_steam_guard_code  		=> \&send_steam_guard_code
+				 send_steam_guard_code  		=> \&send_steam_guard_code,
+				 steam_workshop					=> \&steam_workshop
 			 },
 			 debug	 => 4,
 			 LocalPort => AGENT_PORT,
