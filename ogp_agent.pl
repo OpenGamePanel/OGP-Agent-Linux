@@ -4035,3 +4035,54 @@ sub send_steam_guard_code
 	}
 	return 1
 }
+
+sub steam_workshop
+{
+	chomp(@_);
+	return "Bad Encryption Key" unless(decrypt_param(pop(@_)) eq "Encryption checking OK");
+	return steam_workshop_without_decrypt(decrypt_params(@_));
+}
+
+#### Run the steam client ####
+### @return 1 If update started
+### @return 0 In error case.
+sub steam_workshop_without_decrypt
+{
+	my ($home_id, $mods_path, $workshop_id, $workshop_mod_id) = @_;
+	
+	# Creates home path if it doesn't exist
+	if ( check_b4_chdir($mods_path) != 0)
+	{
+		return -1;
+	}
+  
+    # Changes into root steamcmd OGP directory
+	if ( check_b4_chdir(STEAMCMD_CLIENT_DIR) != 0)
+	{
+		return -1;
+	}
+	
+	my $screen_id = create_screen_id(SCREEN_TYPE_UPDATE, $home_id);
+	my $steam_binary = STEAMCMD_CLIENT_BIN;
+	my $installSteamFile = $screen_id . "_workshop.txt";
+		
+	my $installtxt = Path::Class::File->new($installSteamFile);
+	
+	open  FILE, '>', $installtxt;
+	print FILE "\@ShutdownOnFailedCommand 1\n";
+	print FILE "\@NoPromptForPassword 1\n";
+	print FILE "login anonymous\n";
+	print FILE "force_install_dir \"$mods_path\"\n";
+	print FILE "workshop_download_item $workshop_id $workshop_mod_id\n";
+	print FILE "exit\n";
+	close FILE;
+		
+	my $log_file = Path::Class::File->new(SCREEN_LOGS_DIR, "screenlog.$screen_id");
+	backup_home_log( $home_id, $log_file );
+			
+	my $screen_cmd = create_screen_cmd($screen_id, "$steam_binary +runscript $installtxt +exit");
+	logger "Installing Steam Workshop content with workshop id " . $workshop_id . " and workshop_mod_id " . $workshop_mod_id . " on server Home ID " . $home_id;
+	system($screen_cmd);
+	
+	return 1;
+}
