@@ -449,12 +449,15 @@ sub get_home_pids
 	my $screen_id = create_screen_id(SCREEN_TYPE_HOME, $home_id);
 	my ($pid, @pids);
 	($pid) = split(/\./, `screen -ls | grep -E -o "[0-9]+\.$screen_id"`, 2);
-	chomp($pid);
-	while ($pid =~ /^[0-9]+$/)
+	if(defined $pid)
 	{
-		push(@pids,$pid);
-		$pid = `pgrep -P $pid`;
 		chomp($pid);
+		while ($pid =~ /^[0-9]+$/)
+		{
+			push(@pids,$pid);
+			$pid = `pgrep -P $pid`;
+			chomp($pid);
+		}
 	}
 	return @pids;
 }
