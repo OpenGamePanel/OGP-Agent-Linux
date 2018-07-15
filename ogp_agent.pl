@@ -350,7 +350,8 @@ my $d = Frontier::Daemon::OGP::Forking->new(
 				 shell_action					=> \&shell_action,
 				 remote_query					=> \&remote_query,
 				 send_steam_guard_code  		=> \&send_steam_guard_code,
-				 steam_workshop					=> \&steam_workshop
+				 steam_workshop					=> \&steam_workshop,
+				 get_workshop_mods_info			=> \&get_workshop_mods_info
 			 },
 			 debug	 => 4,
 			 LocalPort => AGENT_PORT,
@@ -4219,4 +4220,39 @@ sub	generate_post_install_scripts
 	$post_install_scripts .= '	i=$(expr $i + 1)'."\n".
 							 'done'."\n";
 	return "$post_install_scripts";
+}
+
+sub get_workshop_mods_info()
+{
+	return "Bad Encryption Key" unless(decrypt_param(pop(@_)) eq "Encryption checking OK");
+	
+	my $mods_info_dir_path = Path::Class::Dir->new(AGENT_RUN_DIR, 'WorkshopModsInfo');
+	
+	if(-d $mods_info_dir_path)
+	{
+		opendir(MODS_INFO_DIR, $mods_info_dir_path) or return -1;
+		my @mods_info;
+		while(my $mod_info_file = readdir(MODS_INFO_DIR))
+		{
+			if($mod_info_file =~ /\.ogpmod$/)
+			{
+				my $mod_info_file_path = Path::Class::File->new($mods_info_dir_path, $mod_info_file);
+				if(open(my $fh, '<:encoding(UTF-8)', $mod_info_file_path))
+				{
+					my $row = <$fh>;
+					chomp $row;
+					if($row ne "")
+					{
+						my ($string_name, $ext) = split(/\.ogp/, $mod_info_file);
+						push @mods_info, "$string_name:$row";
+					}
+					close($fh);
+				}
+			}
+		}
+		closedir(MODS_INFO_DIR);
+		return "1;".encode_list(@mods_info);
+	}
+	
+	return -1;
 }
