@@ -4052,46 +4052,171 @@ sub steam_workshop
 ### @return -1 In error case.
 sub steam_workshop_without_decrypt
 {
-	my ($home_id, $mods_path, $workshop_id, $workshop_mod_list) = @_;
+	my ($home_id, $mods_full_path,
+		$workshop_id, $mods_list,
+		$regex, $mods_backreference_index,
+		$variable, $place_after, $mod_string, 
+		$string_separator, $config_file_path, 
+		$post_install, $mod_names_list) = @_;
 	
-	# Creates home path if it doesn't exist
-	if ( check_b4_chdir($mods_path) != 0)
+	# Creates mods path if it doesn't exist
+	if ( check_b4_chdir($mods_full_path) != 0)
 	{
 		return -1;
 	}
-  
-    # Changes into root steamcmd OGP directory
-	if ( check_b4_chdir(STEAMCMD_CLIENT_DIR) != 0)
-	{
-		return -1;
-	}
+	
+	my $secure = "$mods_full_path/secure.sh";
+	my $home_path = $mods_full_path;
+	$home_path =~ s/('+)/'\"$1\"'/g;
+	my $sec = $secure;
+	$sec =~ s/('+)/'\"$1\"'/g;
+	open  FILE, '>', $secure;
+	print FILE	"chmod 771 '$home_path'\n".
+				"rm -f '$sec'";
+	close FILE;
+		
 	
 	my $screen_id = create_screen_id(SCREEN_TYPE_UPDATE, $home_id);
 	my $steam_binary = STEAMCMD_CLIENT_BIN;
-	my $installSteamFile = $screen_id . "_workshop.txt";
+	my $installSteamFile = $screen_id . "_workshop.txt";	
+	my $installtxt = Path::Class::File->new(STEAMCMD_CLIENT_DIR, $installSteamFile);
+	
+	my @workshop_mods = split /,/, $mods_list;
 		
-	my $installtxt = Path::Class::File->new($installSteamFile);
-	
-	my @workshop_mods = split /,/, $workshop_mod_list;
-	
 	open  FILE, '>', $installtxt;
 	print FILE "\@ShutdownOnFailedCommand 1\n";
 	print FILE "\@NoPromptForPassword 1\n";
 	print FILE "login anonymous\n";
-	print FILE "force_install_dir \"$mods_path\"\n";
+	print FILE "force_install_dir \"$mods_full_path\"\n";
 	foreach my $workshop_mod (@workshop_mods)
 	{
 		print FILE "workshop_download_item $workshop_id $workshop_mod\n";
 	}
 	print FILE "exit\n";
 	close FILE;
-		
+	
 	my $log_file = Path::Class::File->new(SCREEN_LOGS_DIR, "screenlog.$screen_id");
-	backup_home_log( $home_id, $log_file );
-			
-	my $screen_cmd = create_screen_cmd($screen_id, "$steam_binary +runscript $installtxt +exit");
+	backup_home_log($home_id, $log_file);
+	
+	my $precmd = "";
+	my $postcmd = "";
+	
+	$postcmd .= generate_post_install_scripts($mods_full_path, $workshop_id, $mods_list,
+											  $regex, $mods_backreference_index,
+											  $variable, $place_after, $mod_string, 
+											  $string_separator, $config_file_path, 
+											  $post_install, $mod_names_list);
+	
+	my @installcmds = ("$steam_binary +runscript $installtxt +exit");
+	
+	my $bash_scripts_path = MANUAL_TMP_DIR . "/home_id_" . $home_id;
+	
+	if ( check_b4_chdir($bash_scripts_path) != 0)
+	{
+		return -1;
+	}
+	
+	my $installfile = create_bash_scripts($mods_full_path, $bash_scripts_path, $precmd, $postcmd, @installcmds);
+	
+	my $screen_cmd = create_screen_cmd($screen_id, "./$installfile");
+	
 	logger "Installing Steam Workshop content on server Home ID " . $home_id;
 	system($screen_cmd);
 	
 	return 1;
+}
+
+sub	generate_post_install_scripts
+{
+	my ($mods_full_path, $workshop_id, $mods_list,
+		$regex, $mods_backreference_index,
+		$variable, $place_after, $mod_string, 
+		$string_separator, $config_file_path, 
+		$post_install, $mod_names_list) = @_;
+	
+	my $post_install_scripts = "";
+	my $mods_info_path = Path::Class::Dir->new(AGENT_RUN_DIR, 'WorkshopModsInfo');
+	$post_install_scripts .= "mods_full_path=\"$mods_full_path\"\n".
+							 "workshop_id=\"$workshop_id\"\n".
+							 "regex=\"$regex\"\n".
+							 "mods_backreference_index=\"$mods_backreference_index\"\n".
+							 "variable=\"$variable\"\n".
+							 "place_after=\"$place_after\"\n".
+							 "string_separator=\"$string_separator\"\n".
+							 "config_file_path=\"$config_file_path\"\n".
+							 "mods_info_path=\"$mods_info_path/\"\n";
+	my @workshop_mods = split /,/, $mods_list;
+	my @mod_names = split /,/, $mod_names_list;
+	
+	my $index = 0;
+	foreach my $workshop_mod_id (@workshop_mods)
+	{
+		my $steamcmd_download_path = '/steamapps/workshop/content/'.$workshop_id.'/'.$workshop_mod_id.'/';
+		my $workshop_mod_path = $mods_full_path.$steamcmd_download_path;
+		my $this_mod_string = $mod_string;
+		$this_mod_string =~ s/\%workshop_mod_id\%/$workshop_mod_id/g;
+		
+		$post_install_scripts .= "mod_string[$index]=\"$this_mod_string\"\n".
+								 "mod_name[$index]=\"".$mod_names[$index]."\"\n".
+								 "workshop_mod_id[$index]=\"$workshop_mod_id\"\n".
+								 "workshop_mod_path[$index]=\"$workshop_mod_path\"\n";
+		$index++;
+	}
+	
+	$post_install_scripts .= 'if [ ! -e $config_file_path ];then'."\n".
+							 '	if [ ! -d "$(dirname $config_file_path)" ];then mkdir -p "$(dirname $config_file_path)";fi'."\n".
+							 '	echo -e "${place_after}${variable}" > $config_file_path'."\n".
+							 'fi'."\n".
+							 'i=0'."\n".
+							 'for mod_id in "${workshop_mod_id[@]}"'."\n".
+							 'do'."\n".
+							 '	file_content=$(cat $config_file_path)'."\n".
+							 '	if [[ $file_content =~ $regex ]]; then'."\n".
+							 '		full_match="${BASH_REMATCH[0]}"'."\n".
+							 '		mods_match="${BASH_REMATCH[$mods_backreference_index]}"'."\n".
+							 '		found=1'."\n".
+							 '	else'."\n".
+							 '		found=0'."\n".
+							 '	fi'."\n".
+							 '	first_file_string="\%first_file%"'."\n".
+							 '	first_file="$(ls "${workshop_mod_path[$i]}"| sort -n | head -1)"'."\n".
+							 '	if [ -z "${mod_string[$i]##*$first_file_string*}" ];then'."\n".
+							 '		mod_string[$i]="${mod_string[$i]/$first_file_string/$first_file}"'."\n".
+							 '	fi'."\n".
+							 '	if [ $found == 1 ] && [ "X$full_match" != "X" ];then'."\n".
+							 '		if [ "X$mods_match" == "X" ];then'."\n".
+							 '			new_mods=$(echo -e "${full_match}${mod_string[$i]}")'."\n".
+							 '			echo -e "${file_content/$full_match/$new_mods}">"$config_file_path"'."\n".
+							 '		else'."\n".
+							 '			if [ ! -z "${mods_match##*${mod_string[$i]}*}" ];then'."\n".
+							 '				new_mods=$(echo -e "${full_match}${string_separator}${mod_string[$i]}")'."\n".
+							 '				echo -e "${file_content/$full_match/$new_mods}">"$config_file_path"'."\n".
+							 '			fi'."\n".
+							 '		fi'."\n".
+							 '	else'."\n".
+							 '		if [ "X$place_after" == "X" ];then'."\n".
+							 '			echo -e "${file_content}${variable}${mod_string[$i]}">"$config_file_path"'."\n".
+							 '		else'."\n".
+							 '			if [ -z "${file_content##*${place_after}*}" ];then'."\n".
+							 '				new_var="${place_after}${variable}${mod_string[$i]}"'."\n".
+							 '				echo -e "${file_content/$place_after/$new_var}">"$config_file_path"'."\n".
+							 '			else'."\n".
+							 '				echo -e "${file_content}${place_after}${variable}${mod_string[$i]}">"$config_file_path"'."\n".
+							 '			fi'."\n".
+							 '		fi'."\n".
+							 '	fi'."\n".
+							 '	if [ ! -d "${mods_info_path}" ];then mkdir -p "${mods_info_path}";fi'."\n".
+							 '	echo "${mod_name[$i]}" > "${mods_info_path}${mod_string[$i]}.ogpmod"'."\n";
+	my @post_install_lines = split /[\r\n]+/, $post_install;
+	foreach my $line (@post_install_lines) {
+		if($line ne ""){
+			$line =~ s/\%mods_full_path\%/\$mods_full_path/g;
+			$line =~ s/\%workshop_mod_id\%/\$mod_id/g;
+			$line =~ s/\%first_file\%/\$first_file/g;
+			$post_install_scripts .= "\t".$line."\n";
+		}
+	}
+	$post_install_scripts .= '	i=$(expr $i + 1)'."\n".
+							 'done'."\n";
+	return "$post_install_scripts";
 }
