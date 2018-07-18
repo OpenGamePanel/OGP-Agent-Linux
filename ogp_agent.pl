@@ -4059,7 +4059,8 @@ sub steam_workshop_without_decrypt
 		$variable, $place_after, $mod_string, 
 		$string_separator, $config_file_path, 
 		$post_install, $mod_names_list,
-		$anonymous_login, $user, $pass) = @_;
+		$anonymous_login, $user, $pass,
+		$download_method, $url_list, $filename_list) = @_;
 	
 	# Creates mods path if it doesn't exist
 	if ( check_b4_chdir($mods_full_path) != 0)
@@ -4076,33 +4077,64 @@ sub steam_workshop_without_decrypt
 	print FILE	"chmod 771 '$home_path'\n".
 				"rm -f '$sec'";
 	close FILE;
-		
 	
 	my $screen_id = create_screen_id(SCREEN_TYPE_UPDATE, $home_id);
-	my $steam_binary = STEAMCMD_CLIENT_BIN;
-	my $installSteamFile = $screen_id . "_workshop.txt";	
-	my $installtxt = Path::Class::File->new(STEAMCMD_CLIENT_DIR, $installSteamFile);
-	
 	my @workshop_mods = split /,/, $mods_list;
-		
-	open  FILE, '>', $installtxt;
-	print FILE "\@ShutdownOnFailedCommand 1\n";
-	print FILE "\@NoPromptForPassword 1\n";
-	if($anonymous_login eq "0")
+	my @installcmds;
+	
+	if($download_method eq 'steamcmd')
 	{
-		print FILE "login $user $pass\n";
+		my $steam_binary = STEAMCMD_CLIENT_BIN;
+		my $installSteamFile = $screen_id . "_workshop.txt";	
+		my $installtxt = Path::Class::File->new(STEAMCMD_CLIENT_DIR, $installSteamFile);
+
+		open  FILE, '>', $installtxt;
+		print FILE "\@ShutdownOnFailedCommand 1\n";
+		print FILE "\@NoPromptForPassword 1\n";
+		if($anonymous_login eq "0")
+		{
+			print FILE "login $user $pass\n";
+		}
+		else
+		{
+			print FILE "login anonymous\n";
+		}
+		print FILE "force_install_dir \"$mods_full_path\"\n";
+		foreach my $workshop_mod (@workshop_mods)
+		{
+			print FILE "workshop_download_item $workshop_id $workshop_mod\n";
+		}
+		print FILE "exit\n";
+		close FILE;
+		@installcmds = ("$steam_binary +runscript $installtxt +exit");
 	}
-	else
+	
+	if($download_method eq 'steamapi')
 	{
-		print FILE "login anonymous\n";
+		my @urls =  split /,/, $url_list;
+		my @filenames =  split /,/, $filename_list;
+		my $index = 0;
+		foreach my $workshop_mod_id (@workshop_mods)
+		{
+			my $steamcmd_download_path = '/steamapps/workshop/content/'.$workshop_id.'/'.$workshop_mod_id.'/';
+			
+			my $workshop_mod_path = $mods_full_path.$steamcmd_download_path;
+			if(!-d $workshop_mod_path && !mkpath $workshop_mod_path)
+			{
+				logger "Folder $workshop_mod_path could not be created.";
+				$index++;
+				next;
+			}
+			my $url = $urls[$index];
+			my $filename = $filenames[$index];
+			my $download_file_path = Path::Class::File->new($workshop_mod_path, "$filename");
+			$installcmds[$index] = "wget -O \"$download_file_path\" \"$url\"";
+			$index++;
+		}
 	}
-	print FILE "force_install_dir \"$mods_full_path\"\n";
-	foreach my $workshop_mod (@workshop_mods)
-	{
-		print FILE "workshop_download_item $workshop_id $workshop_mod\n";
-	}
-	print FILE "exit\n";
-	close FILE;
+	
+	my $log_file = Path::Class::File->new(SCREEN_LOGS_DIR, "screenlog.$screen_id");
+	backup_home_log($home_id, $log_file);
 		
 	my $precmd = "";
 	my $postcmd = "";
@@ -4112,8 +4144,6 @@ sub steam_workshop_without_decrypt
 											  $variable, $place_after, $mod_string, 
 											  $string_separator, $config_file_path, 
 											  $post_install, $mod_names_list);
-	
-	my @installcmds = ("$steam_binary +runscript $installtxt +exit");
 	
 	my $bash_scripts_path = MANUAL_TMP_DIR . "/home_id_" . $home_id;
 	
@@ -4176,7 +4206,19 @@ sub	generate_post_install_scripts
 							 'i=0'."\n".
 							 'for mod_id in "${workshop_mod_id[@]}"'."\n".
 							 'do'."\n".
-							 '	file_content=$(cat $config_file_path)'."\n".
+							 '	first_file="$(ls "${workshop_mod_path[$i]}"| sort -n | head -1)"'."\n";
+	
+	my @post_install_lines = split /[\r\n]+/, $post_install;
+	foreach my $line (@post_install_lines) {
+		if($line ne ""){
+			$line =~ s/\%mods_full_path\%/\$mods_full_path/g;
+			$line =~ s/\%workshop_mod_id\%/\$mod_id/g;
+			$line =~ s/\%first_file\%/\$first_file/g;
+			$post_install_scripts .= "\t".$line."\n";
+		}
+	}
+	
+	$post_install_scripts .= '	file_content=$(cat $config_file_path)'."\n".
 							 '	if [[ $file_content =~ $regex ]]; then'."\n".
 							 '		full_match="${BASH_REMATCH[0]}"'."\n".
 							 '		mods_match="${BASH_REMATCH[$mods_backreference_index]}"'."\n".
@@ -4185,7 +4227,7 @@ sub	generate_post_install_scripts
 							 '		found=0'."\n".
 							 '	fi'."\n".
 							 '	first_file_string="\%first_file%"'."\n".
-							 '	first_file="$(ls "${workshop_mod_path[$i]}"| sort -n | head -1)"'."\n".
+							 
 							 '	if [ -z "${mod_string[$i]##*$first_file_string*}" ];then'."\n".
 							 '		mod_string[$i]="${mod_string[$i]/$first_file_string/$first_file}"'."\n".
 							 '	fi'."\n".
@@ -4213,17 +4255,8 @@ sub	generate_post_install_scripts
 							 '		fi'."\n".
 							 '	fi'."\n".
 							 '	if [ ! -d "${mods_info_path}" ];then mkdir -p "${mods_info_path}";fi'."\n".
-							 '	echo "${mod_name[$i]}" > "${mods_info_path}${mod_string[$i]}.ogpmod"'."\n";
-	my @post_install_lines = split /[\r\n]+/, $post_install;
-	foreach my $line (@post_install_lines) {
-		if($line ne ""){
-			$line =~ s/\%mods_full_path\%/\$mods_full_path/g;
-			$line =~ s/\%workshop_mod_id\%/\$mod_id/g;
-			$line =~ s/\%first_file\%/\$first_file/g;
-			$post_install_scripts .= "\t".$line."\n";
-		}
-	}
-	$post_install_scripts .= '	i=$(expr $i + 1)'."\n".
+							 '	echo "${mod_name[$i]}" > "${mods_info_path}${mod_string[$i]}.ogpmod"'."\n".
+							 '	i=$(expr $i + 1)'."\n".
 							 'done'."\n";
 	return "$post_install_scripts";
 }

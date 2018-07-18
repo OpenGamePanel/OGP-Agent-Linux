@@ -12,11 +12,6 @@
 # Description:       Start and stop the OGP Agent
 ### END INIT INFO
 #
-set -e
-set -u
-${DEBIAN_SCRIPT_DEBUG:+ set -v -x}
-
-. /lib/lsb/init-functions
 
 agent_dir=OGP_AGENT_DIR
 agent_user=OGP_USER
@@ -27,17 +22,17 @@ agent_user=OGP_USER
 
 if [ "X`whoami`" != "Xroot" ]
 then
-	log_failure_msg "Permission denied."
 	exit 1
 fi
 
 start() {
 	if [ -e "$agent_dir/ogp_agent_run.pid" ]
 	then
-		if [ "X$(ps -A | grep -o `cat $agent_dir/ogp_agent_run.pid`)" != "X" ]
+		pid=$(cat $agent_dir/ogp_agent_run.pid)
+		out=$(kill -0 $pid > /dev/null 2>&1)
+		if [ $? == 0 ]
 		then
-			log_failure_msg "OGP Agent already running."
-			return 1
+			exit 1
 		fi
 	fi
 
@@ -50,22 +45,22 @@ start() {
 		fi
 		usermod -aG sudo $agent_user >/dev/null 2>&1
 	fi
-
-	# Had to add the "|| true" part to the end of the below command due to chown causing the entire bash script to exit on failure in case of protected files (that have chattr +i applied)
-	# http://unix.stackexchange.com/questions/118217/chmod-silent-mode-how-force-exit-code-0-in-spite-of-error
-	chown -Rf `id -u $agent_user`:`id -g $agent_user` $agent_dir >/dev/null 2>&1 || true
-
+	
+	user_id=$(id -u $agent_user)
+	group_id=$(id -g $agent_user)
+	out=$(chown -Rf $user_id:$group_id $agent_dir >/dev/null 2>&1)
+	
 	# Lets the agent user to attach screens.
-	if [ "$( groups $agent_user | grep "\btty\b" )" == "" ]
+	if [ "$(groups $agent_user|grep -o "\stty\s")" == "" ]
 	then
 		usermod -aG tty $agent_user >/dev/null 2>&1
 	fi
-
-	chmod g+rw /dev/pts/* >/dev/null 2>&1
-	chmod g+rw /dev/tty* >/dev/null 2>&1
+	
+	out=$(chmod g+rw /dev/pts/* >/dev/null 2>&1)
+	out=$(chmod g+rw /dev/tty* >/dev/null 2>&1)
 
 	# Check the FTP status
-	if [ -f "/etc/init.d/pure-ftpd" ] && [ -e "/etc/pure-ftpd/conf" ]
+	if [ -f "/etc/init.d/pure-ftpd" ] && [ -d "/etc/pure-ftpd/conf" ]
 	then
 		echo no > /etc/pure-ftpd/conf/PAMAuthentication
 		echo no > /etc/pure-ftpd/conf/UnixAuthentication
@@ -90,52 +85,45 @@ start() {
 		then
 			ln -s /etc/pure-ftpd/pureftpd.pdb /etc/pureftpd.pdb
 		fi
-		pure-pw mkdb >/dev/null 2>&1
-		service pure-ftpd force-reload >/dev/null 2>&1 &
+		out=$(pure-pw mkdb >/dev/null 2>&1)
+		out=$(service pure-ftpd force-reload >/dev/null 2>&1)
 	fi
 
 	cd $agent_dir
-	su -c "screen -d -m -t ogp_agent -c ogp_screenrc -S ogp_agent ./ogp_agent_run -pidfile ogp_agent_run.pid" $agent_user &> $agent_dir/ogp_agent.svc &
-	log_success_msg "OGP Agent started successfully."
-	echo "Use \"sudo su -c 'screen -S ogp_agent -r' $agent_user\" to attach the agent screen,"
-	echo "and CTRL+A+D to detach it."
-	return 0
+	out=$(su -c "screen -d -m -t ogp_agent -c ogp_screenrc -S ogp_agent ./ogp_agent_run -pidfile ogp_agent_run.pid" $agent_user >/dev/null 2>&1)
+	exit 0
 }
 
 stop() {
 	if [ -e "$agent_dir/ogp_agent_run.pid" ]
 	then
-		if [ "X$(ps -A | grep -o `cat $agent_dir/ogp_agent_run.pid`)" == "X" ]
+		pid=$(cat $agent_dir/ogp_agent_run.pid)
+		kill -0 $pid > /dev/null 2>&1
+		if [ $? == 0 ]
 		then
-			log_failure_msg "OGP Agent not running."
-		else
-			kill `cat $agent_dir/ogp_agent_run.pid` >/dev/null 2>&1
-			log_success_msg "OGP Agent stopped successfully."
+			kill $pid >/dev/null 2>&1
+			exit $?
 		fi
 	else
-		log_failure_msg "PID file not found ($agent_dir/ogp_agent_run.pid)"
+		exit 1
 	fi
-	return 0
+	exit 0
 }
 
 case "${1:-''}" in
-	start)
+	'start')
 	start
-	RETVAL=$?
 	;;
-	stop)
+	'stop')
 	stop
-	RETVAL=$?
 	;;
-	restart)
+	'restart')
 	stop
 	sleep 1
 	start
-	RETVAL=$?
 	;;
  	*)
 	echo "Usage: service ogp_agent start|stop|restart"
-	RETVAL=1
+	exit 1
 	;;
 esac
-exit $RETVAL
