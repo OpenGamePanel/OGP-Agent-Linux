@@ -1,5 +1,6 @@
 use strict;
 use warnings;
+use lib ".";
 use FastDownload::Settings; # Daemon Settings
 use Cwd;					# Fast way to get the current directory
 use Fcntl ':flock';			# Import LOCK_* constants for file locking
