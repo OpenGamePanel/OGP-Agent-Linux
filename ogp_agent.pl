@@ -3976,7 +3976,7 @@ sub shell_action
 	elsif($action eq 'get_tasklist')
 	{
 		my %taskList;
-		$taskList{'task'} = encode_base64(`top -b -c -i -w512 -n2 | awk '/^top/{i++}i==2' | grep "COMMAND" -A 30`);
+		$taskList{'task'} = encode_base64(qx[ps aux]);
 		return {%taskList};
 	}
 	elsif($action eq 'get_timestamp')
