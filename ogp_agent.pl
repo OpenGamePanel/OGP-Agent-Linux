@@ -3976,10 +3976,7 @@ sub shell_action
 	elsif($action eq 'get_tasklist')
 	{
 		my %taskList;
-		my $ps = 'ps -p $(ps --no-headers -a -o tty,pid|grep ^[^?] | awk -vORS=, \'{ print $2 }\' | sed \'s/,$/\n/\') -o comm,etime,%cpu,%mem,args';
-		my @res = `$ps`;
-		my $selfcommand = pop(@res);
-		$taskList{'task'} = encode_base64(join("", @res));
+		$taskList{'task'} = encode_base64(qx[top -b -c -i -w512 -n2 -o+%CPU|awk '/^top/{i++}i==2'|grep 'PID' -A 30]);
 		return {%taskList};
 	}
 	elsif($action eq 'get_timestamp')
