@@ -1517,9 +1517,24 @@ sub dirlistfm
 		 $size, $atime, $mtime, $ctime, $blksize, $blocks
 		) = stat($item);
 		
-		$uid = getpwuid($uid);
-		$gid = getgrgid($gid);
-
+		if(defined $uid)
+		{
+			$uid = getpwuid($uid);
+		}
+		else
+		{
+			$uid = '';
+		}
+		
+		if(defined $gid)
+		{
+			$gid = getgrgid($gid);
+		}
+		else
+		{
+			$gid = '';
+		}
+		
 		#This if else logic determines what it is, File, Directory, other	
 		if (-T $item)
 		{
@@ -3961,7 +3976,7 @@ sub shell_action
 	elsif($action eq 'get_tasklist')
 	{
 		my %taskList;
-		$taskList{'task'} = encode_base64(`top -b -c -i -w512 -n2 | awk '/^top/{i++}i==2' | grep "COMMAND" -A 30`);
+		$taskList{'task'} = encode_base64(qx[top -b -c -i -w512 -n2 -o+%CPU|awk '/^top/{i++}i==2'|grep 'PID' -A 30]);
 		return {%taskList};
 	}
 	elsif($action eq 'get_timestamp')
