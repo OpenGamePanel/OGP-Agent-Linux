@@ -2,7 +2,7 @@
 error_reporting(E_ERROR);
  /*----------------------------------------------------------------------------------------------------------\
  |																											|
- |					  [ LIVE GAME SERVER LIST ] [ © RICHARD PERRY FROM GREYCUBE.COM ]						|
+ |					  [ LIVE GAME SERVER LIST ] [ Â© RICHARD PERRY FROM GREYCUBE.COM ]						|
  |																											|
  |	Released under the terms and conditions of the GNU General Public License Version 3 (http://gnu.org)	|
  |																											|
@@ -55,12 +55,14 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"crysiswars"	=> "Crysis Wars",
 		"cs2d"			=> "CS2D",
 		"cube"			=> "Cube Engine",
+		"dayz"			=> "DayZ",
 		"dayzmod"		=> "DayZ Mod",
 		"doomskulltag"	=> "Doom - Skulltag",
 		"doomzdaemon"	=> "Doom - ZDaemon",
 		"doom3"			=> "Doom 3",
 		"dh2005"		=> "Deer Hunter 2005",
-		"egs"			=> "Empyrion - Galactic Survival",
+		"dnl"			=> "Dark and Light",
+		"empyriongs"	=> "Empyrion - Galactic Survival",
 		"farcry"		=> "Far Cry",
 		"fear"			=> "F.E.A.R.",
 		"fivem"			=> "GTA FiveM",
@@ -145,6 +147,7 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"tribes"		=> "Tribes ( Starsiege )",
 		"tribes2"		=> "Tribes 2",
 		"tribesv"		=> "Tribes Vengeance",
+		"unturned"		=> "Unturned",
 		"urbanterror"	=> "UrbanTerror",
 		"ut"			=> "Unreal Tournament",
 		"ut2003"		=> "Unreal Tournament 2003",
@@ -159,7 +162,8 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"wolfet"		=> "Wolfenstein: Enemy Territory",
 		"wolfrtcw"		=> "Wolfenstein: Return To Castle Wolfenstein",
 		"wolf2009"		=> "Wolfenstein ( 2009 By Raven )",
-		"xonotic"		=> "Xonotic"); 
+		"wreckfest"		=> "Wreckfest",
+		"xonotic"		=> "Xonotic");
 	}
 
 //------------------------------------------------------------------------------------------------------------+
@@ -203,12 +207,14 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"crysiswars"	=> "06",
 		"cs2d"			=> "29",
 		"cube"			=> "24",
+		"dayz"			=> "05",
 		"dayzmod"		=> "05",
 		"doomskulltag"	=> "27",
 		"doomzdaemon"	=> "28",
 		"doom3"			=> "10",
 		"dh2005"		=> "09",
-		"egs"			=> "05",
+		"dnl"			=> "05",
+		"empyriongs"	=> "05",
 		"had2"			=> "03",
 		"halflife"		=> "05",
 		"halflifewon"	=> "05",
@@ -300,6 +306,7 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"tribesv"		=> "09",
 		"warsow"		=> "02",
 		"warsowold"		=> "02",
+		"unturned"		=> "05",
 		"urbanterror"	=> "02",
 		"ut"			=> "03",
 		"ut2003"		=> "13",
@@ -314,11 +321,12 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"wolfet"		=> "02",
 		"wolfrtcw"		=> "02",
 		"wolf2009"		=> "10",
+		"wreckfest"		=> "05",
 		"xonotic"		=> "02");
 
 		return $lgsl_protocol_list;
 	}
-	 
+
 //------------------------------------------------------------------------------------------------------------+
 //------------------------------------------------------------------------------------------------------------+
 
@@ -359,12 +367,14 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"crysiswars"	=> "qtracker://{IP}:{S_PORT}?game=CrysisWars&action=show",
 		"cs2d"			=> "http://www.cs2d.com",
 		"cube"			=> "http://cubeengine.com",
+		"dayz"			=> "steam://connect/{IP}:{S_PORT}",
 		"dayzmod"		=> "steam://connect/{IP}:{S_PORT}",
 		"doomskulltag"	=> "http://skulltag.com",
 		"doomzdaemon"	=> "http://www.zdaemon.org",
 		"doom3"			=> "qtracker://{IP}:{S_PORT}?game=Doom3&action=show",
 		"dh2005"		=> "http://en.wikipedia.org/wiki/Deer_Hunter_(computer_game)",
-		"egs"			=> "steam://connect/{IP}:{Q_PORT}",
+		"dnl"			=> "steam://connect/{IP}:{Q_PORT}",
+		"empyriongs"	=> "steam://connect/{IP}:{Q_PORT}",
 		"farcry"		=> "qtracker://{IP}:{S_PORT}?game=FarCry&action=show",
 		"fear"			=> "qtracker://{IP}:{S_PORT}?game=FEAR&action=show",
 		"fivem"			=> "http://fivem.net/",
@@ -448,6 +458,7 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"tribes"		=> "qtracker://{IP}:{S_PORT}?game=Tribes&action=show",
 		"tribes2"		=> "qtracker://{IP}:{S_PORT}?game=Tribes2&action=show",
 		"tribesv"		=> "qtracker://{IP}:{S_PORT}?game=TribesVengeance&action=show",
+		"unturned"		=> "steam://connect/{IP}:{S_PORT}",
 		"urbanterror"	=> "qtracker://{IP}:{S_PORT}?game=UrbanTerror&action=show",
 		"ut"			=> "qtracker://{IP}:{S_PORT}?game=UnrealTournament&action=show",
 		"ut2003"		=> "qtracker://{IP}:{S_PORT}?game=UnrealTournament2003&action=show",
@@ -461,6 +472,7 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"wolfet"		=> "qtracker://{IP}:{S_PORT}?game=WolfensteinEnemyTerritory&action=show",
 		"wolfrtcw"		=> "qtracker://{IP}:{S_PORT}?game=ReturntoCastleWolfenstein&action=show",
 		"wolf2009"		=> "http://en.wikipedia.org/wiki/Wolfenstein_(2009_video_game)",
+		"wreckfest"		=> "http://www.wreckfestgame.com/",
 		"xonotic"		=> "qtracker://{IP}:{S_PORT}?game=Xonotic&action=show");
 
 		// SOFTWARE PORT IS THE QUERY PORT UNLESS SET
@@ -501,9 +513,11 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 			case "citadelfwf"		: $c_to_q = 19238;	$c_def = 7777;	$q_def = 27015;	$c_to_s = 0;	break;
 			case "conanexiles"		: $c_to_q = 19238;	$c_def = 7777;	$q_def = 27015;	$c_to_s = 0;	break;
 			case "cube"				: $c_to_q = 1;		$c_def = 28785;	$q_def = 28786;	$c_to_s = 0;	break;
+			case "dayz"				: $c_to_q = 3;		$c_def = 2302;	$q_def = 2305;	$c_to_s = 0;	break;
 			case "dayzmod"			: $c_to_q = 1;		$c_def = 2302;	$q_def = 2303;	$c_to_s = 0;	break;
-			case "egs"				: $c_to_q = 1;		$c_def = 30000;	$q_def = 30001; $c_to_s = 0;	break;
 			case "dh2005"			: $c_to_q = 0;		$c_def = 23459;	$q_def = 34567;	$c_to_s = 0;	break;
+			case "dnl"				: $c_to_q = 19238;	$c_def = 7777;	$q_def = 27015;	$c_to_s = 0;	break;
+			case "empyriongs"		: $c_to_q = 1;		$c_def = 30000;	$q_def = 30001; $c_to_s = 0;	break;
 			case "farcry"			: $c_to_q = 123;	$c_def = 49001;	$q_def = 49124;	$c_to_s = 0;	break;
 			case "flashpoint"		: $c_to_q = 1;		$c_def = 2302;	$q_def = 2303;	$c_to_s = 0;	break;
 			case "frontlines"		: $c_to_q = 2;		$c_def = 5476;	$q_def = 5478;	$c_to_s = 0;	break;
@@ -541,6 +555,7 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 			case "swat4"			: $c_to_q = 1;		$c_def = 10780;	$q_def = 10781;	$c_to_s = 0;	break;
 			case "theforest"		: $c_to_q = 1;		$c_def = 27015;	$q_def = 27016;	$c_to_s = 0;	break;
 			case "tribesv"			: $c_to_q = 1;		$c_def = 7777;	$q_def = 7778;	$c_to_s = 0;	break;
+			case "unturned"			: $c_to_q = 1;		$c_def = 27015;	$q_def = 27016;	$c_to_s = 0;	break;
 			case "ut"				: $c_to_q = 1;		$c_def = 7777;	$q_def = 7778;	$c_to_s = 0;	break;
 			case "ut2003"			: $c_to_q = 1;		$c_def = 7757;	$q_def = 7758;	$c_to_s = 10;	break;
 			case "ut2003_"			: $c_to_q = 10;		$c_def = 7757;	$q_def = 7767;	$c_to_s = 0;	break;
@@ -549,6 +564,7 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 			case "ut3"				: $c_to_q = -1277;	$c_def = 7777;	$q_def = 6500;	$c_to_s = 0;	break;
 			case "vietcong"			: $c_to_q = 10000;	$c_def = 5425;	$q_def = 15425;	$c_to_s = 0;	break;
 			case "vietcong2"		: $c_to_q = 0;		$c_def = 5001;	$q_def = 19967;	$c_to_s = 0;	break;
+			case "wreckfest"		: $c_to_q = -6524;	$c_def = 33540;	$q_def = 27016;	$c_to_s = 0;	break;
 			default					: $c_to_q = 0;		$c_def = 0;		$q_def = 0;		$c_to_s = 0;	break;
 		}
 
