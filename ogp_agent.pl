@@ -236,7 +236,7 @@ elsif ($no_startups != 1)
 			my (
 				$home_id,   $home_path,   $server_exe,
 				$run_dir,   $startup_cmd, $server_port,
-				$server_ip, $cpu, $nice, $preStart, $envVars, $game_key
+				$server_ip, $cpu, $nice, $preStart, $envVars, $game_key, $console_log
 			   ) = split(',', $_);
 
 			if (is_screen_running_without_decrypt(SCREEN_TYPE_HOME, $home_id) ==
@@ -251,7 +251,7 @@ elsif ($no_startups != 1)
 			universal_start_without_decrypt(
 										 $home_id,   $home_path,   $server_exe,
 										 $run_dir,   $startup_cmd, $server_port,
-										 $server_ip, $cpu,	$nice, $preStart, $envVars, $game_key
+										 $server_ip, $cpu,	$nice, $preStart, $envVars, $game_key, $console_log
 										   );
 		}
 		close(STARTFILE);
@@ -361,7 +361,7 @@ my $d = Frontier::Daemon::OGP::Forking->new(
 
 sub backup_home_log
 {
-	my ($home_id, $log_file) = @_;
+	my ($home_id, $log_file, $console_log_file) = @_;
 	
 	my $home_backup_dir = SCREEN_LOGS_DIR . "/home_id_" . $home_id;
 		
@@ -431,11 +431,34 @@ sub backup_home_log
 			push (@file_list, $file);
 		}
 	}, @find_dirs);
+	
+	# Include the custom console path - and also do a size check on it
+	if(defined $console_log_file && $console_log_file ne ""){
+		my $path_to_console_file = $console_log_file;
+		if( -f $path_to_console_file){
+			push (@file_list, $path_to_console_file);
+			
+			# Backup and delete this specific file as well if it's over 200MB		
+			my @stats = stat($path_to_console_file);
+			if($stats[7] >= 209715200){
+				if(SCREEN_LOG_LOCAL == 1){
+					# Copy it to local log folder as well
+					my $local_log_folder = Path::Class::Dir->new("logs_backup");
+					my $log_local = $local_log_folder . "/" . $backup_file_name . "_console_log";
+					copy($path_to_console_file, $log_local);
+				}
+				# Copy it to the main log folder as well
+				move($path_to_console_file,$output_path . "_console_log");
+			}
+		}
+	}
  
 	for my $file (@file_list) {
-		my @stats = stat($file);
-		if ($now-$stats[9] > $AGE) {
-			unlink $file;
+		if( -f $file ){
+			my @stats = stat($file);
+			if ($now-$stats[9] > $AGE) {
+				unlink $file;
+			}
 		}
 	}
 	
@@ -736,7 +759,7 @@ sub universal_start_without_decrypt
 {
 	my (
 		$home_id, $home_path, $server_exe, $run_dir,
-		$startup_cmd, $server_port, $server_ip, $cpu, $nice, $preStart, $envVars, $game_key
+		$startup_cmd, $server_port, $server_ip, $cpu, $nice, $preStart, $envVars, $game_key, $console_log
 	   ) = @_;
 	   
 	if (is_screen_running_without_decrypt(SCREEN_TYPE_HOME, $home_id) == 1)
@@ -815,7 +838,7 @@ sub universal_start_without_decrypt
 	if (open(STARTUP, '>', $startup_file))
 	{
 		print STARTUP
-		  "$home_id,$home_path,$server_exe,$run_dir,$startup_cmd,$server_port,$server_ip,$cpu,$nice,$preStart,$envVars";
+		  "$home_id,$home_path,$server_exe,$run_dir,$startup_cmd,$server_port,$server_ip,$cpu,$nice,$preStart,$envVars,$game_key,$console_log";
 		logger "Created startup flag for $server_ip-$server_port";
 		close(STARTUP);
 	}
@@ -898,7 +921,7 @@ sub universal_start_without_decrypt
 	}
 		
 	my $log_file = Path::Class::File->new(SCREEN_LOGS_DIR, "screenlog.$screen_id");
-	backup_home_log( $home_id, $log_file );
+	backup_home_log( $home_id, $log_file, $home_path . "/" . $console_log );
 	
 	logger
 	  "Startup command [ $cli_bin ] will be executed in dir $game_binary_dir.";
@@ -2284,7 +2307,7 @@ sub automatic_steam_update
 	my ($home_id, $game_home, $server_ip, $server_port, $exec_path, $exec_folder_path,
 		$control_protocol, $control_password, $control_type,
 		$appId, $modname, $betaname, $betapwd, $user, $pass, $guard, $precmd, $postcmd, $cfg_os, $filesToLockUnlock,
-		$startup_cmd, $cpu, $nice, $preStart, $envVars, $game_key, $arch_bits) = &decrypt_params(@_);
+		$startup_cmd, $cpu, $nice, $preStart, $envVars, $game_key, $arch_bits, $console_log) = &decrypt_params(@_);
 
 	# Is the server currently running? if it is, we'll try to start it after updating.
 	my $isServerRunning = is_screen_running_without_decrypt(SCREEN_TYPE_HOME, $home_id) == 1 ? 1 : 0;
@@ -2325,7 +2348,7 @@ sub automatic_steam_update
 				if (is_screen_running_without_decrypt(SCREEN_TYPE_UPDATE, $home_id) == 0)
 				{
 
-					if (universal_start_without_decrypt($home_id, $game_home, $exec_path, $exec_folder_path, $startup_cmd, $server_port, $server_ip, $cpu, $nice, $preStart, $envVars, $game_key) != 1)
+					if (universal_start_without_decrypt($home_id, $game_home, $exec_path, $exec_folder_path, $startup_cmd, $server_port, $server_ip, $cpu, $nice, $preStart, $envVars, $game_key, $console_log) != 1)
 					{
 						logger("Failed to start server $home_id after automatic update.");
 						return -7;
@@ -2746,14 +2769,14 @@ sub restart_server_without_decrypt
 {
 	my ($home_id, $server_ip, $server_port, $control_protocol,
 		$control_password, $control_type, $home_path, $server_exe, $run_dir,
-		$cmd, $cpu, $nice, $preStart, $envVars, $game_key) = @_;
+		$cmd, $cpu, $nice, $preStart, $envVars, $game_key, $console_log) = @_;
 
 	if (stop_server_without_decrypt($home_id, $server_ip, 
 									$server_port, $control_protocol,
 									$control_password, $control_type, $home_path) == 0)
 	{
 		if (universal_start_without_decrypt($home_id, $home_path, $server_exe, $run_dir,
-											$cmd, $server_port, $server_ip, $cpu, $nice, $preStart, $envVars, $game_key) == 1)
+											$cmd, $server_port, $server_ip, $cpu, $nice, $preStart, $envVars, $game_key, $console_log) == 1)
 		{
 			return 1;
 		}
