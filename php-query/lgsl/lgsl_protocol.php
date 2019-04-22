@@ -33,6 +33,7 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"arma2co"		=> "ArmA 2 Combined Operations",
 		"arma3"			=> "ArmA 3",
 		"arma3alpha"	=> "ArmA 3 Alpha",
+		"atlas"			=> "Atlas",
 		"avorion"		=> "Avorion",
 		"avp2"			=> "Aliens VS. Predator 2",
 		"bfbc2"			=> "Battlefield Bad Company 2",
@@ -91,6 +92,7 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"killingfloor2"	=> "Killing Floor 2",
 		"kingpin"		=> "Kingpin: Life of Crime",
 		"lifeisfeudal"	=> "Life is Feudal",
+		"miscreated"	=> "Miscreated",
 		"moh"			=> "Medal of Honor",
 		"mohaa"			=> "Medal of Honor: Allied Assault",
 		"mohaab"		=> "Medal of Honor: Allied Assault Breakthrough",
@@ -103,6 +105,7 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"neverwinter2"	=> "NeverWinter Nights 2",
 		"nexuiz"		=> "Nexuiz",
 		"ns2"			=> "Natural Selection 2",
+		"ootow"			=> "Outlaws of the Old West",
 		"openttd"		=> "Open Transport Tycoon Deluxe",
 		"painkiller"	=> "PainKiller",
 		"pixark"		=> "PixARK",
@@ -185,6 +188,7 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"arma2co"		=> "06",
 		"arma3"			=> "05",
 		"arma3alpha"	=> "09",
+		"atlas"			=> "05",
 		"avorion"		=> "05",
 		"avp2"			=> "03",
 		"bfbc2"			=> "30",
@@ -243,6 +247,7 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"killingfloor2"	=> "05",
 		"kingpin"		=> "03",
 		"lifeisfeudal"	=> "05",
+		"miscreated"    => "05",
 		"moh"			=> "30",
 		"mohaa"			=> "03",
 		"mohaab"		=> "03",
@@ -259,6 +264,7 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"neverwinter2"	=> "09",
 		"nexuiz"		=> "02",
 		"ns2"			=> "05",
+		"ootow"			=> "05",
 		"openttd"		=> "22",
 		"painkiller"	=> "08",
 		"painkiller_"	=> "09",
@@ -333,7 +339,7 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 	function lgsl_software_link($type, $ip, $c_port, $q_port, $s_port)
 	{
 		$lgsl_software_link = array(
-		"7dtd"			=> "steam://connect/{IP}:{Q_PORT}",
+		"7dtd"			=> "steam://connect/{IP}:{S_PORT}",
 		"aarmy"			=> "qtracker://{IP}:{S_PORT}?game=ArmyOperations&action=show",
 		"aarmy3"		=> "qtracker://{IP}:{S_PORT}?game=AmericasArmy3&action=show",
 		"aliensvspredator"	=> "steam://connect/{IP}:{Q_PORT}",
@@ -345,6 +351,7 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"arma2co"		=> "http://en.wikipedia.org/wiki/ARMA_2",
 		"arma3"			=> "steam://connect/{IP}:{S_PORT}",
 		"arma3alpha"	=> "http://en.wikipedia.org/wiki/ARMA_2",
+		"atlas"			=> "steam://connect/{IP}:{Q_PORT}",
 		"avorion"		=> "steam://connect/{IP}:{S_PORT}",
 		"avp2"			=> "qtracker://{IP}:{S_PORT}?game=AliensversusPredator2&action=show",
 		"bfbc2"			=> "http://en.wikipedia.org/wiki/Battlefield_bad_company_2",
@@ -403,6 +410,7 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"killingfloor2" => "steam://connect/{IP}:{S_PORT}",
 		"kingpin"		=> "qtracker://{IP}:{S_PORT}?game=Kingpin&action=show",
 		"lifeisfeudal"	=> "steam://connect/{IP}:{Q_PORT}",
+		"miscreated"	=> "steam://connect/{IP}:{Q_PORT}",
 		"mohaa"			=> "qtracker://{IP}:{S_PORT}?game=MedalofHonorAlliedAssault&action=show",
 		"mohaab"		=> "qtracker://{IP}:{S_PORT}?game=MedalofHonorAlliedAssaultBreakthrough&action=show",
 		"mohaas"		=> "qtracker://{IP}:{S_PORT}?game=MedalofHonorAlliedAssaultSpearhead&action=show",
@@ -414,6 +422,7 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 		"neverwinter2"	=> "qtracker://{IP}:{S_PORT}?game=NeverwinterNights&action=show",
 		"nexuiz"		=> "qtracker://{IP}:{S_PORT}?game=Nexuiz&action=show",
 		"ns2"			=> "steam://connect/{IP}:{S_PORT}",
+		"ootow"			=> "steam://connect/{IP}:{Q_PORT}",
 		"openttd"		=> "http://wwww.openttd.org",
 		"painkiller"	=> "qtracker://{IP}:{S_PORT}?game=Painkiller&action=show",
 		"pixark"		=> "steam://connect/{IP}:{Q_PORT}",
@@ -495,13 +504,13 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 	{
 		switch ($type) // GAMES WHERE Q_PORT IS NOT EQUAL TO C_PORT
 		{
-			case "7dtd"				: $c_to_q = 1;		$c_def = 26900;	$q_def = 26901;	$c_to_s = 0;	break;
 			case "aarmy"			: $c_to_q = 1;		$c_def = 1716;	$q_def = 1717;	$c_to_s = 0;	break;
 			case "aarmy3"			: $c_to_q = 0;		$c_def = 8777;	$q_def = 39300;	$c_to_s = 0;	break;
 			case "aliensvspredator"	: $c_to_q = -23357;	$c_def = 27015;	$q_def = 3658;	$c_to_s = 0;	break;
 			case "arcasimracing"	: $c_to_q = -100;	$c_def = 34397;	$q_def = 34297;	$c_to_s = 0;	break;
 			case "arkse"			: $c_to_q = 19238;	$c_def = 7777;	$q_def = 27015;	$c_to_s = 0;	break;
 			case "arma3"			: $c_to_q = 1; 		$c_def = 2302; 	$q_def = 2303; 	$c_to_s = 0; 	break;
+			case "atlas"			: $c_to_q = 51800;	$c_def = 5761;	$q_def = 57561;	$c_to_s = 0;	break;
 			case "avorion"			: $c_to_q = 20; 	$c_def = 27000;	$q_def = 27020; $c_to_s = 0;  	break;
 			case "bfbc2"			: $c_to_q = 0;		$c_def = 19567;	$q_def = 48888;	$c_to_s = 0;	break;
 			case "bfvietnam"		: $c_to_q = 0;		$c_def = 15567;	$q_def = 23000;	$c_to_s = 0;	break;
@@ -529,6 +538,7 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 			case "killingfloor"		: $c_to_q = 1;		$c_def = 7708;	$q_def = 7709;	$c_to_s = 0;	break;
 			case "killingfloor2"	: $c_to_q = 19238; 	$c_def = 7777; 	$q_def = 27015; $c_to_s = 0;  	break;
 			case "lifeisfeudal"		: $c_to_q = 2;		$c_def = 28000; $q_def = 28002; $c_to_s = 0;	break;
+			case "miscreated"		: $c_to_q = 2;		$c_def = 64090;	$q_def = 64092;	$c_to_s = 0;	break;
 			case "mohaa"			: $c_to_q = 97;		$c_def = 12203;	$q_def = 12300;	$c_to_s = 0;	break;
 			case "mohaab"			: $c_to_q = 97;		$c_def = 12203;	$q_def = 12300;	$c_to_s = 0;	break;
 			case "mohaas"			: $c_to_q = 97;		$c_def = 12203;	$q_def = 12300;	$c_to_s = 0;	break;
@@ -536,6 +546,7 @@ if (!function_exists('lgsl_version')) { // START OF DOUBLE LOAD PROTECTION
 			case "mta"				: $c_to_q = 123;	$c_def = 22003;	$q_def = 22126;	$c_to_s = 0;	break;
 			case "murmur"			: $c_to_q = 2;		$c_def = 64738;	$q_def = 64740;	$c_to_s = 0;	break;
 			case "ns2"				: $c_to_q = 1;		$c_def = 27015;	$q_def = 27016;	$c_to_s = 1;	break;
+			case "ootow"			: $c_to_q = -359;	$c_def = 27374;	$q_def = 27015;	$c_to_s = 0;	break;
 			case "painkiller"		: $c_to_q = 123;	$c_def = 3455;	$q_def = 3578;	$c_to_s = 0;	break;
 			case "pixark"			: $c_to_q = 20016;	$c_def = 7003;	$q_def = 27019;	$c_to_s = 0;	break;
 			case "ravenshield"		: $c_to_q = 1000;	$c_def = 7777;	$q_def = 8777;	$c_to_s = 0;	break;
