@@ -92,7 +92,7 @@ detectSystemD(){
 		
 		if [ -e "${AGENTDIR}/systemd/ogp_agent.service" ]; then
 			if [ ! -z "$systemdPresent" ] && [ ! -z "$SystemDDir" ]; then
-				echo -e "systemd detected as the init system with a directory of $SystemDDir.  Updating OGP agent to use systemd service init script."
+				echo -e "systemd detected as the init system with a directory of $SystemDDir."
 				if [ -e "/etc/init.d/ogp_agent" ] && [ ! -e "${AGENTDIR}/ogp_agent_init" ]; then
 					echo -e "Taking care of existing OGP files."
 					# Kill any remaining ogp agent process
@@ -118,6 +118,7 @@ detectSystemD(){
 				fi
 				
 				if [ ! -e "$SystemDDir/ogp_agent.service" ] || [ "$replaceSystemDService" = true ]; then
+					echo -e "Updating OGP agent systemd service init script."
 					echo -e "Copying ogp_agent systemd service file to $SystemDDir"
 					echo "$sudoPass" | sudo -S -p "" cp "${AGENTDIR}/systemd/ogp_agent.service" "$SystemDDir"
 					echo "$sudoPass" | sudo -S -p "" sed -i "s#{OGP_AGENT_PATH}#$AGENTDIR#g" "${SystemDDir}/ogp_agent.service"
