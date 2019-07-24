@@ -295,8 +295,8 @@ update() {
 	
 run() {
 	getSudoPassword
-	detectSystemD
 	update
+	detectSystemD
 	if test -n "$RESTART" ; then
 		echo "Agent will auto-restart if there is a crash."
 		#loop forever
