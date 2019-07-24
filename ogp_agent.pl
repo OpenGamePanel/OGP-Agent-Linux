@@ -1961,15 +1961,20 @@ sub check_b4_chdir
 	{
 		logger "$path does not exist yet. Trying to create it...";
 
-		if (!mkpath($path))
+		eval { mkpath($path); 1 } or logger "Error creating $path with Perl mkpath command. Errno: $! - Trying again with sudo...";
+
+		if (!-e $path)
 		{
-			logger "Error creating $path . Errno: $!";
+			sudo_exec_without_decrypt('mkdir -p ' . $path);
+		}
+		
+		if (!-e $path)
+		{
 			return -1;
 		}
 		
 		# Set perms on it as well
 		sudo_exec_without_decrypt('chown -Rf '.$uid.':'.$gid.' \''.$path.'\'');
-		
 	}
 	else
 	{	
