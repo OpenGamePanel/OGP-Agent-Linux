@@ -107,6 +107,16 @@ detectSystemD(){
 					echo "$sudoPass" | sudo -S -p "" rm -rf "/etc/init.d/ogp_agent"
 					replaceSystemDService=true
 				fi
+				
+				# Update service to use oneshot and not forking
+				if [ -e "$SystemDDir/ogp_agent.service" ]; then
+					# Check to see if it's using oneshot
+					usingOneShot=$(cat "$SystemDDir/ogp_agent.service" | grep -o "oneshot")
+					if [ -z "$usingOneShot" ]; then
+						replaceSystemDService=true
+					fi
+				fi
+				
 				if [ ! -e "$SystemDDir/ogp_agent.service" ] || [ "$replaceSystemDService" = true ]; then
 					echo -e "Copying ogp_agent systemd service file to $SystemDDir"
 					echo "$sudoPass" | sudo -S -p "" cp "${AGENTDIR}/systemd/ogp_agent.service" "$SystemDDir"
