@@ -32,7 +32,7 @@ start() {
 		out=$(kill -0 $pid > /dev/null 2>&1)
 		if [ $? == 0 ]
 		then
-			exit 1
+			return 1
 		fi
 	fi
 
@@ -91,7 +91,7 @@ start() {
 
 	cd $agent_dir
 	out=$(su -c "screen -d -m -t ogp_agent -c ogp_screenrc -S ogp_agent ./ogp_agent_run -pidfile ogp_agent_run.pid" $agent_user >/dev/null 2>&1)
-	exit 0
+	return 0
 }
 
 stop() {
@@ -102,28 +102,37 @@ stop() {
 		if [ $? == 0 ]
 		then
 			kill $pid >/dev/null 2>&1
-			exit $?
+			return $?
 		fi
 	else
-		exit 1
+		return 1
 	fi
-	exit 0
+	return 0
 }
 
 case "${1:-''}" in
 	'start')
 	start
+	RETVAL=$?
 	;;
 	'stop')
 	stop
+	RETVAL=$?
 	;;
 	'restart')
 	stop
 	sleep 1
 	start
+	RETVAL=$?
 	;;
  	*)
 	echo "Usage: service ogp_agent start|stop|restart"
 	exit 1
 	;;
 esac
+
+if [ ! -z "$RETVAL" ]; then
+	exit $RETVAL
+else 
+	exit 1
+fi
