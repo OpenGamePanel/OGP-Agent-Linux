@@ -3887,6 +3887,21 @@ sub shell_action
 		}
 		return "1;";
 	}
+	elsif($action eq 'rename')
+	{
+		my($src, $dest) = split(';', $arguments);
+		chomp($src);
+		chomp($dest);
+		if(-d $src)
+		{
+			dirmove($src, $dest);
+		}
+		else
+		{
+			fmove($src, $dest);
+		}
+		return "1;";
+	}
 	elsif($action eq 'copy')
 	{
 		my($src, $dest) = split(';', $arguments);
