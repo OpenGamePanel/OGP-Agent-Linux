@@ -76,6 +76,8 @@ use constant GAME_STARTUP_DIR =>
   Path::Class::Dir->new(AGENT_RUN_DIR, 'startups');
 use constant SCREENRC_FILE =>
   Path::Class::File->new(AGENT_RUN_DIR, 'ogp_screenrc');
+use constant SCREENRC_FILE_BK =>
+  Path::Class::File->new(AGENT_RUN_DIR, 'ogp_screenrc_bk');
 use constant SCREENRC_TMP_FILE =>
   Path::Class::File->new(AGENT_RUN_DIR, 'ogp_screenrc.tmp');
 use constant SCREEN_TYPE_HOME   => "HOME";
@@ -151,6 +153,13 @@ if (-e AGENT_LOG_FILE)
 	logger "Rotating log file";
 	move(AGENT_LOG_FILE, AGENT_LOG_FILE . ".bak");
 	logger "New log file created";
+}
+
+# If for some reason the screenrc file doesn't exist, restore it from the backup copy
+# I've seen this happen a few times
+if (! -e SCREENRC_FILE)
+{
+	copy(SCREENRC_FILE_BK,SCREENRC_FILE);
 }
 
 open INPUTFILE, "<", SCREENRC_FILE or die $!;
