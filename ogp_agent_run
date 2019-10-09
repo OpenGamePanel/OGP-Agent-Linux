@@ -255,7 +255,7 @@ update() {
 							ogpGitCleanup
 						else
 							cd ${REPONAME}-${REVISION}
-							cp -avf systemd Frontier ArmaBE Schedule Time FastDownload php-query ogp_agent.pl ogp_screenrc ogp_agent_run agent_conf.sh $AGENTDIR &> /dev/null
+							cp -avf systemd Frontier ArmaBE Schedule Time FastDownload php-query ogp_agent.pl ogp_screenrc ogp_screenrc_bk ogp_agent_run agent_conf.sh $AGENTDIR &> /dev/null
 							if test $? -ne 0; then
 								echo "`date`: The agent files cannot be overwritten."
 								cd ..
