@@ -2106,7 +2106,7 @@ sub start_rsync_install
 	my $installfile = create_bash_scripts( $home_path, $bash_scripts_path, $precmd, $postcmd, @installcmds );
 
 	my $screen_cmd = create_screen_cmd($screen_id, "./$installfile");
-	logger "Running rsync update: /usr/bin/rsync --log-file=" . AGENT_RUN_DIR . "/rsync_update_generic.log --archive --compress --copy-links --update --verbose rsync://$url '$home_path'";
+	logger "Running rsync update: /usr/bin/rsync --log-file=" . AGENT_RSYNC_GENERIC_LOG . " --archive --compress --copy-links --update --verbose rsync://$url '$home_path'";
 	system($screen_cmd);
 	
 	chdir AGENT_RUN_DIR;
