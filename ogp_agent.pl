@@ -63,6 +63,8 @@ use constant SCREEN_LOG_LOCAL  => $Cfg::Preferences{screen_log_local};
 use constant DELETE_LOGS_AFTER  => $Cfg::Preferences{delete_logs_after};
 use constant AGENT_PID_FILE =>
   Path::Class::File->new(AGENT_RUN_DIR, 'ogp_agent.pid');
+use constant AGENT_RSYNC_GENERIC_LOG =>
+  Path::Class::File->new(AGENT_RUN_DIR, 'rsync_update_generic.log');
 use constant STEAM_LICENSE_OK => "Accept";
 use constant STEAM_LICENSE	=> $Cfg::Config{steam_license};
 use constant MANUAL_TMP_DIR   => Path::Class::Dir->new(AGENT_RUN_DIR, 'tmp');
@@ -2100,11 +2102,11 @@ sub start_rsync_install
 	backup_home_log( $home_id, $log_file );
 	my $path	= $home_path;
 	$path		=~ s/('+)/'\"$1\"'/g;
-	my @installcmds = ("/usr/bin/rsync --archive --compress --copy-links --update --verbose rsync://$url '$path'");
+	my @installcmds = ("/usr/bin/rsync --log-file=" . AGENT_RSYNC_GENERIC_LOG . " --archive --compress --copy-links --update --verbose rsync://$url '$path'");
 	my $installfile = create_bash_scripts( $home_path, $bash_scripts_path, $precmd, $postcmd, @installcmds );
 
 	my $screen_cmd = create_screen_cmd($screen_id, "./$installfile");
-	logger "Running rsync update: /usr/bin/rsync --archive --compress --copy-links --update --verbose rsync://$url '$home_path'";
+	logger "Running rsync update: /usr/bin/rsync --log-file=" . AGENT_RUN_DIR . "/rsync_update_generic.log --archive --compress --copy-links --update --verbose rsync://$url '$home_path'";
 	system($screen_cmd);
 	
 	chdir AGENT_RUN_DIR;
