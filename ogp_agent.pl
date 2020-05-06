@@ -4374,7 +4374,6 @@ sub get_setting_using_api
 	
 	if(defined WEB_API_URL && WEB_API_URL ne "" && defined WEB_ADMIN_API_KEY && WEB_ADMIN_API_KEY ne ""){
 		my $url = WEB_API_URL . "?setting/get&setting_name=" . $setting_name . "&token=" . WEB_ADMIN_API_KEY;
-		logger "URL is " . $url;
 		my $ua = LWP::UserAgent->new;
 		$ua->agent('Mozilla/5.0');
 		$ua->timeout(5);
