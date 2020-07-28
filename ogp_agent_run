@@ -111,7 +111,7 @@ detectSystemD(){
 				# Update service to use oneshot and not forking
 				if [ -e "$SystemDDir/ogp_agent.service" ]; then
 					# Check to see if it's using oneshot
-					usingOneShot=$(cat "$SystemDDir/ogp_agent.service" | grep -o "oneshot")
+					usingOneShot=$(echo "$sudoPass" | sudo -S -p "" cat "$SystemDDir/ogp_agent.service" | grep -o "oneshot")
 					if [ -z "$usingOneShot" ]; then
 						replaceSystemDService=true
 					fi
