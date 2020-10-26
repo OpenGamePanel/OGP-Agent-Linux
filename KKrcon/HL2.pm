@@ -89,9 +89,13 @@ sub run {
 	}
 
 	my $socket = $self->socket();
-	print $socket $self->packet(CMD, $command);
-
-	return $self->response();
+	if($socket->connected)
+	{
+		print $socket $self->packet(CMD, $command);
+		return $self->response();
+	}
+	
+	return;
 }
 
 # create tcp socket
