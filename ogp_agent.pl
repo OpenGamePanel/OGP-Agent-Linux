@@ -452,9 +452,9 @@ sub backup_home_log
 		if( -f $path_to_console_file){
 			push (@file_list, $path_to_console_file);
 			
-			# Backup and delete this specific file as well if it's over 200MB		
+			# Backup and delete this specific file as well if it's over 20MB		
 			my @stats = stat($path_to_console_file);
-			if($stats[7] >= 209715200){
+			if($stats[7] >= 20971520){
 				if(SCREEN_LOG_LOCAL == 1){
 					# Copy it to local log folder as well
 					my $local_log_folder = Path::Class::Dir->new("logs_backup");
