@@ -1472,7 +1472,7 @@ sub send_rcon_command
 								  timeout  => 2
 								 );
 			
-			logger "Sending RCON command to $server_ip:$server_port: \n $rconCommand \n  .";
+			logger "Sending RCON command via ArmaBE module to $server_ip:$server_port: \n $rconCommand \n  .";
 					
 			my(@modedlines) = $armabe->run($rconCommand);
 			my $encoded_content = encode_list(@modedlines);
