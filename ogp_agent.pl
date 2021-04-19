@@ -1281,7 +1281,7 @@ sub stop_server_without_decrypt
 		}
 		elsif ($control_protocol eq "minecraft")
 		{
-			use Minecraft::Minecraft::RCON;
+			use Minecraft::RCON;
 			
 			my $minecraft = Minecraft::RCON->new(
 				{
@@ -1480,7 +1480,7 @@ sub send_rcon_command
 		}
 		elsif ($control_protocol eq "minecraft")
 		{
-			use Minecraft::Minecraft::RCON;
+			use Minecraft::RCON;
 			
 			my $minecraft = Minecraft::RCON->new(
 				{
