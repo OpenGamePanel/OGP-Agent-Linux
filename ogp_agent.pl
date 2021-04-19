@@ -1282,7 +1282,7 @@ sub stop_server_without_decrypt
 		elsif ($control_protocol eq "minecraft")
 		{
 			use Minecraft::RCON;
-			
+			my $strip_color = 1;
 			my $minecraft = Minecraft::RCON->new(
 				{
 					address     => $server_ip,
@@ -1481,7 +1481,7 @@ sub send_rcon_command
 		elsif ($control_protocol eq "minecraft")
 		{
 			use Minecraft::RCON;
-			
+			my $strip_color = 1;
 			my $minecraft = Minecraft::RCON->new(
 				{
 					address     => $server_ip,
