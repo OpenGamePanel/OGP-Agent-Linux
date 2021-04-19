@@ -1279,6 +1279,26 @@ sub stop_server_without_decrypt
 				$usedProtocolToStop = 1;
 			}
 		}
+		elsif ($control_protocol eq "minecraft")
+		{
+			use Minecraft::Minecraft::RCON;
+			
+			my $minecraft = Minecraft::RCON->new(
+				{
+					address     => $server_ip,
+					port        => $server_port,
+					password    => $control_password,
+					color_mode  => $strip_color ? 'strip' : 'convert',
+				}
+			);
+
+			my $rconCommand = "/stop";
+			my $mc_result = $minecraft->command($command);
+			if ($mc_result) {
+				logger "Minecraft Shutdown command sent successfully";
+				$usedProtocolToStop = 1;
+			}
+		}
 		
 		my @server_pids;
 		
@@ -1455,6 +1475,25 @@ sub send_rcon_command
 			logger "Sending RCON command to $server_ip:$server_port: \n $rconCommand \n  .";
 					
 			my(@modedlines) = $armabe->run($rconCommand);
+			my $encoded_content = encode_list(@modedlines);
+			return "1;" . $encoded_content;
+		}
+		elsif ($control_protocol eq "minecraft")
+		{
+			use Minecraft::Minecraft::RCON;
+			
+			my $minecraft = Minecraft::RCON->new(
+				{
+					address     => $server_ip,
+					port        => $server_port,
+					password    => $control_password,
+					color_mode  => $strip_color ? 'strip' : 'convert',
+				}
+			);
+
+			logger "Sending RCON command via Minecraft RCON module to $server_ip:$server_port: \n $rconCommand \n  .";
+
+			my(@modedlines) = $minecraft->command($rconCommand);
 			my $encoded_content = encode_list(@modedlines);
 			return "1;" . $encoded_content;
 		}
