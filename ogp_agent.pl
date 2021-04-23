@@ -1283,20 +1283,43 @@ sub stop_server_without_decrypt
 		{
 			use Minecraft::RCON;
 			my $strip_color = 1;
-			my $minecraft = Minecraft::RCON->new(
+			
+			my $rconPort = get_minecraft_rcon_port($home_path);
+			
+			logger "Minecraft rcon port detected as $rconPort with path of $home_path";
+			
+			if ($rconPort != -1){
+				my $minecraft;
+				my $response;
+				
+				eval {
+					$minecraft = Minecraft::RCON->new(
+						{
+							address     => $server_ip,
+							port        => $rconPort,
+							password    => $control_password,
+							color_mode  => $strip_color ? 'strip' : 'convert',
+						}
+					);
+				};
+				
+				if (defined $minecraft)
 				{
-					address     => $server_ip,
-					port        => $server_port,
-					password    => $control_password,
-					color_mode  => $strip_color ? 'strip' : 'convert',
+					eval { $minecraft->connect };
+					logger "Minecraft rcon module connection failed: $@" if $@;
+					 
+					
+					my $rconCommand = "/stop";
+					eval { $response = $minecraft->command($rconCommand) };
+					logger $@ ? "Minecraft rcon error: $@" : "Minecraft rcon module response: $response";
+	 
+					eval { $minecraft->disconnect; };
+					
+					if (defined $response) {
+						logger "Minecraft Shutdown command sent successfully";
+						$usedProtocolToStop = 1;
+					}
 				}
-			);
-
-			my $rconCommand = "stop";
-			my $mc_result = $minecraft->command($rconCommand);
-			if ($mc_result) {
-				logger "Minecraft Shutdown command sent successfully";
-				$usedProtocolToStop = 1;
 			}
 		}
 		
@@ -1404,7 +1427,7 @@ sub send_rcon_command
 {
 	return "Bad Encryption Key" unless(decrypt_param(pop(@_)) eq "Encryption checking OK");
 	my ($home_id, $server_ip, $server_port, $control_protocol,
-		$control_password, $control_type, $rconCommand) = decrypt_params(@_);
+		$control_password, $control_type, $rconCommand, $homedir) = decrypt_params(@_);
 
 	# legacy console
 	if ($control_protocol eq "lcon")
@@ -1475,25 +1498,6 @@ sub send_rcon_command
 			logger "Sending RCON command via ArmaBE module to $server_ip:$server_port: \n $rconCommand \n  .";
 					
 			my(@modedlines) = $armabe->run($rconCommand);
-			my $encoded_content = encode_list(@modedlines);
-			return "1;" . $encoded_content;
-		}
-		elsif ($control_protocol eq "minecraft")
-		{
-			use Minecraft::RCON;
-			my $strip_color = 1;
-			my $minecraft = Minecraft::RCON->new(
-				{
-					address     => $server_ip,
-					port        => $server_port,
-					password    => $control_password,
-					color_mode  => $strip_color ? 'strip' : 'convert',
-				}
-			);
-
-			logger "Sending RCON command via Minecraft RCON module to $server_ip:$server_port: \n $rconCommand \n  .";
-
-			my(@modedlines) = $minecraft->command($rconCommand);
 			my $encoded_content = encode_list(@modedlines);
 			return "1;" . $encoded_content;
 		}
@@ -4431,4 +4435,29 @@ sub get_setting_using_api
 
 sub is_integer {
    defined $_[0] && $_[0] =~ /^[+-]?\d+$/;
+}
+
+sub get_minecraft_rcon_port{
+	my ($home_dir) = @_;
+	my $port = -1;
+	my $findStr = "rcon.port=";
+	my $file = Path::Class::File->new($home_dir, "server.properties");
+
+	open(FH, '<', $file) or return -1;
+
+	while(<FH>){
+		if (begins_with($_,$findStr)){
+			$port = int(substr($_, length($findStr)));
+			last;
+		}
+	}
+
+	close(FH);
+	
+	return $port;
+}
+
+sub begins_with
+{
+    return substr($_[0], 0, length($_[1])) eq $_[1];
 }
