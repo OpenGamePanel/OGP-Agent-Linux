@@ -1427,7 +1427,7 @@ sub send_rcon_command
 {
 	return "Bad Encryption Key" unless(decrypt_param(pop(@_)) eq "Encryption checking OK");
 	my ($home_id, $server_ip, $server_port, $control_protocol,
-		$control_password, $control_type, $rconCommand, $homedir) = decrypt_params(@_);
+		$control_password, $control_type, $rconCommand) = decrypt_params(@_);
 
 	# legacy console
 	if ($control_protocol eq "lcon")
