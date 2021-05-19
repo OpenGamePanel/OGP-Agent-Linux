@@ -669,6 +669,7 @@ then
 	prefs="${prefs}\togp_manages_ftp => '${ogpManagesFTP}',\n"
 	prefs="${prefs}\tftp_method => '${ftpMethod}',\n"
 	prefs="${prefs}\togp_autorestart_server => '${autoRestart}',\n"
+	prefs="${prefs}\tprotocol_shutdown_waittime => '10',\n"
 	if [ "X${proftpd}" == "Xyes" ]
 	then
 		prefs="${prefs}\tproftpd_conf_path => '${proFTPdConfPath}'\n"
