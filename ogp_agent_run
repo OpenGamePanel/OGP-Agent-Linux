@@ -206,6 +206,9 @@ checkDepends() {
 }
 
 update() {
+	# Check to see if limited ogpuser exists
+	generateOGPLimitedUser
+	
 	# Run the update
 	if test -n "$AUTO_UPDATE"; then
 		if [ -z "$CURL" -o -z "$UNZIP" ]; then
@@ -343,6 +346,36 @@ quit() {
 	# reset SIGINT and then kill ourselves properly
 	trap - 2
 	kill -2 $$
+}
+
+function generatePassword(){
+	if [ ! -z "$1" ]; then
+		PLENGTH="$1"
+	else
+		PLENGTH="10"
+	fi
+  
+	#rPass=$(date +%s | sha256sum | base64 | head -c "$PLENGTH")
+	rPass=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1 | head -c "$PLENGTH")
+}
+
+function generateOGPLimitedUser(){
+	ogpUSER="ogp_server_runner"
+	echo "$sudoPass" | sudo -S -p "" id -u "$ogpUSER"
+	if [ $? -eq 1 ]; then
+		echo "Creating ogp limited user for running servers and additional security..."
+		echo "$sudoPass" | sudo -S -p "" groupadd ${ogpUSER}
+		generatePassword "15"
+		ogpPass="$rPass"
+		echo "$sudoPass" | sudo -S -p "" useradd --home "/home/$ogpUSER" -G ${ogpUSER} -m "$ogpUSER"
+		echo "$sudoPass" | sudo -S -p "" echo "$ogpUSER:$ogpPass" | chpasswd
+		# Use /bin/bash shell by default per request from Omano
+		echo "$sudoPass" | sudo -S -p "" usermod -s /bin/bash ${ogpUSER}
+		
+		echo "$sudoPass" | sudo -S -p "" echo "limited_ogp_user=$ogpUSER
+password=$ogpPass" > /root/ogp_server_runner_info
+	fi
+		
 }
 
 #####################
