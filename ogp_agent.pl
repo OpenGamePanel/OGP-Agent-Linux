@@ -64,6 +64,7 @@ use constant WEB_API_URL => $Cfg::Config{web_api_url};
 use constant STEAM_DL_LIMIT => $Cfg::Config{steam_dl_limit};
 use constant SCREEN_LOG_LOCAL  => $Cfg::Preferences{screen_log_local};
 use constant DELETE_LOGS_AFTER  => $Cfg::Preferences{delete_logs_after};
+use constant USE_EXISTING_DIR_PERMS  => $Cfg::Preferences{use_dir_owner_game_servers};
 use constant AGENT_PID_FILE =>
   Path::Class::File->new(AGENT_RUN_DIR, 'ogp_agent.pid');
 use constant AGENT_RSYNC_GENERIC_LOG =>
@@ -487,7 +488,13 @@ sub get_home_pids
 	my ($home_id) = @_;
 	my $screen_id = create_screen_id(SCREEN_TYPE_HOME, $home_id);
 	my ($pid, @pids);
+	
 	my $as_user = SERVER_RUNNER_USER;
+	
+	if(defined USE_EXISTING_DIR_PERMS && USE_EXISTING_DIR_PERMS eq "1"){
+		$as_user = find_user_by_screen_id($screen_id);
+	}
+	
 	my $ret = sudo_exec_without_decrypt('screen -ls | grep -E -o "[0-9]+\.'.$screen_id.'"', $as_user);
 	my ($retval, $enc_out) = split(/;/, $ret, 2);
 	if($retval != 1)
@@ -752,6 +759,10 @@ sub is_screen_running_without_decrypt
 	my $screen_id = create_screen_id($screen_type, $home_id);
 	
 	my $as_user = SERVER_RUNNER_USER;
+	
+	if(defined USE_EXISTING_DIR_PERMS && USE_EXISTING_DIR_PERMS eq "1"){
+		$as_user = find_user_by_screen_id($screen_id);
+	}
 		
 	my $ret = sudo_exec_without_decrypt('screen -list | grep '.$screen_id, $as_user);
 		
@@ -823,7 +834,13 @@ sub universal_start_without_decrypt
 	
 	my $owner = SERVER_RUNNER_USER;
 	my $group = SERVER_RUNNER_USER;
-	chomp $group;
+	
+	if(defined USE_EXISTING_DIR_PERMS && USE_EXISTING_DIR_PERMS eq "1"){
+		$owner = get_path_owner($home_path);
+		$group = `whoami`;
+		chomp $group;
+		sudo_exec_without_decrypt("usermod -a -G $group $owner"); # Add the owner to the agent groups
+	}
 	
 	set_path_ownership($owner, $group, $home_path);
 	
@@ -1263,6 +1280,10 @@ sub stop_server_without_decrypt
 	
 	my $screen_id = create_screen_id(SCREEN_TYPE_HOME, $home_id);
 	my $as_user = SERVER_RUNNER_USER;
+	
+	if(defined USE_EXISTING_DIR_PERMS && USE_EXISTING_DIR_PERMS eq "1"){
+		$as_user = find_user_by_screen_id($screen_id);
+	}
 
 	if ($control_password !~ /^\s*$/ and $control_protocol ne "")
 	{
@@ -2063,7 +2084,11 @@ sub check_b4_chdir
 	}
 	
 	my $group = SERVER_RUNNER_USER;
-	chomp $group;
+	
+	if(defined USE_EXISTING_DIR_PERMS && USE_EXISTING_DIR_PERMS eq "1"){
+		$group = `whoami`;
+		chomp $group;
+	}
 	
 	set_path_ownership($owner, $group, $path);
 	
@@ -2082,14 +2107,20 @@ sub set_path_ownership
 	
 	my $owner_uid = `id -u $owner`;
 	chomp $owner_uid;
-	my $group_uid = `id -u $group`;
+	my $group_uid = `id -g $group`;
 	chomp $group_uid;
 		
 	# Remove immutable flag recursivelly
 	secure_path_without_decrypt('chattr-i', $path);
 	# Set owner and perms on it recursivelly as well
-	sudo_exec_without_decrypt("chown -Rf $owner_uid:$group_uid '$path'");
-	sudo_exec_without_decrypt("chmod -Rf ug+rwx '$path'");
+	my $chownCommand = "chown -Rf $owner_uid:$group_uid '$path'";
+	my $chmodCommand = "chmod -Rf ug+rwx '$path'";
+	sudo_exec_without_decrypt($chownCommand);
+	sudo_exec_without_decrypt($chmodCommand);
+	
+	# Additional logging for debug
+	#logger "Running chown command of " . $chownCommand;
+	#logger "Running chown command of " . $chmodCommand;
 		
 	return 0;
 }
@@ -2156,6 +2187,10 @@ sub start_rsync_install
 	
 	my $owner = SERVER_RUNNER_USER;
 	
+	if(defined USE_EXISTING_DIR_PERMS && USE_EXISTING_DIR_PERMS eq "1"){
+		$owner = get_path_owner($home_path);
+	}
+	
 	if ( check_b4_chdir($home_path, $owner) != 0)
 	{
 		return 0;
@@ -2213,6 +2248,10 @@ sub master_server_update
 	return "Bad Encryption Key" unless(decrypt_param(pop(@_)) eq "Encryption checking OK");
 	my ($home_id,$home_path,$ms_home_id,$ms_home_path,$exec_folder_path,$exec_path,$precmd,$postcmd) = decrypt_params(@_);
 	my $owner = SERVER_RUNNER_USER;
+	
+	if(defined USE_EXISTING_DIR_PERMS && USE_EXISTING_DIR_PERMS eq "1"){
+		$owner = get_path_owner($home_path);
+	}
 	
 	if ( check_b4_chdir($home_path, $owner) != 0)
 	{
@@ -2284,6 +2323,10 @@ sub steam_cmd_without_decrypt
 {
 	my ($home_id, $home_path, $mod, $modname, $betaname, $betapwd, $user, $pass, $guard, $exec_folder_path, $exec_path, $precmd, $postcmd, $cfg_os, $filesToLockUnlock, $arch_bits) = @_;
 	my $owner = SERVER_RUNNER_USER;
+	
+	if(defined USE_EXISTING_DIR_PERMS && USE_EXISTING_DIR_PERMS eq "1"){
+		$owner = get_path_owner($home_path);
+	}
 	
 	if ( check_b4_chdir($home_path, $owner) != 0)
 	{
@@ -2906,6 +2949,11 @@ sub find_user_by_screen_id
 	
 	my $screen_user = SERVER_RUNNER_USER;
 	
+	if(defined USE_EXISTING_DIR_PERMS && USE_EXISTING_DIR_PERMS eq "1"){
+		$screen_user = `whoami`;
+		chomp $screen_user;
+	}
+	
 	my $ret = sudo_exec_without_decrypt('find /var/run/screen -name "*'.$screen_id.'"');
 		
 	my ($retval, $enc_out) = split(/;/, $ret, 2);
@@ -2951,6 +2999,11 @@ sub get_path_owner
 	my ($path) = @_;
 	
 	my $path_owner = SERVER_RUNNER_USER;
+	
+	if(defined USE_EXISTING_DIR_PERMS && USE_EXISTING_DIR_PERMS eq "1"){
+		$path_owner = `whoami`;
+		chomp $path_owner;
+	}
 	
 	if(-d $path)
 	{
@@ -4309,7 +4362,12 @@ sub steam_workshop_without_decrypt
 	
 	# Creates mods path if it doesn't exist
 	my $owner = SERVER_RUNNER_USER;
-	chomp $owner;
+	
+	if(defined USE_EXISTING_DIR_PERMS && USE_EXISTING_DIR_PERMS eq "1"){
+		$owner = `whoami`;
+		chomp $owner;
+	}
+
 	if ( check_b4_chdir($mods_full_path, $owner) != 0)
 	{
 		return -1;
