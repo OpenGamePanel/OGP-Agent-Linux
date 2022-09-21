@@ -851,11 +851,6 @@ sub universal_start_without_decrypt
 			sudo_exec_without_decrypt("/bin/cp /etc/skel/.* \"$home_path\"");  # copy /etc/skel files over
 			sudo_exec_without_decrypt("chown -R $owner:$group \"$home_path\""); 
 			sudo_exec_without_decrypt("chmod 770 -R \"$home_path\""); # Temp set perms to 777 since the group changes haven't applied to this pid yet
-			
-			my $randomPass = generate_random_password(15);
-			sudo_exec_without_decrypt("sh -c \"echo '$owner:$randomPass' | chpasswd\""); 
-			sudo_exec_without_decrypt("echo '$owner:$randomPass' > /root/ogp_" . $owner . "_account_info"); 
-			logger "$owner user account being creating with password $randomPass";
 			sudo_exec_without_decrypt("usermod -s /bin/bash $owner"); 
 		}
 	}
