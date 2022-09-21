@@ -377,6 +377,8 @@ function generateOGPLimitedUser(){
 password=${ogpPass}' > /root/ogp_server_runner_info"
 		agentUser="$(whoami)"
 		echo "$sudoPass" | sudo -S -p "" usermod -a -G "$ogpUSER" "$agentUser"
+		# Reload perms so we don't have to reboot system for new group to apply right now...
+		echo "$sudoPass" | sudo -S -p "" exec su -l "$agentUser"
 	fi
 }
 
