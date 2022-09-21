@@ -384,7 +384,7 @@ password=${ogpPass}' > /root/ogp_server_runner_info"
 	# Set servers to run under their own user by default:
 	hasLinuxUser=$(cat "$AGENTDIR/Cfg/Preferences.pm" | grep -o "linux_user_per_game_server")
 	if [ -z "$hasLinuxUser" ]; then
-		 sed -i "\$i linux_user_per_game_server_ => '1'," "$AGENTDIR/Cfg/Preferences.pm"
+		 sed -i "\$i \\\\tlinux_user_per_game_server => '1'," "$AGENTDIR/Cfg/Preferences.pm"
 	fi
 }
 
