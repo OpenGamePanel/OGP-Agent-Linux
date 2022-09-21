@@ -64,7 +64,7 @@ use constant WEB_API_URL => $Cfg::Config{web_api_url};
 use constant STEAM_DL_LIMIT => $Cfg::Config{steam_dl_limit};
 use constant SCREEN_LOG_LOCAL  => $Cfg::Preferences{screen_log_local};
 use constant DELETE_LOGS_AFTER  => $Cfg::Preferences{delete_logs_after};
-use constant USE_EXISTING_DIR_PERMS  => $Cfg::Preferences{use_dir_owner_game_servers};
+use constant USE_EXISTING_DIR_PERMS  => $Cfg::Preferences{linux_user_per_game_server};
 use constant AGENT_PID_FILE =>
   Path::Class::File->new(AGENT_RUN_DIR, 'ogp_agent.pid');
 use constant AGENT_RSYNC_GENERIC_LOG =>
