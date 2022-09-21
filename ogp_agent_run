@@ -390,6 +390,8 @@ password=${ogpPass}' > /root/ogp_server_runner_info"
 
 function restrictAccess(){
 	echo "$sudoPass" | sudo -S -p "" chmod 750 "$AGENTDIR/Cfg/Config.pm"
+	echo "$sudoPass" | sudo -S -p "" chmod 750 "$AGENTDIR/Cfg/Preferences.pm"
+	echo "$sudoPass" | sudo -S -p "" chmod 750 "$AGENTDIR/Cfg/bash_prefs.cfg"
 }
 
 #####################
