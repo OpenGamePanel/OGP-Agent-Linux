@@ -862,6 +862,8 @@ sub universal_start_without_decrypt
 				sudo_exec_without_decrypt("usermod -a -G $owner ftp"); 
 				sudo_exec_without_decrypt("usermod -a -G $owner vsftpd"); 
 			}
+			
+			my $applyNewGroups = `exec newgrp $owner`;
 		}
 		
 		$group = $owner;
