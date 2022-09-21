@@ -844,7 +844,11 @@ sub universal_start_without_decrypt
 			
 			logger "User $owner currently doesn't exist... creating user...";
 			
-			sudo_exec_without_decrypt("useradd --home \"$home_path\" -m $owner"); 
+			sudo_exec_without_decrypt("mkdir -p \"$home_path\""); 
+			sudo_exec_without_decrypt("chattr -i -Rf \"$home_path\""); 
+			sudo_exec_without_decrypt("useradd --home \"$home_path\" $owner"); 
+			sudo_exec_without_decrypt("chown -R $owner:$owner \"$home_path\""); 
+			sudo_exec_without_decrypt("chmod 770 -R \"$home_path\""); 
 			
 			my $randomPass = generate_random_password(15);
 			sudo_exec_without_decrypt("sh -c \"echo '$owner:$randomPass' | chpasswd\""); 
@@ -866,6 +870,9 @@ sub universal_start_without_decrypt
 				sudo_exec_without_decrypt("usermod -a -G $owner ftp"); 
 				sudo_exec_without_decrypt("usermod -a -G $owner vsftpd"); 
 			}
+			
+			# Restart the agent for group changes to take effect
+			sudo_exec_without_decrypt("service ogp_agent restart"); 
 		}
 		
 		$group = $owner;
