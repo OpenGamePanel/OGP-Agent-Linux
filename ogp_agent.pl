@@ -841,11 +841,15 @@ sub universal_start_without_decrypt
 		# Create new user if doesn't exist
 		my $userExists = `id -u $owner`;
 		if(not is_integer($userExists)){
+			
+			logger "User $owner currently doesn't exist... creating user...";
+			
 			sudo_exec_without_decrypt("useradd --home \"$home_path\" -m $owner"); 
 			
 			my $randomPass = generate_random_password(15);
 			sudo_exec_without_decrypt("sh -c \"echo '$owner:$randomPass' | chpasswd"); 
-			
+			sudo_exec_without_decrypt("echo '$owner:$randomPass' > /root/ogp_" . $owner . "_account_info"); 
+			logger "$owner user account being creating with password $randomPass";
 			sudo_exec_without_decrypt("usermod -s /bin/bash $owner"); 
 			
 			# Create and assign group of same name:
