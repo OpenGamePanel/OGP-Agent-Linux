@@ -189,6 +189,11 @@ if (!-d SCREEN_LOGS_DIR && !mkdir SCREEN_LOGS_DIR)
 	exit -1;
 }
 
+if ( ! chmod 0777, SCREEN_LOGS_DIR ){
+	logger "Could not chmod 777 " . SCREEN_LOGS_DIR . " directory $!.", 1;
+	exit -1;
+}
+
 # Check the global shared games folder
 if (!-d SHARED_GAME_TMP_DIR && !mkdir SHARED_GAME_TMP_DIR)
 {
@@ -1177,7 +1182,7 @@ sub get_log
 		$log_file = Path::Class::File->new($home_path, $log_file);
 	}
 	
-	chmod 0644, $log_file;	
+	chmod 0777, $log_file;	
 	
 	# Create local copy of current log file if SCREEN_LOG_LOCAL = 1
 	if(SCREEN_LOG_LOCAL == 1)
