@@ -858,6 +858,8 @@ sub universal_start_without_decrypt
 			sudo_exec_without_decrypt("chmod 770 -R \"$home_path\""); # Temp set perms to 777 since the group changes haven't applied to this pid yet
 			sudo_exec_without_decrypt("usermod -s /bin/bash $owner"); 
 		}
+		
+		sudo_exec_without_decrypt("rm -rf /var/run/screen/S-$owner"); # Delete screen file if it exists already
 	}
 	
 	set_path_ownership($owner, $group, $home_path);
