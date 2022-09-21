@@ -851,7 +851,7 @@ sub universal_start_without_decrypt
 			sudo_exec_without_decrypt("useradd --home \"$home_path\" $owner"); 
 			sudo_exec_without_decrypt("cp -R /etc/skel/* \"$home_path\"");  # copy /etc/skel files over
 			sudo_exec_without_decrypt("chown -R $owner:$owner \"$home_path\""); 
-			sudo_exec_without_decrypt("chmod 770 -R \"$home_path\""); 
+			sudo_exec_without_decrypt("chmod 771 -R \"$home_path\"");
 			
 			my $randomPass = generate_random_password(15);
 			sudo_exec_without_decrypt("sh -c \"echo '$owner:$randomPass' | chpasswd\""); 
