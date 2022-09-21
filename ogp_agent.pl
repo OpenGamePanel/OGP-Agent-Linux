@@ -1183,6 +1183,7 @@ sub get_log
 	}
 	
 	chmod 0777, $log_file;	
+	sudo_exec_without_decrypt("chmod 777 \"$log_file\"");
 	
 	# Create local copy of current log file if SCREEN_LOG_LOCAL = 1
 	if(SCREEN_LOG_LOCAL == 1)
