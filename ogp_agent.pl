@@ -818,8 +818,6 @@ sub universal_start_without_decrypt
 		$startup_cmd, $server_port, $server_ip, $cpu, $nice, $preStart, $envVars, $game_key, $console_log
 	   ) = @_;
 	   
-	my $restart_agent = 0;
-	
 	if (is_screen_running_without_decrypt(SCREEN_TYPE_HOME, $home_id) == 1)
 	{
 		logger "This server is already running (ID: $home_id).";
@@ -839,51 +837,26 @@ sub universal_start_without_decrypt
 	
 	if(defined USE_EXISTING_DIR_PERMS && USE_EXISTING_DIR_PERMS eq "1"){
 		$owner = "gamehome" . $home_id;
+		$group = `whoami`;
+		chomp $group;
 		
 		# Create new user if doesn't exist
 		my $userExists = `id -u $owner`;
 		if(not is_integer($userExists)){
-			
 			logger "User $owner currently doesn't exist... creating user...";
 			
 			sudo_exec_without_decrypt("mkdir -p \"$home_path\""); 
 			sudo_exec_without_decrypt("chattr -i -Rf \"$home_path\""); 
 			sudo_exec_without_decrypt("useradd --home \"$home_path\" -m $owner"); 
 			sudo_exec_without_decrypt("/bin/cp /etc/skel/.* \"$home_path\"");  # copy /etc/skel files over
-			sudo_exec_without_decrypt("chown -R $owner:$owner \"$home_path\""); 
-			sudo_exec_without_decrypt("chmod 777 -R \"$home_path\""); # Temp set perms to 777 since the group changes haven't applied to this pid yet
+			sudo_exec_without_decrypt("chown -R $owner:$group \"$home_path\""); 
+			sudo_exec_without_decrypt("chmod 770 -R \"$home_path\""); # Temp set perms to 777 since the group changes haven't applied to this pid yet
 			
 			my $randomPass = generate_random_password(15);
 			sudo_exec_without_decrypt("sh -c \"echo '$owner:$randomPass' | chpasswd\""); 
 			sudo_exec_without_decrypt("echo '$owner:$randomPass' > /root/ogp_" . $owner . "_account_info"); 
 			logger "$owner user account being creating with password $randomPass";
 			sudo_exec_without_decrypt("usermod -s /bin/bash $owner"); 
-			
-			# Create and assign group of same name:
-			sudo_exec_without_decrypt("usermod -a -G $owner $owner"); # Add the owner to a new group of itself
-			
-			# Assign OGP agent user to same group:
-			$group = `whoami`;
-			chomp $group;
-			
-			sudo_exec_without_decrypt("usermod -a -G $owner $group"); # Add the agent user to the new user group
-			
-			# Add group to ftp user
-			if(defined($Cfg::Preferences{ftp_method}) && $Cfg::Preferences{ftp_method} eq "EHCP" && (-e "/etc/init.d/ehcp" || -e "/lib/systemd/system/ehcp.service" || -e "/etc/systemd/system/ehcp.service" )){
-				sudo_exec_without_decrypt("usermod -a -G $owner ftp"); 
-				sudo_exec_without_decrypt("usermod -a -G $owner vsftpd"); 
-			}
-			
-			# Restart the agent for group changes to take effect
-			$restart_agent = 1;
-		}
-		
-		$group = $owner;
-		
-		# Fix perms again if needed
-		if(not $restart_agent){
-			sudo_exec_without_decrypt("chown -R $owner:$owner \"$home_path\""); 
-			sudo_exec_without_decrypt("chmod 770 -R \"$home_path\"");
 		}
 	}
 	
@@ -1042,11 +1015,6 @@ sub universal_start_without_decrypt
 		
 	chdir AGENT_RUN_DIR;
 	
-	if($restart_agent){
-		sudo_exec_without_decrypt("chown -R $owner:$owner \"$home_path\""); 
-		sudo_exec_without_decrypt("chmod 770 -R \"$home_path\"");
-		return sudo_exec_without_decrypt("service ogp_agent restart"); 
-	}
 	return 1;
 }
 
@@ -2141,7 +2109,7 @@ sub check_b4_chdir
 		chomp $group;
 	}
 	
-	set_path_ownership($owner, $owner, $path);
+	set_path_ownership($owner, $group, $path);
 	
 	if (!chdir $path)
 	{
@@ -4418,7 +4386,8 @@ sub steam_workshop_without_decrypt
 	my $owner = SERVER_RUNNER_USER;
 	
 	if(defined USE_EXISTING_DIR_PERMS && USE_EXISTING_DIR_PERMS eq "1"){
-		$owner = "gamehome" . $home_id;
+		$owner = `whoami`;
+		chomp $owner;
 	}
 
 	if ( check_b4_chdir($mods_full_path, $owner) != 0)
