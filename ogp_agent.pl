@@ -818,6 +818,8 @@ sub universal_start_without_decrypt
 		$startup_cmd, $server_port, $server_ip, $cpu, $nice, $preStart, $envVars, $game_key, $console_log
 	   ) = @_;
 	   
+	my $restart_agent = 0;
+	
 	if (is_screen_running_without_decrypt(SCREEN_TYPE_HOME, $home_id) == 1)
 	{
 		logger "This server is already running (ID: $home_id).";
@@ -872,7 +874,7 @@ sub universal_start_without_decrypt
 			}
 			
 			# Restart the agent for group changes to take effect
-			sudo_exec_without_decrypt("service ogp_agent restart"); 
+			$restart_agent = 1;
 		}
 		
 		$group = $owner;
@@ -1032,6 +1034,10 @@ sub universal_start_without_decrypt
 	renice_process_without_decrypt($home_id, $nice);
 		
 	chdir AGENT_RUN_DIR;
+	
+	if($restart_agent){
+		sudo_exec_without_decrypt("service ogp_agent restart"); 
+	}
 	return 1;
 }
 
