@@ -836,10 +836,35 @@ sub universal_start_without_decrypt
 	my $group = SERVER_RUNNER_USER;
 	
 	if(defined USE_EXISTING_DIR_PERMS && USE_EXISTING_DIR_PERMS eq "1"){
-		$owner = get_path_owner($home_path);
-		$group = `whoami`;
-		chomp $group;
-		sudo_exec_without_decrypt("usermod -a -G $group $owner"); # Add the owner to the agent groups
+		$owner = "gamehome" . $home_id;
+		
+		# Create new user if doesn't exist
+		my $userExists = `id -u $owner`;
+		if(not is_integer($userExists)){
+			sudo_exec_without_decrypt("useradd --home \"$home_path\" -m $owner"); 
+			
+			my $randomPass = generate_random_password(15);
+			sudo_exec_without_decrypt("sh -c \"echo '$owner:$randomPass' | chpasswd"); 
+			
+			sudo_exec_without_decrypt("usermod -s /bin/bash $owner"); 
+			
+			# Create and assign group of same name:
+			sudo_exec_without_decrypt("usermod -a -G $owner $owner"); # Add the owner to a new group of itself
+			
+			# Assign OGP agent user to same group:
+			$group = `whoami`;
+			chomp $group;
+			
+			sudo_exec_without_decrypt("usermod -a -G $owner $group"); # Add the agent user to the new user group
+			
+			# Add group to ftp user
+			if(defined($Cfg::Preferences{ftp_method}) && $Cfg::Preferences{ftp_method} eq "EHCP" && (-e "/etc/init.d/ehcp" || -e "/lib/systemd/system/ehcp.service" || -e "/etc/systemd/system/ehcp.service" )){
+				sudo_exec_without_decrypt("usermod -a -G $owner ftp"); 
+				sudo_exec_without_decrypt("usermod -a -G $owner vsftpd"); 
+			}
+		}
+		
+		$group = $owner;
 	}
 	
 	set_path_ownership($owner, $group, $home_path);
@@ -2090,7 +2115,7 @@ sub check_b4_chdir
 		chomp $group;
 	}
 	
-	set_path_ownership($owner, $group, $path);
+	set_path_ownership($owner, $owner, $path);
 	
 	if (!chdir $path)
 	{
@@ -4367,8 +4392,7 @@ sub steam_workshop_without_decrypt
 	my $owner = SERVER_RUNNER_USER;
 	
 	if(defined USE_EXISTING_DIR_PERMS && USE_EXISTING_DIR_PERMS eq "1"){
-		$owner = `whoami`;
-		chomp $owner;
+		$owner = "gamehome" . $home_id;
 	}
 
 	if ( check_b4_chdir($mods_full_path, $owner) != 0)
@@ -4648,4 +4672,21 @@ sub get_minecraft_rcon_port{
 sub begins_with
 {
     return substr($_[0], 0, length($_[1])) eq $_[1];
+}
+
+sub generate_random_password{
+	my ($length) = @_;
+	my @alphanumeric = ('a'..'z', 'A'..'Z', 0..9,'!','_','-');
+	my @numeric = (0..9);
+	my $randpassword = '';
+	
+	if(not defined $length || not is_integer($length)){
+		$length = 16;
+	}
+
+	until ( length($randpassword) > $length ) {
+			$randpassword = $randpassword . join '', map $alphanumeric[rand @alphanumeric], 0..(rand @numeric);
+	}
+
+	return $randpassword;
 }
