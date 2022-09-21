@@ -851,7 +851,7 @@ sub universal_start_without_decrypt
 			sudo_exec_without_decrypt("useradd --home \"$home_path\" -m $owner"); 
 			sudo_exec_without_decrypt("/bin/cp /etc/skel/.* \"$home_path\"");  # copy /etc/skel files over
 			sudo_exec_without_decrypt("chown -R $owner:$owner \"$home_path\""); 
-			sudo_exec_without_decrypt("chmod 771 -R \"$home_path\"");
+			sudo_exec_without_decrypt("chmod 777 -R \"$home_path\""); # Temp set perms to 777 since the group changes haven't applied to this pid yet
 			
 			my $randomPass = generate_random_password(15);
 			sudo_exec_without_decrypt("sh -c \"echo '$owner:$randomPass' | chpasswd\""); 
@@ -879,6 +879,12 @@ sub universal_start_without_decrypt
 		}
 		
 		$group = $owner;
+		
+		# Fix perms again if needed
+		if(not $restart_agent){
+			sudo_exec_without_decrypt("chown -R $owner:$owner \"$home_path\""); 
+			sudo_exec_without_decrypt("chmod 771 -R \"$home_path\"");
+		}
 	}
 	
 	set_path_ownership($owner, $group, $home_path);
@@ -1037,6 +1043,8 @@ sub universal_start_without_decrypt
 	chdir AGENT_RUN_DIR;
 	
 	if($restart_agent){
+		sudo_exec_without_decrypt("chown -R $owner:$owner \"$home_path\""); 
+		sudo_exec_without_decrypt("chmod 771 -R \"$home_path\"");
 		sudo_exec_without_decrypt("service ogp_agent restart"); 
 	}
 	return 1;
