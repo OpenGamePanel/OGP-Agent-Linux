@@ -883,7 +883,7 @@ sub universal_start_without_decrypt
 		# Fix perms again if needed
 		if(not $restart_agent){
 			sudo_exec_without_decrypt("chown -R $owner:$owner \"$home_path\""); 
-			sudo_exec_without_decrypt("chmod 771 -R \"$home_path\"");
+			sudo_exec_without_decrypt("chmod 770 -R \"$home_path\"");
 		}
 	}
 	
@@ -1044,7 +1044,7 @@ sub universal_start_without_decrypt
 	
 	if($restart_agent){
 		sudo_exec_without_decrypt("chown -R $owner:$owner \"$home_path\""); 
-		sudo_exec_without_decrypt("chmod 771 -R \"$home_path\"");
+		sudo_exec_without_decrypt("chmod 770 -R \"$home_path\"");
 		return sudo_exec_without_decrypt("service ogp_agent restart"); 
 	}
 	return 1;
