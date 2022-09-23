@@ -834,6 +834,8 @@ sub universal_start_without_decrypt
 	
 	my $owner = SERVER_RUNNER_USER;
 	my $group = SERVER_RUNNER_USER;
+	my $ogpAgentGroup = `whoami`;
+	chomp $ogpAgentGroup;
 	
 	if(defined USE_EXISTING_DIR_PERMS && USE_EXISTING_DIR_PERMS eq "1"){
 		$owner = get_path_owner($home_path);
@@ -841,6 +843,11 @@ sub universal_start_without_decrypt
 		chomp $group;
 		sudo_exec_without_decrypt("usermod -a -G $group $owner"); # Add the owner to the agent groups
 	}
+		
+	# Fix perms on ogp_agent user's homedir so that other users can access their owned files within this dir
+	my $fixOGPHomeDirCommand = 'chmod 771 -R $( getent passwd "' . $ogpAgentGroup . '" | cut -d: -f6 )';
+	# logger "Command is " . $fixOGPHomeDirCommand;
+	sudo_exec_without_decrypt($fixOGPHomeDirCommand);
 	
 	set_path_ownership($owner, $group, $home_path);
 	
