@@ -856,8 +856,6 @@ sub universal_start_without_decrypt
 			sudo_exec_without_decrypt("usermod -s /bin/bash $owner"); 
 			sudo_exec_without_decrypt("usermod -a -G \"$owner\" \"$group\""); 
 		}
-		
-		sudo_exec_without_decrypt("rm -rf /var/run/screen/S-$owner"); # Delete screen file if it exists already
 	}
 	
 	# Set ownership on the game home
