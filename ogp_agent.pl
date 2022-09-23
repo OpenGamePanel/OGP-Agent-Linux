@@ -839,6 +839,7 @@ sub universal_start_without_decrypt
 	
 	my $owner = SERVER_RUNNER_USER;
 	my $group = SERVER_RUNNER_USER;
+	my $ogpAgentGroup = `whoami`;
 	
 	if(defined USE_EXISTING_DIR_PERMS && USE_EXISTING_DIR_PERMS eq "1"){
 		$owner = "gamehome" . $home_id;
@@ -861,6 +862,9 @@ sub universal_start_without_decrypt
 		
 		sudo_exec_without_decrypt("rm -rf /var/run/screen/S-$owner"); # Delete screen file if it exists already
 	}
+	
+	# Fix perms on ogp_agent user's homedir so that other users can access their owned files within this dir
+	sudo_exec_without_decrypt('chmod 771 -R $( getent passwd "' . $ogpAgentGroup . '" | cut -d: -f6 )');
 	
 	set_path_ownership($owner, $group, $home_path);
 	
