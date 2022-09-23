@@ -865,7 +865,7 @@ sub universal_start_without_decrypt
 	}
 	
 	# Fix perms on ogp_agent user's homedir so that other users can access their owned files within this dir
-	my $fixOGPHomeDirCommand = 'chmod 771 -R $( getent passwd "' . $ogpAgentGroup . '" | cut -d: -f6 )'
+	my $fixOGPHomeDirCommand = 'chmod 771 -R $( getent passwd "' . $ogpAgentGroup . '" | cut -d: -f6 )';
 	# logger "Command is " . $fixOGPHomeDirCommand;
 	sudo_exec_without_decrypt($fixOGPHomeDirCommand);
 	
