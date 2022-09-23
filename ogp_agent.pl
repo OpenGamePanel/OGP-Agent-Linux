@@ -851,12 +851,8 @@ sub universal_start_without_decrypt
 		my $userExists = `id -u $owner`;
 		if(not is_integer($userExists)){
 			logger "User $owner currently doesn't exist... creating user...";
-			
-			sudo_exec_without_decrypt("mkdir -p \"$home_path\""); 
-			sudo_exec_without_decrypt("chattr -i -Rf \"$home_path\""); 
+			 
 			sudo_exec_without_decrypt("useradd -m $owner"); 
-			sudo_exec_without_decrypt("chown -R $owner:$group \"$home_path\""); 
-			sudo_exec_without_decrypt("chmod 771 -R \"$home_path\""); 
 			sudo_exec_without_decrypt("usermod -s /bin/bash $owner"); 
 			sudo_exec_without_decrypt("usermod -a -G \"$owner\" \"$group\""); 
 		}
@@ -864,15 +860,15 @@ sub universal_start_without_decrypt
 		sudo_exec_without_decrypt("rm -rf /var/run/screen/S-$owner"); # Delete screen file if it exists already
 	}
 	
+	# Set ownership on the game home
+	set_path_ownership($owner, $group, $home_path);
+	
 	# Fix perms on ogp_agent user's homedir so that other users can access their owned files within this dir
 	my $fixOGPHomeDirCommand = 'chmod -R ug+rwx $( getent passwd "' . $ogpAgentGroup . '" | cut -d: -f6 )';
 	sudo_exec_without_decrypt($fixOGPHomeDirCommand);
 
 	$fixOGPHomeDirCommand = 'find "$( getent passwd "' . $ogpAgentGroup . '" | cut -d: -f6 )" -type d -print0 | xargs -0 chmod o+x';
 	sudo_exec_without_decrypt($fixOGPHomeDirCommand);
-	
-	# Set ownership on the game home
-	set_path_ownership($owner, $group, $home_path);
 	
 	# Some game require that we are in the directory where the binary is.
 	my $game_binary_dir = Path::Class::Dir->new($home_path, $run_dir);
@@ -2144,15 +2140,16 @@ sub set_path_ownership
 		
 	# Remove immutable flag recursivelly
 	secure_path_without_decrypt('chattr-i', $path);
+	
 	# Set owner and perms on it recursivelly as well
 	my $chownCommand = "chown -Rf $owner_uid:$group_uid '$path'";
 	my $chmodCommand = "chmod -Rf ug+rwx '$path'";
 	sudo_exec_without_decrypt($chownCommand);
 	sudo_exec_without_decrypt($chmodCommand);
 	
-	# Additional logging for debug
-	#logger "Running chown command of " . $chownCommand;
-	#logger "Running chown command of " . $chmodCommand;
+	# Remove perms for other users
+	$chmodCommand = "chmod -Rf o-rwx '$path'";
+	sudo_exec_without_decrypt($chmodCommand);
 		
 	return 0;
 }
