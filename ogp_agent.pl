@@ -865,10 +865,13 @@ sub universal_start_without_decrypt
 	}
 	
 	# Fix perms on ogp_agent user's homedir so that other users can access their owned files within this dir
-	my $fixOGPHomeDirCommand = 'chmod 771 -R $( getent passwd "' . $ogpAgentGroup . '" | cut -d: -f6 )';
-	# logger "Command is " . $fixOGPHomeDirCommand;
+	my $fixOGPHomeDirCommand = 'chmod -R ug+rwx $( getent passwd "' . $ogpAgentGroup . '" | cut -d: -f6 )';
+	sudo_exec_without_decrypt($fixOGPHomeDirCommand);
+
+	$fixOGPHomeDirCommand = 'find "$( getent passwd "' . $ogpAgentGroup . '" | cut -d: -f6 )" -type d -print0 | xargs -0 chmod o+x';
 	sudo_exec_without_decrypt($fixOGPHomeDirCommand);
 	
+	# Set ownership on the game home
 	set_path_ownership($owner, $group, $home_path);
 	
 	# Some game require that we are in the directory where the binary is.
