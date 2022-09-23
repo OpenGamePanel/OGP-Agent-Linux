@@ -852,11 +852,11 @@ sub universal_start_without_decrypt
 			
 			sudo_exec_without_decrypt("mkdir -p \"$home_path\""); 
 			sudo_exec_without_decrypt("chattr -i -Rf \"$home_path\""); 
-			sudo_exec_without_decrypt("useradd --home \"$home_path\" -m $owner"); 
-			sudo_exec_without_decrypt("/bin/cp /etc/skel/.* \"$home_path\"");  # copy /etc/skel files over
+			sudo_exec_without_decrypt("useradd -m $owner"); 
 			sudo_exec_without_decrypt("chown -R $owner:$group \"$home_path\""); 
-			sudo_exec_without_decrypt("chmod 770 -R \"$home_path\""); # Temp set perms to 777 since the group changes haven't applied to this pid yet
+			sudo_exec_without_decrypt("chmod 770 -R \"$home_path\""); 
 			sudo_exec_without_decrypt("usermod -s /bin/bash $owner"); 
+			sudo_exec_without_decrypt("usermod -a -G \"$owner\" \"$group\""); 
 		}
 		
 		sudo_exec_without_decrypt("rm -rf /var/run/screen/S-$owner"); # Delete screen file if it exists already
