@@ -854,7 +854,7 @@ sub universal_start_without_decrypt
 			sudo_exec_without_decrypt("chattr -i -Rf \"$home_path\""); 
 			sudo_exec_without_decrypt("useradd -m $owner"); 
 			sudo_exec_without_decrypt("chown -R $owner:$group \"$home_path\""); 
-			sudo_exec_without_decrypt("chmod 770 -R \"$home_path\""); 
+			sudo_exec_without_decrypt("chmod 771 -R \"$home_path\""); 
 			sudo_exec_without_decrypt("usermod -s /bin/bash $owner"); 
 			sudo_exec_without_decrypt("usermod -a -G \"$owner\" \"$group\""); 
 		}
