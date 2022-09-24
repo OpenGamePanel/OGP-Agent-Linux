@@ -4703,3 +4703,9 @@ sub generate_random_password{
 
 	return $randpassword;
 }
+
+sub trim{ 
+	my $s = shift; 
+	$s =~ s/^\s+|\s+$//g; 
+	return $s 
+};
