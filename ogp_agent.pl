@@ -3087,7 +3087,7 @@ sub sudo_exec_without_decrypt
 	my $ret = pop(@cmdret);
 	chomp($ret);
 	
-	$owner = `whoami`;
+	my $owner = `whoami`;
 	chomp $owner;
 	
 	# Issue in some versions of Ubuntu
