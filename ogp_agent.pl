@@ -3094,7 +3094,7 @@ sub sudo_exec_without_decrypt
 	# man sudo: -S, --stdin Write the prompt to the standard error
 	# But we don't want to capture the sudo password prompt part in our output, so replace it:
 	s/\[sudo\] password for $owner://g for @cmdret;
-    s{^\s+|\s+$}{}g foreach @cmdret;
+	s{^\s+|\s+$}{}g foreach @cmdret;
 	
 	if ("X$ret" eq "X0")
 	{
