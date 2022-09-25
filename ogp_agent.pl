@@ -3080,21 +3080,13 @@ sub sudo_exec_without_decrypt
 		$as_user = "root";
 	}
 	
-	my $command = "echo '$SUDOPASSWD'|sudo -kS -p \"\" su -c '$sudo_exec;echo \$?' $as_user 2>&1";
+	my $command = "echo '$SUDOPASSWD'|sudo -kS -p \"<prompt>\" su -c '$sudo_exec;echo \$?' $as_user 2>&1";
 	my @cmdret = qx($command);
+	$cmdret[0] =~ s/^<prompt>//g if defined $cmdret[0];
 	chomp(@cmdret);
 	
 	my $ret = pop(@cmdret);
 	chomp($ret);
-	
-	my $owner = `whoami`;
-	chomp $owner;
-	
-	# Issue in some versions of Ubuntu
-	# man sudo: -S, --stdin Write the prompt to the standard error
-	# But we don't want to capture the sudo password prompt part in our output, so replace it:
-	s/\[sudo\] password for $owner://g for @cmdret;
-	s{^\s+|\s+$}{}g foreach @cmdret;
 	
 	if ("X$ret" eq "X0")
 	{
