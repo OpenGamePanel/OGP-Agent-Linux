@@ -2912,8 +2912,8 @@ sub remove_home
 			my $kill_all_user = sudo_exec_without_decrypt('killall -u "' . $owner . '"');
 			my $deleted_user = sudo_exec_without_decrypt('userdel -r "' . $owner . '"');
 			my ($retval_del_user, $enc_out_del_user) = split(/;/, $deleted_user, 2);
-			if ($retval_del_user eq "1"){
-				logger "Deleted user $deleted_user and $deleted_user home directory.";
+			if ($retval_del_user == 1){
+				logger "Removing and deleting user $deleted_user";
 			}
 			my $deleted_user_group = sudo_exec_without_decrypt('groupdel "' . $owner . '"');
 		}
