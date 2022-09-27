@@ -2907,18 +2907,20 @@ sub remove_home
 	secure_path_without_decrypt('chattr-i', $home_path_del);
 	my $deleted_home_dir = sudo_exec_without_decrypt('rm -rf \''.$home_path_del.'\'');
 	
-	if(defined LINUX_USER_PER_GAME_SERVER && LINUX_USER_PER_GAME_SERVER eq "1"){
-		if($owner ne SERVER_RUNNER_USER && begins_with($owner,'gamehome')){
+	if (defined LINUX_USER_PER_GAME_SERVER && LINUX_USER_PER_GAME_SERVER eq "1"){
+		if ($owner ne SERVER_RUNNER_USER && begins_with($owner,'gamehome')){
 			my $kill_all_user = sudo_exec_without_decrypt('killall -u "' . $owner . '"');
 			my $deleted_user = sudo_exec_without_decrypt('userdel -r "' . $owner . '"');
-			if($deleted_user eq "1"){
+			my ($retval_del_user, $enc_out_del_user) = split(/;/, $deleted_user, 2);
+			if ($retval_del_user eq "1"){
 				logger "Deleted user $deleted_user and $deleted_user home directory.";
 			}
 			my $deleted_user_group = sudo_exec_without_decrypt('groupdel "' . $owner . '"');
 		}
 	}
 	
-	if($deleted_home_dir eq "1"){
+	my ($retval, $enc_out) = split(/;/, $deleted_home_dir, 2);
+	if ($retval == 1){
 		logger "Deletetion of $home_path_del successful!";
 	}else{
 		logger "Deletetion of $home_path_del failed!";
