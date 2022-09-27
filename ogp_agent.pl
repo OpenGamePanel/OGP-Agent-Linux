@@ -64,7 +64,7 @@ use constant WEB_API_URL => $Cfg::Config{web_api_url};
 use constant STEAM_DL_LIMIT => $Cfg::Config{steam_dl_limit};
 use constant SCREEN_LOG_LOCAL  => $Cfg::Preferences{screen_log_local};
 use constant DELETE_LOGS_AFTER  => $Cfg::Preferences{delete_logs_after};
-use constant USE_EXISTING_DIR_PERMS  => $Cfg::Preferences{linux_user_per_game_server};
+use constant LINUX_USER_PER_GAME_SERVER  => $Cfg::Preferences{linux_user_per_game_server};
 use constant AGENT_PID_FILE =>
   Path::Class::File->new(AGENT_RUN_DIR, 'ogp_agent.pid');
 use constant AGENT_RSYNC_GENERIC_LOG =>
@@ -494,11 +494,7 @@ sub get_home_pids
 	my $screen_id = create_screen_id(SCREEN_TYPE_HOME, $home_id);
 	my ($pid, @pids);
 	
-	my $as_user = SERVER_RUNNER_USER;
-	
-	if(defined USE_EXISTING_DIR_PERMS && USE_EXISTING_DIR_PERMS eq "1"){
-		$as_user = find_user_by_screen_id($screen_id);
-	}
+	my $as_user = find_user_by_screen_id($screen_id);
 	
 	my $ret = sudo_exec_without_decrypt('screen -ls | grep -E -o "[0-9]+\.'.$screen_id.'"', $as_user);
 	my ($retval, $enc_out) = split(/;/, $ret, 2);
@@ -763,11 +759,7 @@ sub is_screen_running_without_decrypt
 
 	my $screen_id = create_screen_id($screen_type, $home_id);
 	
-	my $as_user = SERVER_RUNNER_USER;
-	
-	if(defined USE_EXISTING_DIR_PERMS && USE_EXISTING_DIR_PERMS eq "1"){
-		$as_user = find_user_by_screen_id($screen_id);
-	}
+	my $as_user = find_user_by_screen_id($screen_id);
 		
 	my $ret = sudo_exec_without_decrypt('screen -list | grep '.$screen_id, $as_user);
 		
@@ -842,7 +834,7 @@ sub universal_start_without_decrypt
 	my $ogpAgentGroup = `whoami`;
 	chomp $ogpAgentGroup;
 	
-	if(defined USE_EXISTING_DIR_PERMS && USE_EXISTING_DIR_PERMS eq "1"){
+	if(defined LINUX_USER_PER_GAME_SERVER && LINUX_USER_PER_GAME_SERVER eq "1"){
 		$owner = "gamehome" . $home_id;
 		$group = `whoami`;
 		chomp $group;
@@ -1305,11 +1297,7 @@ sub stop_server_without_decrypt
 	}
 	
 	my $screen_id = create_screen_id(SCREEN_TYPE_HOME, $home_id);
-	my $as_user = SERVER_RUNNER_USER;
-	
-	if(defined USE_EXISTING_DIR_PERMS && USE_EXISTING_DIR_PERMS eq "1"){
-		$as_user = find_user_by_screen_id($screen_id);
-	}
+	my $as_user = find_user_by_screen_id($screen_id);
 
 	if ($control_password !~ /^\s*$/ and $control_protocol ne "")
 	{
@@ -2111,7 +2099,7 @@ sub check_b4_chdir
 	
 	my $group = SERVER_RUNNER_USER;
 	
-	if(defined USE_EXISTING_DIR_PERMS && USE_EXISTING_DIR_PERMS eq "1"){
+	if(defined LINUX_USER_PER_GAME_SERVER && LINUX_USER_PER_GAME_SERVER eq "1"){
 		$group = `whoami`;
 		chomp $group;
 	}
@@ -2212,11 +2200,7 @@ sub start_rsync_install
 	return "Bad Encryption Key" unless(decrypt_param(pop(@_)) eq "Encryption checking OK");
 	my ($home_id, $home_path, $url, $exec_folder_path, $exec_path, $precmd, $postcmd, $filesToLockUnlock) = decrypt_params(@_);
 	
-	my $owner = SERVER_RUNNER_USER;
-	
-	if(defined USE_EXISTING_DIR_PERMS && USE_EXISTING_DIR_PERMS eq "1"){
-		$owner = get_path_owner($home_path);
-	}
+	my $owner = get_path_owner($home_path);
 	
 	if ( check_b4_chdir($home_path, $owner) != 0)
 	{
@@ -2274,11 +2258,7 @@ sub master_server_update
 {
 	return "Bad Encryption Key" unless(decrypt_param(pop(@_)) eq "Encryption checking OK");
 	my ($home_id,$home_path,$ms_home_id,$ms_home_path,$exec_folder_path,$exec_path,$precmd,$postcmd) = decrypt_params(@_);
-	my $owner = SERVER_RUNNER_USER;
-	
-	if(defined USE_EXISTING_DIR_PERMS && USE_EXISTING_DIR_PERMS eq "1"){
-		$owner = get_path_owner($home_path);
-	}
+	my $owner = get_path_owner($home_path);
 	
 	if ( check_b4_chdir($home_path, $owner) != 0)
 	{
@@ -2349,11 +2329,7 @@ sub steam_cmd
 sub steam_cmd_without_decrypt
 {
 	my ($home_id, $home_path, $mod, $modname, $betaname, $betapwd, $user, $pass, $guard, $exec_folder_path, $exec_path, $precmd, $postcmd, $cfg_os, $filesToLockUnlock, $arch_bits) = @_;
-	my $owner = SERVER_RUNNER_USER;
-	
-	if(defined USE_EXISTING_DIR_PERMS && USE_EXISTING_DIR_PERMS eq "1"){
-		$owner = get_path_owner($home_path);
-	}
+	my $owner = get_path_owner($home_path);
 	
 	if ( check_b4_chdir($home_path, $owner) != 0)
 	{
@@ -2926,10 +2902,28 @@ sub remove_home
 		logger "ERROR - $home_path_del does not exist...nothing to do";
 		return 0;
 	}
-
+	
+	my $owner = get_path_owner($home_path_del);
 	secure_path_without_decrypt('chattr-i', $home_path_del);
-	sleep 1 while ( !pathrmdir("$home_path_del") );
-	logger "Deletetion of $home_path_del successful!";
+	my $deleted_home_dir = sudo_exec_without_decrypt('rm -rf \''.$home_path_del.'\'');
+	
+	if(defined LINUX_USER_PER_GAME_SERVER && LINUX_USER_PER_GAME_SERVER eq "1"){
+		if($owner ne SERVER_RUNNER_USER && begins_with($owner,'gamehome')){
+			my $kill_all_user = sudo_exec_without_decrypt('killall -u "' . $owner . '"');
+			my $deleted_user = sudo_exec_without_decrypt('userdel -r "' . $owner . '"');
+			if($deleted_user eq "1"){
+				logger "Deleted user $deleted_user and $deleted_user home directory.";
+			}
+			my $deleted_user_group = sudo_exec_without_decrypt('groupdel "' . $owner . '"');
+		}
+	}
+	
+	if($deleted_home_dir eq "1"){
+		logger "Deletetion of $home_path_del successful!";
+	}else{
+		logger "Deletetion of $home_path_del failed!";
+	}
+	
 	return 1;
 }
 
@@ -2976,7 +2970,7 @@ sub find_user_by_screen_id
 	
 	my $screen_user = SERVER_RUNNER_USER;
 	
-	if(defined USE_EXISTING_DIR_PERMS && USE_EXISTING_DIR_PERMS eq "1"){
+	if(defined LINUX_USER_PER_GAME_SERVER && LINUX_USER_PER_GAME_SERVER eq "1"){
 		$screen_user = `whoami`;
 		chomp $screen_user;
 	}
@@ -3027,7 +3021,7 @@ sub get_path_owner
 	
 	my $path_owner = SERVER_RUNNER_USER;
 	
-	if(defined USE_EXISTING_DIR_PERMS && USE_EXISTING_DIR_PERMS eq "1"){
+	if(defined LINUX_USER_PER_GAME_SERVER && LINUX_USER_PER_GAME_SERVER eq "1"){
 		$path_owner = `whoami`;
 		chomp $path_owner;
 	}
@@ -4395,7 +4389,7 @@ sub steam_workshop_without_decrypt
 	# Creates mods path if it doesn't exist
 	my $owner = SERVER_RUNNER_USER;
 	
-	if(defined USE_EXISTING_DIR_PERMS && USE_EXISTING_DIR_PERMS eq "1"){
+	if(defined LINUX_USER_PER_GAME_SERVER && LINUX_USER_PER_GAME_SERVER eq "1"){
 		$owner = `whoami`;
 		chomp $owner;
 	}
