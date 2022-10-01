@@ -362,23 +362,23 @@ function generatePassword(){
 
 function generateOGPLimitedUser(){
 	ogpUSER="ogp_server_runner"
-	echo "$sudoPass" | sudo -S -p "" id -u "$ogpUSER"
+	echo "$sudoPass" | sudo -S -p "<prompt>" id -u "$ogpUSER"
 	if [ $? -eq 1 ]; then
 		echo "Creating ogp limited user for running servers and additional security..."
-		echo "$sudoPass" | sudo -S -p "" groupdel ${ogpUSER}
-		echo "$sudoPass" | sudo -S -p "" groupadd ${ogpUSER}
+		echo "$sudoPass" | sudo -S -p "<prompt>" groupdel ${ogpUSER}
+		echo "$sudoPass" | sudo -S -p "<prompt>" groupadd ${ogpUSER}
 		generatePassword "15"
 		ogpPass="$rPass"
-		echo "$sudoPass" | sudo -S -p "" useradd --home "/home/$ogpUSER" -g ${ogpUSER} -m "$ogpUSER"
-		echo "$sudoPass" | sudo -S -p "" sh -c "echo '${ogpUSER}:${ogpPass}' | chpasswd"
+		echo "$sudoPass" | sudo -S -p "<prompt>" useradd --home "/home/$ogpUSER" -g ${ogpUSER} -m "$ogpUSER"
+		echo "$sudoPass" | sudo -S -p "<prompt>" sh -c "echo '${ogpUSER}:${ogpPass}' | chpasswd"
 		# Use /bin/bash shell by default per request from Omano
-		echo "$sudoPass" | sudo -S -p "" usermod -s /bin/bash ${ogpUSER}
-		echo "$sudoPass" | sudo -S -p "" sh -c "echo 'limited_ogp_user=${ogpUSER}
+		echo "$sudoPass" | sudo -S -p "<prompt>" usermod -s /bin/bash ${ogpUSER}
+		echo "$sudoPass" | sudo -S -p "<prompt>" sh -c "echo 'limited_ogp_user=${ogpUSER}
 password=${ogpPass}' > /root/ogp_server_runner_info"
 		agentUser="$(whoami)"
-		echo "$sudoPass" | sudo -S -p "" usermod -a -G "$ogpUSER" "$agentUser"
+		echo "$sudoPass" | sudo -S -p "<prompt>" usermod -a -G "$ogpUSER" "$agentUser"
 		# Reload perms so we don't have to reboot system for new group to apply right now...
-		echo "$sudoPass" | sudo -S -p "" exec su -l "$agentUser"
+		echo "$sudoPass" | sudo -S -p "<prompt>" exec su -l "$agentUser"
 	fi
 	
 	# Set servers to run under their own user by default:
@@ -389,9 +389,9 @@ password=${ogpPass}' > /root/ogp_server_runner_info"
 }
 
 function restrictAccess(){
-	echo "$sudoPass" | sudo -S -p "" chmod 750 "$AGENTDIR/Cfg/Config.pm"
-	echo "$sudoPass" | sudo -S -p "" chmod 750 "$AGENTDIR/Cfg/Preferences.pm"
-	echo "$sudoPass" | sudo -S -p "" chmod 750 "$AGENTDIR/Cfg/bash_prefs.cfg"
+	echo "$sudoPass" | sudo -S -p "<prompt>" chmod 750 "$AGENTDIR/Cfg/Config.pm"
+	echo "$sudoPass" | sudo -S -p "<prompt>" chmod 750 "$AGENTDIR/Cfg/Preferences.pm"
+	echo "$sudoPass" | sudo -S -p "<prompt>" chmod 750 "$AGENTDIR/Cfg/bash_prefs.cfg"
 }
 
 #####################

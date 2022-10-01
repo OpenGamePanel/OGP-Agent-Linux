@@ -1180,7 +1180,6 @@ sub get_log
 		$log_file = Path::Class::File->new($home_path, $log_file);
 	}
 	
-	chmod 0777, $log_file;	
 	sudo_exec_without_decrypt("chmod 777 \"$log_file\"");
 	
 	# Create local copy of current log file if SCREEN_LOG_LOCAL = 1
