@@ -206,6 +206,9 @@ checkDepends() {
 }
 
 update() {
+	# Check to see if limited ogpuser exists
+	generateOGPLimitedUser
+	
 	# Run the update
 	if test -n "$AUTO_UPDATE"; then
 		if [ -z "$CURL" -o -z "$UNZIP" ]; then
@@ -296,6 +299,7 @@ update() {
 	
 run() {
 	getSudoPassword
+	restrictAccess
 	update
 	detectSystemD
 	if test -n "$RESTART" ; then
@@ -343,6 +347,51 @@ quit() {
 	# reset SIGINT and then kill ourselves properly
 	trap - 2
 	kill -2 $$
+}
+
+function generatePassword(){
+	if [ ! -z "$1" ]; then
+		PLENGTH="$1"
+	else
+		PLENGTH="10"
+	fi
+  
+	#rPass=$(date +%s | sha256sum | base64 | head -c "$PLENGTH")
+	rPass=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1 | head -c "$PLENGTH")
+}
+
+function generateOGPLimitedUser(){
+	ogpUSER="ogp_server_runner"
+	echo "$sudoPass" | sudo -S -p "<prompt>" id -u "$ogpUSER"
+	if [ $? -eq 1 ]; then
+		echo "Creating ogp limited user for running servers and additional security..."
+		echo "$sudoPass" | sudo -S -p "<prompt>" groupdel ${ogpUSER}
+		echo "$sudoPass" | sudo -S -p "<prompt>" groupadd ${ogpUSER}
+		generatePassword "15"
+		ogpPass="$rPass"
+		echo "$sudoPass" | sudo -S -p "<prompt>" useradd --home "/home/$ogpUSER" -g ${ogpUSER} -m "$ogpUSER"
+		echo "$sudoPass" | sudo -S -p "<prompt>" sh -c "echo '${ogpUSER}:${ogpPass}' | chpasswd"
+		# Use /bin/bash shell by default per request from Omano
+		echo "$sudoPass" | sudo -S -p "<prompt>" usermod -s /bin/bash ${ogpUSER}
+		echo "$sudoPass" | sudo -S -p "<prompt>" sh -c "echo 'limited_ogp_user=${ogpUSER}
+password=${ogpPass}' > /root/ogp_server_runner_info"
+		agentUser="$(whoami)"
+		echo "$sudoPass" | sudo -S -p "<prompt>" usermod -a -G "$ogpUSER" "$agentUser"
+		# Reload perms so we don't have to reboot system for new group to apply right now...
+		echo "$sudoPass" | sudo -S -p "<prompt>" exec su -l "$agentUser"
+	fi
+	
+	# Set servers to run under their own user by default:
+	hasLinuxUser=$(cat "$AGENTDIR/Cfg/Preferences.pm" | grep -o "linux_user_per_game_server")
+	if [ -z "$hasLinuxUser" ]; then
+		 sed -i "\$i \\\\tlinux_user_per_game_server => '1'," "$AGENTDIR/Cfg/Preferences.pm"
+	fi
+}
+
+function restrictAccess(){
+	echo "$sudoPass" | sudo -S -p "<prompt>" chmod 750 "$AGENTDIR/Cfg/Config.pm"
+	echo "$sudoPass" | sudo -S -p "<prompt>" chmod 750 "$AGENTDIR/Cfg/Preferences.pm"
+	echo "$sudoPass" | sudo -S -p "<prompt>" chmod 750 "$AGENTDIR/Cfg/bash_prefs.cfg"
 }
 
 #####################

@@ -64,6 +64,7 @@ use constant WEB_API_URL => $Cfg::Config{web_api_url};
 use constant STEAM_DL_LIMIT => $Cfg::Config{steam_dl_limit};
 use constant SCREEN_LOG_LOCAL  => $Cfg::Preferences{screen_log_local};
 use constant DELETE_LOGS_AFTER  => $Cfg::Preferences{delete_logs_after};
+use constant LINUX_USER_PER_GAME_SERVER  => $Cfg::Preferences{linux_user_per_game_server};
 use constant AGENT_PID_FILE =>
   Path::Class::File->new(AGENT_RUN_DIR, 'ogp_agent.pid');
 use constant AGENT_RSYNC_GENERIC_LOG =>
@@ -87,6 +88,7 @@ use constant SCREENRC_TMP_FILE =>
   Path::Class::File->new(AGENT_RUN_DIR, 'ogp_screenrc.tmp');
 use constant SCREEN_TYPE_HOME   => "HOME";
 use constant SCREEN_TYPE_UPDATE => "UPDATE";
+use constant SERVER_RUNNER_USER => "ogp_server_runner";
 use constant FD_DIR => Path::Class::Dir->new(AGENT_RUN_DIR, 'FastDownload');
 use constant FD_ALIASES_DIR => Path::Class::Dir->new(FD_DIR, 'aliases');
 use constant FD_PID_FILE => Path::Class::File->new(FD_DIR, 'fd.pid');
@@ -184,6 +186,11 @@ move(SCREENRC_TMP_FILE,SCREENRC_FILE);
 if (!-d SCREEN_LOGS_DIR && !mkdir SCREEN_LOGS_DIR)
 {
 	logger "Could not create " . SCREEN_LOGS_DIR . " directory $!.", 1;
+	exit -1;
+}
+
+if ( ! chmod 0777, SCREEN_LOGS_DIR ){
+	logger "Could not chmod 777 " . SCREEN_LOGS_DIR . " directory $!.", 1;
 	exit -1;
 }
 
@@ -486,7 +493,22 @@ sub get_home_pids
 	my ($home_id) = @_;
 	my $screen_id = create_screen_id(SCREEN_TYPE_HOME, $home_id);
 	my ($pid, @pids);
-	($pid) = split(/\./, `screen -ls | grep -E -o "[0-9]+\.$screen_id"`, 2);
+	
+	my $as_user = find_user_by_screen_id($screen_id);
+	
+	my $ret = sudo_exec_without_decrypt('screen -ls | grep -E -o "[0-9]+\.'.$screen_id.'"', $as_user);
+	my ($retval, $enc_out) = split(/;/, $ret, 2);
+	if($retval != 1)
+	{
+		logger "Unable to get pids, probably a bad sudo password or not in sudoers list.";
+		return ();
+	}
+	
+	$enc_out =~ s/\\n//g;
+	
+	my $out = decode_base64($enc_out);
+	
+	($pid) = split(/\./, $out, 2);
 	if(defined $pid)
 	{
 		chomp($pid);
@@ -736,9 +758,26 @@ sub is_screen_running_without_decrypt
 	my ($screen_type, $home_id) = @_;
 
 	my $screen_id = create_screen_id($screen_type, $home_id);
-
-	my $is_running = `screen -list | grep $screen_id`;
-
+	
+	my $as_user = find_user_by_screen_id($screen_id);
+		
+	my $ret = sudo_exec_without_decrypt('screen -list | grep '.$screen_id, $as_user);
+		
+	my ($retval, $enc_out) = split(/;/, $ret, 2);
+	
+	if($retval != 1)
+	{
+		return 0;
+	}
+	
+	my $is_running = " ";
+	
+	if( defined($enc_out) )
+	{
+		$enc_out =~ s/\\n//g;
+		$is_running = decode_base64($enc_out);
+	}
+		
 	if ($is_running =~ /^\s*$/)
 	{
 		return 0;
@@ -782,19 +821,44 @@ sub universal_start_without_decrypt
 		return -14;
 	}
 	
+	secure_path_without_decrypt('chattr-i', $server_exe);
+	
 	if (!-e $home_path)
 	{
 		logger "Can't find server's install path [ $home_path ].";
 		return -10;
 	}
 	
-	my $uid = `id -u`;
-	chomp $uid;
-	my $gid = `id -g`;
-	chomp $gid;
-	my $path = $home_path;
-	$path =~ s/('+)/'\"$1\"'/g;
-	sudo_exec_without_decrypt('chown -Rf '.$uid.':'.$gid.' \''.$path.'\'');
+	my $owner = SERVER_RUNNER_USER;
+	my $group = SERVER_RUNNER_USER;
+	my $ogpAgentGroup = `whoami`;
+	chomp $ogpAgentGroup;
+	
+	if(defined LINUX_USER_PER_GAME_SERVER && LINUX_USER_PER_GAME_SERVER eq "1"){
+		$owner = "gamehome" . $home_id;
+		$group = `whoami`;
+		chomp $group;
+		
+		# Create new user if doesn't exist
+		my $userExists = `id -u $owner`;
+		if(not is_integer($userExists)){
+			logger "User $owner currently doesn't exist... creating user...";
+			 
+			sudo_exec_without_decrypt("useradd -m $owner"); 
+			sudo_exec_without_decrypt("usermod -s /bin/bash $owner"); 
+			sudo_exec_without_decrypt("usermod -a -G \"$owner\" \"$group\""); 
+		}
+	}
+	
+	# Set ownership on the game home
+	set_path_ownership($owner, $group, $home_path);
+	
+	# Fix perms on ogp_agent user's homedir so that other users can access their owned files within this dir
+	my $fixOGPHomeDirCommand = 'chmod -R ug+rwx $( getent passwd "' . $ogpAgentGroup . '" | cut -d: -f6 )';
+	sudo_exec_without_decrypt($fixOGPHomeDirCommand);
+
+	$fixOGPHomeDirCommand = 'find "$( getent passwd "' . $ogpAgentGroup . '" | cut -d: -f6 )" -type d -print0 | xargs -0 chmod o+x';
+	sudo_exec_without_decrypt($fixOGPHomeDirCommand);
 	
 	# Some game require that we are in the directory where the binary is.
 	my $game_binary_dir = Path::Class::Dir->new($home_path, $run_dir);
@@ -804,11 +868,9 @@ sub universal_start_without_decrypt
 		return -12;
 	}
 	
-	secure_path_without_decrypt('chattr-i', $server_exe);
-	
 	if (!-x $server_exe)
 	{
-		if (!chmod 0755, $server_exe)
+		if (!chmod 0775, $server_exe)
 		{
 			logger "The $server_exe file is not executable.";
 			return -13;
@@ -941,15 +1003,16 @@ sub universal_start_without_decrypt
 	  "Startup command [ $cli_bin ] will be executed in dir $game_binary_dir.";
 	
 	# Run before start script
-	$run_before_start = run_before_start_commands($home_id, $home_path, $preStart);
+	$run_before_start = run_before_start_commands($home_id, $home_path, $preStart, $owner);
 	
-	system($cli_bin);
+	sudo_exec_without_decrypt($cli_bin, $owner);
 	
 	sleep(1);
 	
 	renice_process_without_decrypt($home_id, $nice);
 		
 	chdir AGENT_RUN_DIR;
+	
 	return 1;
 }
 
@@ -1117,7 +1180,7 @@ sub get_log
 		$log_file = Path::Class::File->new($home_path, $log_file);
 	}
 	
-	chmod 0644, $log_file;	
+	sudo_exec_without_decrypt("chmod 777 \"$log_file\"");
 	
 	# Create local copy of current log file if SCREEN_LOG_LOCAL = 1
 	if(SCREEN_LOG_LOCAL == 1)
@@ -1231,6 +1294,9 @@ sub stop_server_without_decrypt
 		logger("Invalid IP:Port given $server_ip:$server_port.");
 		return 1;
 	}
+	
+	my $screen_id = create_screen_id(SCREEN_TYPE_HOME, $home_id);
+	my $as_user = find_user_by_screen_id($screen_id);
 
 	if ($control_password !~ /^\s*$/ and $control_protocol ne "")
 	{
@@ -1362,21 +1428,23 @@ sub stop_server_without_decrypt
 		@server_pids = get_home_pids($home_id);
 		
 		my $cnt;
+		my $out;
 		foreach my $pid (@server_pids)
 		{
 			chomp($pid);
-			$cnt = kill 15, $pid;
-			
-			if ($cnt != 1)
+			$cnt = sudo_exec_without_decrypt("kill 15 $pid", $as_user);
+			($cnt, $out) = split(/;/, $cnt, 2);
+			if ($cnt == -1)
 			{
-				$cnt = kill 9, $pid;
-				if ($cnt == 1)
+				$cnt = sudo_exec_without_decrypt("kill 9 $pid", $as_user);
+				($cnt, $out) = split(/;/, $cnt, 2);
+				if ($cnt == -1)
 				{
-					logger "Stopped process with pid $pid successfully using kill 9.";
+					logger "Process $pid can not be stopped.";
 				}
 				else
 				{
-					logger "Process $pid can not be stopped.";
+					logger "Stopped process with pid $pid successfully using kill 9.";
 				}
 			}
 			else
@@ -1384,7 +1452,7 @@ sub stop_server_without_decrypt
 				logger "Stopped process with pid $pid successfully using kill 15.";
 			}
 		}
-		system('screen -wipe > /dev/null 2>&1');
+		sudo_exec_without_decrypt('screen -wipe > /dev/null 2>&1', $as_user);
 		return 0;
 	}
 	else
@@ -1393,21 +1461,23 @@ sub stop_server_without_decrypt
 		my @server_pids = get_home_pids($home_id);
 		
 		my $cnt;
+		my $out;
 		foreach my $pid (@server_pids)
 		{
 			chomp($pid);
-			$cnt = kill 15, $pid;
-			
-			if ($cnt != 1)
+			$cnt = sudo_exec_without_decrypt("kill 15 $pid", $as_user);
+			($cnt, $out) = split(/;/, $cnt, 2);
+			if ($cnt == -1)
 			{
-				$cnt = kill 9, $pid;
-				if ($cnt == 1)
+				$cnt = sudo_exec_without_decrypt("kill 9 $pid", $as_user);
+				($cnt, $out) = split(/;/, $cnt, 2);
+				if ($cnt == -1)
 				{
-					logger "Stopped process with pid $pid successfully using kill 9.";
+					logger "Process $pid can not be stopped.";
 				}
 				else
 				{
-					logger "Process $pid can not be stopped.";
+					logger "Stopped process with pid $pid successfully using kill 9.";
 				}
 			}
 			else
@@ -1415,7 +1485,7 @@ sub stop_server_without_decrypt
 				logger "Stopped process with pid $pid successfully using kill 15.";
 			}
 		}
-		system('screen -wipe > /dev/null 2>&1');
+		sudo_exec_without_decrypt('screen -wipe > /dev/null 2>&1', $as_user);
 		return 0;
 	}
 }
@@ -1936,7 +2006,7 @@ sub lock_additional_files_logic{
 sub run_before_start_commands
 {
 	#return "Bad Encryption Key" unless(decrypt_param(pop(@_)) eq "Encryption checking OK");
-	my ($server_id, $homedir, $beforestartcmd) = @_;
+	my ($server_id, $homedir, $beforestartcmd, $pathowner) = @_;
 	
 	if ($homedir ne "" && $server_id ne ""){
 		# Run any prestart scripts
@@ -1954,7 +2024,7 @@ sub run_before_start_commands
 			print FILE "rm -f $prestartcmdfile\n";
 			close FILE;
 			chmod 0755, $prestartcmdfile;
-			system("bash $prestartcmdfile");
+			sudo_exec_without_decrypt("bash $prestartcmdfile", $pathowner);
 		}		
 	}else{
 		return -2;
@@ -2007,13 +2077,8 @@ sub create_secure_script
 
 sub check_b4_chdir
 {
-	my ( $path ) = @_;
-	
-	my $uid = `id -u`;
-	chomp $uid;
-	my $gid = `id -g`;
-	chomp $gid;	
-		
+	my ($path, $owner) = @_;
+			
 	if (!-e $path)
 	{
 		logger "$path does not exist yet. Trying to create it...";
@@ -2029,16 +2094,16 @@ sub check_b4_chdir
 		{
 			return -1;
 		}
-		
-		# Set perms on it as well
-		sudo_exec_without_decrypt('chown -Rf '.$uid.':'.$gid.' \''.$path.'\'');
 	}
-	else
-	{	
-		# File or directory already exists
-		# Make sure it's owned by the agent
-		secure_path_without_decrypt('chattr-i', $path);
+	
+	my $group = SERVER_RUNNER_USER;
+	
+	if(defined LINUX_USER_PER_GAME_SERVER && LINUX_USER_PER_GAME_SERVER eq "1"){
+		$group = `whoami`;
+		chomp $group;
 	}
+	
+	set_path_ownership($owner, $group, $path);
 	
 	if (!chdir $path)
 	{
@@ -2046,6 +2111,31 @@ sub check_b4_chdir
 		return -1;
 	}
 	
+	return 0;
+}
+
+sub set_path_ownership
+{
+	my ($owner, $group, $path) = @_;
+	
+	my $owner_uid = `id -u $owner`;
+	chomp $owner_uid;
+	my $group_uid = `id -g $group`;
+	chomp $group_uid;
+		
+	# Remove immutable flag recursivelly
+	secure_path_without_decrypt('chattr-i', $path);
+	
+	# Set owner and perms on it recursivelly as well
+	my $chownCommand = "chown -Rf $owner_uid:$group_uid '$path'";
+	my $chmodCommand = "chmod -Rf ug+rwx '$path'";
+	sudo_exec_without_decrypt($chownCommand);
+	sudo_exec_without_decrypt($chmodCommand);
+	
+	# Remove perms for other users
+	$chmodCommand = "chmod -Rf o-rwx '$path'";
+	sudo_exec_without_decrypt($chmodCommand);
+		
 	return 0;
 }
 
@@ -2108,19 +2198,19 @@ sub start_rsync_install
 {
 	return "Bad Encryption Key" unless(decrypt_param(pop(@_)) eq "Encryption checking OK");
 	my ($home_id, $home_path, $url, $exec_folder_path, $exec_path, $precmd, $postcmd, $filesToLockUnlock) = decrypt_params(@_);
-
-	if ( check_b4_chdir($home_path) != 0)
+	
+	my $owner = get_path_owner($home_path);
+	
+	if ( check_b4_chdir($home_path, $owner) != 0)
 	{
 		return 0;
 	}
-	
-	secure_path_without_decrypt('chattr-i', $home_path);
-	
+		
 	create_secure_script($home_path, $exec_folder_path, $exec_path);
-
+	
 	my $bash_scripts_path = MANUAL_TMP_DIR . "/home_id_" . $home_id;
 	
-	if ( check_b4_chdir($bash_scripts_path) != 0)
+	if ( check_b4_chdir($bash_scripts_path, $owner) != 0)
 	{
 		return 0;
 	}
@@ -2167,19 +2257,18 @@ sub master_server_update
 {
 	return "Bad Encryption Key" unless(decrypt_param(pop(@_)) eq "Encryption checking OK");
 	my ($home_id,$home_path,$ms_home_id,$ms_home_path,$exec_folder_path,$exec_path,$precmd,$postcmd) = decrypt_params(@_);
+	my $owner = get_path_owner($home_path);
 	
-	if ( check_b4_chdir($home_path) != 0)
+	if ( check_b4_chdir($home_path, $owner) != 0)
 	{
 		return 0;
 	}
-	
-	secure_path_without_decrypt('chattr-i', $home_path);
-		
+			
 	create_secure_script($home_path, $exec_folder_path, $exec_path);
 			
 	my $bash_scripts_path = MANUAL_TMP_DIR . "/home_id_" . $home_id;
 	
-	if ( check_b4_chdir($bash_scripts_path) != 0)
+	if ( check_b4_chdir($bash_scripts_path, $owner) != 0)
 	{
 		return 0;
 	}
@@ -2239,19 +2328,18 @@ sub steam_cmd
 sub steam_cmd_without_decrypt
 {
 	my ($home_id, $home_path, $mod, $modname, $betaname, $betapwd, $user, $pass, $guard, $exec_folder_path, $exec_path, $precmd, $postcmd, $cfg_os, $filesToLockUnlock, $arch_bits) = @_;
+	my $owner = get_path_owner($home_path);
 	
-	if ( check_b4_chdir($home_path) != 0)
+	if ( check_b4_chdir($home_path, $owner) != 0)
 	{
 		return 0;
 	}
-	
-	secure_path_without_decrypt('chattr-i', $home_path);
-	
+		
 	create_secure_script($home_path, $exec_folder_path, $exec_path);
 	
 	my $bash_scripts_path = MANUAL_TMP_DIR . "/home_id_" . $home_id;
 	
-	if ( check_b4_chdir($bash_scripts_path) != 0)
+	if ( check_b4_chdir($bash_scripts_path, $owner) != 0)
 	{
 		return 0;
 	}
@@ -2813,10 +2901,30 @@ sub remove_home
 		logger "ERROR - $home_path_del does not exist...nothing to do";
 		return 0;
 	}
-
+	
+	my $owner = get_path_owner($home_path_del);
 	secure_path_without_decrypt('chattr-i', $home_path_del);
-	sleep 1 while ( !pathrmdir("$home_path_del") );
-	logger "Deletetion of $home_path_del successful!";
+	my $deleted_home_dir = sudo_exec_without_decrypt('rm -rf \''.$home_path_del.'\'');
+	
+	if (defined LINUX_USER_PER_GAME_SERVER && LINUX_USER_PER_GAME_SERVER eq "1"){
+		if ($owner ne SERVER_RUNNER_USER && begins_with($owner,'gamehome')){
+			my $kill_all_user = sudo_exec_without_decrypt('killall -u "' . $owner . '"');
+			my $deleted_user = sudo_exec_without_decrypt('userdel -r "' . $owner . '"');
+			my ($retval_del_user, $enc_out_del_user) = split(/;/, $deleted_user, 2);
+			if ($retval_del_user == 1){
+				logger "Removing and deleting user $owner";
+			}
+			my $deleted_user_group = sudo_exec_without_decrypt('groupdel "' . $owner . '"');
+		}
+	}
+	
+	my ($retval, $enc_out) = split(/;/, $deleted_home_dir, 2);
+	if ($retval == 1){
+		logger "Deletetion of $home_path_del successful!";
+	}else{
+		logger "Deletetion of $home_path_del failed!";
+	}
+	
 	return 1;
 }
 
@@ -2857,6 +2965,100 @@ sub restart_server_without_decrypt
 	}
 }
 
+sub find_user_by_screen_id
+{
+	my ($screen_id) = @_;
+	
+	my $screen_user = SERVER_RUNNER_USER;
+	
+	if(defined LINUX_USER_PER_GAME_SERVER && LINUX_USER_PER_GAME_SERVER eq "1"){
+		$screen_user = `whoami`;
+		chomp $screen_user;
+	}
+	
+	my $ret = sudo_exec_without_decrypt('find /var/run/screen -name "*'.$screen_id.'"');
+		
+	my ($retval, $enc_out) = split(/;/, $ret, 2);
+	
+	if($retval != 1)
+	{
+		return $screen_user;
+	}
+		
+	if( defined($enc_out) && $enc_out =~ /^(.+)\\n/ )
+	{
+		my @dec_out = ();
+		foreach my $line (split /\\n/, $enc_out) {
+			my $dec_line = decode_base64($line);
+			push @dec_out, $dec_line;
+		}
+		
+		my @path_parts = split /\//, $dec_out[0];
+		
+		if ($#path_parts == 5)
+		{
+			if($path_parts[5] =~ /^(\d+)\.$screen_id$/)
+			{
+				if ($path_parts[4] =~ /^S-/)
+				{
+					my $parseval = $path_parts[4];
+					$parseval =~ s/^S-//g;
+					my $uid = `id -u $parseval`;
+					if( $uid =~ /^(\d+)$/ )
+					{
+						$screen_user = $parseval;
+					}
+				}
+			}
+		}
+	}
+	
+	return $screen_user;
+}
+
+sub get_path_owner
+{
+	my ($path) = @_;
+	
+	my $path_owner = SERVER_RUNNER_USER;
+	
+	if(defined LINUX_USER_PER_GAME_SERVER && LINUX_USER_PER_GAME_SERVER eq "1"){
+		$path_owner = `whoami`;
+		chomp $path_owner;
+	}
+	
+	if(-d $path)
+	{
+		my $ret = sudo_exec_without_decrypt('stat -c "%U" "'.$path.'"');
+			
+		my ($retval, $enc_out) = split(/;/, $ret, 2);
+		
+		if($retval != 1)
+		{
+			return $path_owner;
+		}
+			
+		if( defined($enc_out) && $enc_out =~ /^(.+)\\n/ )
+		{
+			my @dec_out = ();
+			foreach my $line (split /\\n/, $enc_out) {
+				my $dec_line = decode_base64($line);
+				push @dec_out, $dec_line;
+			}
+
+			my $parseval = $dec_out[0];
+			my $uid = `id -u $parseval`;
+			
+			if( $uid =~ /^(\d+)$/ )
+			{
+				$path_owner = $parseval;
+			}
+		}
+	}
+	
+	return $path_owner;
+}
+
 sub sudo_exec
 {
 	return "Bad Encryption Key" unless(decrypt_param(pop(@_)) eq "Encryption checking OK");
@@ -2866,22 +3068,26 @@ sub sudo_exec
 
 sub sudo_exec_without_decrypt
 {
-	my ($sudo_exec) = @_;
+	my ($sudo_exec, $as_user) = @_;
 	$sudo_exec =~ s/('+)/'"$1"'/g;
-	logger "Running the following command \"" . $sudo_exec . "\" with sudo.";
-	my $command = "echo '$SUDOPASSWD'|sudo -kS -p \"<prompt>\" su -c '$sudo_exec;echo \$?' root 2>&1";
+	if( !defined($as_user) )
+	{
+		$as_user = "root";
+	}
+	
+	my $command = "echo '$SUDOPASSWD'|sudo -kS -p \"<prompt>\" su -c '$sudo_exec;echo \$?' $as_user 2>&1";
 	my @cmdret = qx($command);
 	$cmdret[0] =~ s/^<prompt>//g if defined $cmdret[0];
 	chomp(@cmdret);
+	
 	my $ret = pop(@cmdret);
 	chomp($ret);
 	
 	if ("X$ret" eq "X0")
 	{
-		logger "Command \"" . $sudo_exec . "\" was successfully run with sudo.";
 		return "1;".encode_list(@cmdret);
 	}
-	logger "Command \"" . $sudo_exec . "\" run with sudo failed with exit code $ret.";
+	
 	return -1;
 }
 
@@ -2907,25 +3113,21 @@ sub secure_path_without_decrypt
 		}
 	}
 	
-	my $uid = `id -u`;
-	chomp $uid;
-	my $gid = `id -g`;
-	chomp $gid;
 	$file_path =~ s/('+)/'\"$1\"'/g;
 	if($action eq "chattr+i")
 	{
 		if(defined $returnType && $returnType eq "str"){
-			return 'chown -Rf '.$uid.':'.$gid.' \''.$file_path.'\' && chattr -Rf +i \''.$file_path.'\'';
+			return 'chattr -Rf +i \''.$file_path.'\'';
 		}else{
-			return sudo_exec_without_decrypt('chown -Rf '.$uid.':'.$gid.' \''.$file_path.'\' && chattr -Rf +i \''.$file_path.'\'');
+			return sudo_exec_without_decrypt('chattr -Rf +i \''.$file_path.'\'');
 		}
 	}
 	elsif($action eq "chattr-i")
 	{
 		if(defined $returnType && $returnType eq "str"){
-			return 'chattr -Rf -i \''.$file_path.'\' && chown -Rf '.$uid.':'.$gid.' \''.$file_path.'\'';
+			return 'chattr -Rf -i \''.$file_path.'\'';
 		}else{
-			return sudo_exec_without_decrypt('chattr -Rf -i \''.$file_path.'\' && chown -Rf '.$uid.':'.$gid.' \''.$file_path.'\'');
+			return sudo_exec_without_decrypt('chattr -Rf -i \''.$file_path.'\'');
 		}
 	}
 	
@@ -3013,12 +3215,15 @@ sub ftp_mgr
 			chdir EHCP_DIR;
 			my $phpScript;
 			my $phpOut;
+			my $gidTwo = SERVER_RUNNER_USER;
 			
 			chmod 0777, 'ehcp_ftp_log.txt';
 			
 			# In order to access the FTP files, the vsftpd user needs to be added to the ogp group
 			sudo_exec_without_decrypt("usermod -a -G '$gid' ftp"); 
 			sudo_exec_without_decrypt("usermod -a -G '$gid' vsftpd"); 
+			sudo_exec_without_decrypt("usermod -a -G '$gidTwo' ftp"); 
+			sudo_exec_without_decrypt("usermod -a -G '$gidTwo' vsftpd"); 
 			
 			if($action eq "list")
 			{
@@ -4183,7 +4388,14 @@ sub steam_workshop_without_decrypt
 		$download_method, $url_list, $filename_list) = @_;
 	
 	# Creates mods path if it doesn't exist
-	if ( check_b4_chdir($mods_full_path) != 0)
+	my $owner = SERVER_RUNNER_USER;
+	
+	if(defined LINUX_USER_PER_GAME_SERVER && LINUX_USER_PER_GAME_SERVER eq "1"){
+		$owner = `whoami`;
+		chomp $owner;
+	}
+
+	if ( check_b4_chdir($mods_full_path, $owner) != 0)
 	{
 		return -1;
 	}
@@ -4267,7 +4479,7 @@ sub steam_workshop_without_decrypt
 	
 	my $bash_scripts_path = MANUAL_TMP_DIR . "/home_id_" . $home_id;
 	
-	if ( check_b4_chdir($bash_scripts_path) != 0)
+	if ( check_b4_chdir($bash_scripts_path, $owner) != 0)
 	{
 		return -1;
 	}
@@ -4461,3 +4673,26 @@ sub begins_with
 {
     return substr($_[0], 0, length($_[1])) eq $_[1];
 }
+
+sub generate_random_password{
+	my ($length) = @_;
+	my @alphanumeric = ('a'..'z', 'A'..'Z', 0..9,'!','_','-');
+	my @numeric = (0..9);
+	my $randpassword = '';
+	
+	if(not defined $length || not is_integer($length)){
+		$length = 16;
+	}
+
+	until ( length($randpassword) > $length ) {
+			$randpassword = $randpassword . join '', map $alphanumeric[rand @alphanumeric], 0..(rand @numeric);
+	}
+
+	return $randpassword;
+}
+
+sub trim{ 
+	my $s = shift; 
+	$s =~ s/^\s+|\s+$//g; 
+	return $s 
+};
