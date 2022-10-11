@@ -1503,9 +1503,12 @@ sub send_rcon_command
 	if ($control_protocol eq "lcon")
 	{
 		my $screen_id = create_screen_id(SCREEN_TYPE_HOME, $home_id);
-		system('screen -S '.$screen_id.' -p 0 -X stuff "'.$rconCommand.'$(printf \\\\r)"');
+		my $as_user = find_user_by_screen_id($screen_id);
+		my $ScreenCommand = 'screen -S '.$screen_id.' -p 0 -X stuff "'.$rconCommand.'$(printf \\\\r)"';
 		logger "Sending legacy console command to ".$screen_id.": \n$rconCommand \n .";
-		if ($? == -1)
+		my $ret = sudo_exec_without_decrypt($ScreenCommand, $as_user);	
+		my ($retval, $enc_out) = split(/;/, $ret, 2);
+		if($retval == 1)
 		{
 			my(@modedlines) = "$rconCommand";
 			my $encoded_content = encode_list(@modedlines);
