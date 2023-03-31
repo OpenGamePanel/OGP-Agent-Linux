@@ -1035,16 +1035,12 @@ sub renice_process_without_decrypt
 		  "Renicing pids [ @pids ] from home_id $home_id with nice value $nice.";
 		foreach my $pid (@pids)
 		{
-			my $rpid = kill 0, $pid;
-			if ($rpid == 1)
+			my $ret = sudo_exec_without_decrypt('/usr/bin/renice '.$nice.' '.$pid);
+			($ret) = split(/;/, $ret, 2);
+			if($ret != 1)
 			{
-				my $ret = sudo_exec_without_decrypt('/usr/bin/renice '.$nice.' '.$pid);
-				($ret) = split(/;/, $ret, 2);
-				if($ret != 1)
-				{
-					logger "Unable to renice process, probably bad sudo password or not in sudoers list.";
-					return -1
-				}
+				logger "Unable to renice process, probably bad sudo password or not in sudoers list.";
+				return -1
 			}
 		}
 	}
@@ -1835,7 +1831,6 @@ sub rebootnow
 sub what_os
 {
 	return "Bad Encryption Key" unless(decrypt_param(pop(@_)) eq "Encryption checking OK");
-	logger "Asking for OS type";
 	my $which_uname = `which uname`;
 	chomp $which_uname;
 	if ($which_uname ne "")
@@ -1857,7 +1852,6 @@ sub what_os
 			$wine_ver = "|".$wine_ver;
 		}
 		$os = $os_name." ".$os_arch.$wine_ver;
-		logger "OS is $os";
 		return "$os";
 	}
 	else
