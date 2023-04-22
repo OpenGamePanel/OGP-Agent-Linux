@@ -1016,7 +1016,7 @@ sub universal_start_without_decrypt
 	chdir AGENT_RUN_DIR;
 	
 	if($restartOGPAgentToApplyNewPerms){
-		sudo_exec_without_decrypt("sleep 2 && service ogp_agent restart &"); 
+		sudo_exec_without_decrypt_no_return("sleep 2 && service ogp_agent restart &"); 
 	}
 	
 	return 1;
@@ -3079,6 +3079,31 @@ sub sudo_exec_without_decrypt
 	}
 	
 	my $command = "echo '$SUDOPASSWD'|sudo -kS -p \"<prompt>\" su -c '$sudo_exec;echo \$?' $as_user 2>&1";
+	my @cmdret = qx($command);
+	$cmdret[0] =~ s/^<prompt>//g if defined $cmdret[0];
+	chomp(@cmdret);
+	
+	my $ret = pop(@cmdret);
+	chomp($ret);
+	
+	if ("X$ret" eq "X0")
+	{
+		return "1;".encode_list(@cmdret);
+	}
+	
+	return -1;
+}
+
+sub sudo_exec_without_decrypt_no_return
+{
+	my ($sudo_exec, $as_user) = @_;
+	$sudo_exec =~ s/('+)/'"$1"'/g;
+	if( !defined($as_user) )
+	{
+		$as_user = "root";
+	}
+	
+	my $command = "echo '$SUDOPASSWD'|sudo -kS -p \"<prompt>\" su -c '$sudo_exec' $as_user 2>&1";
 	my @cmdret = qx($command);
 	$cmdret[0] =~ s/^<prompt>//g if defined $cmdret[0];
 	chomp(@cmdret);
