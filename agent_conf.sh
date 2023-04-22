@@ -670,9 +670,10 @@ then
 	prefs="${prefs}\tftp_method => '${ftpMethod}',\n"
 	prefs="${prefs}\togp_autorestart_server => '${autoRestart}',\n"
 	prefs="${prefs}\tprotocol_shutdown_waittime => '10',\n"
+	prefs="${prefs}\tlinux_user_per_game_server => '1',\n"
 	if [ "X${proftpd}" == "Xyes" ]
 	then
-		prefs="${prefs}\tproftpd_conf_path => '${proFTPdConfPath}'\n"
+		prefs="${prefs}\tproftpd_conf_path => '${proFTPdConfPath}',\n"
 	fi
 	prefs="${prefs});"
 	echo -e $prefs > $prefsfile 

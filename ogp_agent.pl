@@ -64,7 +64,7 @@ use constant WEB_API_URL => $Cfg::Config{web_api_url};
 use constant STEAM_DL_LIMIT => $Cfg::Config{steam_dl_limit};
 use constant SCREEN_LOG_LOCAL  => $Cfg::Preferences{screen_log_local};
 use constant DELETE_LOGS_AFTER  => $Cfg::Preferences{delete_logs_after};
-use constant USE_EXISTING_DIR_PERMS  => $Cfg::Preferences{use_dir_owner_game_servers};
+use constant LINUX_USER_PER_GAME_SERVER  => $Cfg::Preferences{linux_user_per_game_server};
 use constant AGENT_PID_FILE =>
   Path::Class::File->new(AGENT_RUN_DIR, 'ogp_agent.pid');
 use constant AGENT_RSYNC_GENERIC_LOG =>
@@ -186,6 +186,11 @@ move(SCREENRC_TMP_FILE,SCREENRC_FILE);
 if (!-d SCREEN_LOGS_DIR && !mkdir SCREEN_LOGS_DIR)
 {
 	logger "Could not create " . SCREEN_LOGS_DIR . " directory $!.", 1;
+	exit -1;
+}
+
+if ( ! chmod 0777, SCREEN_LOGS_DIR ){
+	logger "Could not chmod 777 " . SCREEN_LOGS_DIR . " directory $!.", 1;
 	exit -1;
 }
 
@@ -489,11 +494,7 @@ sub get_home_pids
 	my $screen_id = create_screen_id(SCREEN_TYPE_HOME, $home_id);
 	my ($pid, @pids);
 	
-	my $as_user = SERVER_RUNNER_USER;
-	
-	if(defined USE_EXISTING_DIR_PERMS && USE_EXISTING_DIR_PERMS eq "1"){
-		$as_user = find_user_by_screen_id($screen_id);
-	}
+	my $as_user = find_user_by_screen_id($screen_id);
 	
 	my $ret = sudo_exec_without_decrypt('screen -ls | grep -E -o "[0-9]+\.'.$screen_id.'"', $as_user);
 	my ($retval, $enc_out) = split(/;/, $ret, 2);
@@ -758,11 +759,7 @@ sub is_screen_running_without_decrypt
 
 	my $screen_id = create_screen_id($screen_type, $home_id);
 	
-	my $as_user = SERVER_RUNNER_USER;
-	
-	if(defined USE_EXISTING_DIR_PERMS && USE_EXISTING_DIR_PERMS eq "1"){
-		$as_user = find_user_by_screen_id($screen_id);
-	}
+	my $as_user = find_user_by_screen_id($screen_id);
 		
 	my $ret = sudo_exec_without_decrypt('screen -list | grep '.$screen_id, $as_user);
 		
@@ -835,21 +832,35 @@ sub universal_start_without_decrypt
 	my $owner = SERVER_RUNNER_USER;
 	my $group = SERVER_RUNNER_USER;
 	my $ogpAgentGroup = `whoami`;
+	my $restartOGPAgentToApplyNewPerms = 0;
 	chomp $ogpAgentGroup;
 	
-	if(defined USE_EXISTING_DIR_PERMS && USE_EXISTING_DIR_PERMS eq "1"){
-		$owner = get_path_owner($home_path);
+	if(defined LINUX_USER_PER_GAME_SERVER && LINUX_USER_PER_GAME_SERVER eq "1"){
+		$owner = "gamehome" . $home_id;
 		$group = `whoami`;
 		chomp $group;
-		sudo_exec_without_decrypt("usermod -a -G $group $owner"); # Add the owner to the agent groups
-	}
 		
-	# Fix perms on ogp_agent user's homedir so that other users can access their owned files within this dir
-	my $fixOGPHomeDirCommand = 'chmod 771 -R $( getent passwd "' . $ogpAgentGroup . '" | cut -d: -f6 )';
-	# logger "Command is " . $fixOGPHomeDirCommand;
-	sudo_exec_without_decrypt($fixOGPHomeDirCommand);
+		# Create new user if doesn't exist
+		my $userExists = `id -u $owner`;
+		if(not is_integer($userExists)){
+			logger "User $owner currently doesn't exist... creating user...";
+			 
+			sudo_exec_without_decrypt("useradd -m $owner"); 
+			sudo_exec_without_decrypt("usermod -s /bin/bash $owner"); 
+			sudo_exec_without_decrypt("usermod -a -G \"$owner\" \"$group\""); 
+			$restartOGPAgentToApplyNewPerms = 1;
+		}
+	}
 	
+	# Set ownership on the game home
 	set_path_ownership($owner, $group, $home_path);
+	
+	# Fix perms on ogp_agent user's homedir so that other users can access their owned files within this dir
+	my $fixOGPHomeDirCommand = 'chmod -R ug+rwx $( getent passwd "' . $ogpAgentGroup . '" | cut -d: -f6 )';
+	sudo_exec_without_decrypt($fixOGPHomeDirCommand);
+
+	$fixOGPHomeDirCommand = 'find "$( getent passwd "' . $ogpAgentGroup . '" | cut -d: -f6 )" -type d -print0 | xargs -0 chmod o+x';
+	sudo_exec_without_decrypt($fixOGPHomeDirCommand);
 	
 	# Some game require that we are in the directory where the binary is.
 	my $game_binary_dir = Path::Class::Dir->new($home_path, $run_dir);
@@ -1003,6 +1014,11 @@ sub universal_start_without_decrypt
 	renice_process_without_decrypt($home_id, $nice);
 		
 	chdir AGENT_RUN_DIR;
+	
+	if($restartOGPAgentToApplyNewPerms){
+		sudo_exec_without_decrypt("sleep 2 && service ogp_agent restart &"); 
+	}
+	
 	return 1;
 }
 
@@ -1025,16 +1041,12 @@ sub renice_process_without_decrypt
 		  "Renicing pids [ @pids ] from home_id $home_id with nice value $nice.";
 		foreach my $pid (@pids)
 		{
-			my $rpid = kill 0, $pid;
-			if ($rpid == 1)
+			my $ret = sudo_exec_without_decrypt('/usr/bin/renice '.$nice.' '.$pid);
+			($ret) = split(/;/, $ret, 2);
+			if($ret != 1)
 			{
-				my $ret = sudo_exec_without_decrypt('/usr/bin/renice '.$nice.' '.$pid);
-				($ret) = split(/;/, $ret, 2);
-				if($ret != 1)
-				{
-					logger "Unable to renice process, probably bad sudo password or not in sudoers list.";
-					return -1
-				}
+				logger "Unable to renice process, probably bad sudo password or not in sudoers list.";
+				return -1
 			}
 		}
 	}
@@ -1170,7 +1182,7 @@ sub get_log
 		$log_file = Path::Class::File->new($home_path, $log_file);
 	}
 	
-	chmod 0644, $log_file;	
+	sudo_exec_without_decrypt("chmod 777 \"$log_file\"");
 	
 	# Create local copy of current log file if SCREEN_LOG_LOCAL = 1
 	if(SCREEN_LOG_LOCAL == 1)
@@ -1286,11 +1298,7 @@ sub stop_server_without_decrypt
 	}
 	
 	my $screen_id = create_screen_id(SCREEN_TYPE_HOME, $home_id);
-	my $as_user = SERVER_RUNNER_USER;
-	
-	if(defined USE_EXISTING_DIR_PERMS && USE_EXISTING_DIR_PERMS eq "1"){
-		$as_user = find_user_by_screen_id($screen_id);
-	}
+	my $as_user = find_user_by_screen_id($screen_id);
 
 	if ($control_password !~ /^\s*$/ and $control_protocol ne "")
 	{
@@ -1497,9 +1505,12 @@ sub send_rcon_command
 	if ($control_protocol eq "lcon")
 	{
 		my $screen_id = create_screen_id(SCREEN_TYPE_HOME, $home_id);
-		system('screen -S '.$screen_id.' -p 0 -X stuff "'.$rconCommand.'$(printf \\\\r)"');
+		my $as_user = find_user_by_screen_id($screen_id);
+		my $ScreenCommand = 'screen -S '.$screen_id.' -p 0 -X stuff "'.$rconCommand.'$(printf \\\\r)"';
 		logger "Sending legacy console command to ".$screen_id.": \n$rconCommand \n .";
-		if ($? == -1)
+		my $ret = sudo_exec_without_decrypt($ScreenCommand, $as_user);	
+		my ($retval, $enc_out) = split(/;/, $ret, 2);
+		if($retval == 1)
 		{
 			my(@modedlines) = "$rconCommand";
 			my $encoded_content = encode_list(@modedlines);
@@ -1826,7 +1837,6 @@ sub rebootnow
 sub what_os
 {
 	return "Bad Encryption Key" unless(decrypt_param(pop(@_)) eq "Encryption checking OK");
-	logger "Asking for OS type";
 	my $which_uname = `which uname`;
 	chomp $which_uname;
 	if ($which_uname ne "")
@@ -1848,7 +1858,6 @@ sub what_os
 			$wine_ver = "|".$wine_ver;
 		}
 		$os = $os_name." ".$os_arch.$wine_ver;
-		logger "OS is $os";
 		return "$os";
 	}
 	else
@@ -2092,7 +2101,7 @@ sub check_b4_chdir
 	
 	my $group = SERVER_RUNNER_USER;
 	
-	if(defined USE_EXISTING_DIR_PERMS && USE_EXISTING_DIR_PERMS eq "1"){
+	if(defined LINUX_USER_PER_GAME_SERVER && LINUX_USER_PER_GAME_SERVER eq "1"){
 		$group = `whoami`;
 		chomp $group;
 	}
@@ -2119,15 +2128,16 @@ sub set_path_ownership
 		
 	# Remove immutable flag recursivelly
 	secure_path_without_decrypt('chattr-i', $path);
+	
 	# Set owner and perms on it recursivelly as well
 	my $chownCommand = "chown -Rf $owner_uid:$group_uid '$path'";
 	my $chmodCommand = "chmod -Rf ug+rwx '$path'";
 	sudo_exec_without_decrypt($chownCommand);
 	sudo_exec_without_decrypt($chmodCommand);
 	
-	# Additional logging for debug
-	#logger "Running chown command of " . $chownCommand;
-	#logger "Running chown command of " . $chmodCommand;
+	# Remove perms for other users
+	$chmodCommand = "chmod -Rf o-rwx '$path'";
+	sudo_exec_without_decrypt($chmodCommand);
 		
 	return 0;
 }
@@ -2192,11 +2202,7 @@ sub start_rsync_install
 	return "Bad Encryption Key" unless(decrypt_param(pop(@_)) eq "Encryption checking OK");
 	my ($home_id, $home_path, $url, $exec_folder_path, $exec_path, $precmd, $postcmd, $filesToLockUnlock) = decrypt_params(@_);
 	
-	my $owner = SERVER_RUNNER_USER;
-	
-	if(defined USE_EXISTING_DIR_PERMS && USE_EXISTING_DIR_PERMS eq "1"){
-		$owner = get_path_owner($home_path);
-	}
+	my $owner = get_path_owner($home_path);
 	
 	if ( check_b4_chdir($home_path, $owner) != 0)
 	{
@@ -2254,11 +2260,7 @@ sub master_server_update
 {
 	return "Bad Encryption Key" unless(decrypt_param(pop(@_)) eq "Encryption checking OK");
 	my ($home_id,$home_path,$ms_home_id,$ms_home_path,$exec_folder_path,$exec_path,$precmd,$postcmd) = decrypt_params(@_);
-	my $owner = SERVER_RUNNER_USER;
-	
-	if(defined USE_EXISTING_DIR_PERMS && USE_EXISTING_DIR_PERMS eq "1"){
-		$owner = get_path_owner($home_path);
-	}
+	my $owner = get_path_owner($home_path);
 	
 	if ( check_b4_chdir($home_path, $owner) != 0)
 	{
@@ -2329,11 +2331,7 @@ sub steam_cmd
 sub steam_cmd_without_decrypt
 {
 	my ($home_id, $home_path, $mod, $modname, $betaname, $betapwd, $user, $pass, $guard, $exec_folder_path, $exec_path, $precmd, $postcmd, $cfg_os, $filesToLockUnlock, $arch_bits) = @_;
-	my $owner = SERVER_RUNNER_USER;
-	
-	if(defined USE_EXISTING_DIR_PERMS && USE_EXISTING_DIR_PERMS eq "1"){
-		$owner = get_path_owner($home_path);
-	}
+	my $owner = get_path_owner($home_path);
 	
 	if ( check_b4_chdir($home_path, $owner) != 0)
 	{
@@ -2906,10 +2904,30 @@ sub remove_home
 		logger "ERROR - $home_path_del does not exist...nothing to do";
 		return 0;
 	}
-
+	
+	my $owner = get_path_owner($home_path_del);
 	secure_path_without_decrypt('chattr-i', $home_path_del);
-	sleep 1 while ( !pathrmdir("$home_path_del") );
-	logger "Deletetion of $home_path_del successful!";
+	my $deleted_home_dir = sudo_exec_without_decrypt('rm -rf \''.$home_path_del.'\'');
+	
+	if (defined LINUX_USER_PER_GAME_SERVER && LINUX_USER_PER_GAME_SERVER eq "1"){
+		if ($owner ne SERVER_RUNNER_USER && begins_with($owner,'gamehome')){
+			my $kill_all_user = sudo_exec_without_decrypt('killall -u "' . $owner . '"');
+			my $deleted_user = sudo_exec_without_decrypt('userdel -r "' . $owner . '"');
+			my ($retval_del_user, $enc_out_del_user) = split(/;/, $deleted_user, 2);
+			if ($retval_del_user == 1){
+				logger "Removing and deleting user $owner";
+			}
+			my $deleted_user_group = sudo_exec_without_decrypt('groupdel "' . $owner . '"');
+		}
+	}
+	
+	my ($retval, $enc_out) = split(/;/, $deleted_home_dir, 2);
+	if ($retval == 1){
+		logger "Deletetion of $home_path_del successful!";
+	}else{
+		logger "Deletetion of $home_path_del failed!";
+	}
+	
 	return 1;
 }
 
@@ -2956,7 +2974,7 @@ sub find_user_by_screen_id
 	
 	my $screen_user = SERVER_RUNNER_USER;
 	
-	if(defined USE_EXISTING_DIR_PERMS && USE_EXISTING_DIR_PERMS eq "1"){
+	if(defined LINUX_USER_PER_GAME_SERVER && LINUX_USER_PER_GAME_SERVER eq "1"){
 		$screen_user = `whoami`;
 		chomp $screen_user;
 	}
@@ -3007,7 +3025,7 @@ sub get_path_owner
 	
 	my $path_owner = SERVER_RUNNER_USER;
 	
-	if(defined USE_EXISTING_DIR_PERMS && USE_EXISTING_DIR_PERMS eq "1"){
+	if(defined LINUX_USER_PER_GAME_SERVER && LINUX_USER_PER_GAME_SERVER eq "1"){
 		$path_owner = `whoami`;
 		chomp $path_owner;
 	}
@@ -3060,9 +3078,11 @@ sub sudo_exec_without_decrypt
 		$as_user = "root";
 	}
 	
-	my $command = "echo '$SUDOPASSWD'|sudo -kS -p \"\" su -c '$sudo_exec;echo \$?' $as_user 2>&1";
+	my $command = "echo '$SUDOPASSWD'|sudo -kS -p \"<prompt>\" su -c '$sudo_exec;echo \$?' $as_user 2>&1";
 	my @cmdret = qx($command);
+	$cmdret[0] =~ s/^<prompt>//g if defined $cmdret[0];
 	chomp(@cmdret);
+	
 	my $ret = pop(@cmdret);
 	chomp($ret);
 	
@@ -4373,7 +4393,7 @@ sub steam_workshop_without_decrypt
 	# Creates mods path if it doesn't exist
 	my $owner = SERVER_RUNNER_USER;
 	
-	if(defined USE_EXISTING_DIR_PERMS && USE_EXISTING_DIR_PERMS eq "1"){
+	if(defined LINUX_USER_PER_GAME_SERVER && LINUX_USER_PER_GAME_SERVER eq "1"){
 		$owner = `whoami`;
 		chomp $owner;
 	}
@@ -4656,3 +4676,26 @@ sub begins_with
 {
     return substr($_[0], 0, length($_[1])) eq $_[1];
 }
+
+sub generate_random_password{
+	my ($length) = @_;
+	my @alphanumeric = ('a'..'z', 'A'..'Z', 0..9,'!','_','-');
+	my @numeric = (0..9);
+	my $randpassword = '';
+	
+	if(not defined $length || not is_integer($length)){
+		$length = 16;
+	}
+
+	until ( length($randpassword) > $length ) {
+			$randpassword = $randpassword . join '', map $alphanumeric[rand @alphanumeric], 0..(rand @numeric);
+	}
+
+	return $randpassword;
+}
+
+sub trim{ 
+	my $s = shift; 
+	$s =~ s/^\s+|\s+$//g; 
+	return $s 
+};
