@@ -832,7 +832,6 @@ sub universal_start_without_decrypt
 	my $owner = SERVER_RUNNER_USER;
 	my $group = SERVER_RUNNER_USER;
 	my $ogpAgentGroup = `whoami`;
-	my $restartOGPAgentToApplyNewPerms = 0;
 	chomp $ogpAgentGroup;
 	
 	if(defined LINUX_USER_PER_GAME_SERVER && LINUX_USER_PER_GAME_SERVER eq "1"){
@@ -848,7 +847,6 @@ sub universal_start_without_decrypt
 			sudo_exec_without_decrypt("useradd -m $owner"); 
 			sudo_exec_without_decrypt("usermod -s /bin/bash $owner"); 
 			sudo_exec_without_decrypt("usermod -a -G \"$owner\" \"$group\""); 
-			$restartOGPAgentToApplyNewPerms = 1;
 		}
 	}
 	
@@ -1014,10 +1012,6 @@ sub universal_start_without_decrypt
 	renice_process_without_decrypt($home_id, $nice);
 		
 	chdir AGENT_RUN_DIR;
-	
-	if($restartOGPAgentToApplyNewPerms){
-		sudo_exec_without_decrypt_no_return("sleep 2 && service ogp_agent restart &"); 
-	}
 	
 	return 1;
 }
@@ -2132,8 +2126,11 @@ sub set_path_ownership
 	# Set owner and perms on it recursivelly as well
 	my $chownCommand = "chown -Rf $owner_uid:$group_uid '$path'";
 	my $chmodCommand = "chmod -Rf ug+rwx '$path'";
+	my $groupCommand = "chmod g+s '$path'";
 	sudo_exec_without_decrypt($chownCommand);
 	sudo_exec_without_decrypt($chmodCommand);
+	sudo_exec_without_decrypt($groupCommand);
+	
 	
 	# Remove perms for other users
 	$chmodCommand = "chmod -Rf o-rwx '$path'";
