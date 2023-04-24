@@ -2132,8 +2132,11 @@ sub set_path_ownership
 	# Set owner and perms on it recursivelly as well
 	my $chownCommand = "chown -Rf $owner_uid:$group_uid '$path'";
 	my $chmodCommand = "chmod -Rf ug+rwx '$path'";
+	my $groupCommand = "chmod -Rf g+s '$path'";
 	sudo_exec_without_decrypt($chownCommand);
 	sudo_exec_without_decrypt($chmodCommand);
+	sudo_exec_without_decrypt($groupCommand);
+	
 	
 	# Remove perms for other users
 	$chmodCommand = "chmod -Rf o-rwx '$path'";
