@@ -2126,8 +2126,11 @@ sub set_path_ownership
 	# Set owner and perms on it recursivelly as well
 	my $chownCommand = "chown -Rf $owner_uid:$group_uid '$path'";
 	my $chmodCommand = "chmod -Rf ug+rwx '$path'";
+	my $groupCommand = "chmod -Rf g+s '$path'";
 	sudo_exec_without_decrypt($chownCommand);
 	sudo_exec_without_decrypt($chmodCommand);
+	sudo_exec_without_decrypt($groupCommand);
+	
 	
 	# Remove perms for other users
 	$chmodCommand = "chmod -Rf o-rwx '$path'";
@@ -3073,6 +3076,31 @@ sub sudo_exec_without_decrypt
 	}
 	
 	my $command = "echo '$SUDOPASSWD'|sudo -kS -p \"<prompt>\" su -c '$sudo_exec;echo \$?' $as_user 2>&1";
+	my @cmdret = qx($command);
+	$cmdret[0] =~ s/^<prompt>//g if defined $cmdret[0];
+	chomp(@cmdret);
+	
+	my $ret = pop(@cmdret);
+	chomp($ret);
+	
+	if ("X$ret" eq "X0")
+	{
+		return "1;".encode_list(@cmdret);
+	}
+	
+	return -1;
+}
+
+sub sudo_exec_without_decrypt_no_return
+{
+	my ($sudo_exec, $as_user) = @_;
+	$sudo_exec =~ s/('+)/'"$1"'/g;
+	if( !defined($as_user) )
+	{
+		$as_user = "root";
+	}
+	
+	my $command = "echo '$SUDOPASSWD'|sudo -kS -p \"<prompt>\" su -c '$sudo_exec' $as_user 2>&1";
 	my @cmdret = qx($command);
 	$cmdret[0] =~ s/^<prompt>//g if defined $cmdret[0];
 	chomp(@cmdret);
