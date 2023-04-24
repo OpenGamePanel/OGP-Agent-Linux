@@ -194,6 +194,9 @@ if ( ! chmod 0777, SCREEN_LOGS_DIR ){
 	exit -1;
 }
 
+my $groupCommandScreenLogs = "chmod -Rf g+s '" . SCREEN_LOGS_DIR . "'";
+sudo_exec_without_decrypt($groupCommandScreenLogs);
+
 # Check the global shared games folder
 if (!-d SHARED_GAME_TMP_DIR && !mkdir SHARED_GAME_TMP_DIR)
 {
@@ -2131,11 +2134,9 @@ sub set_path_ownership
 	my $chownCommand = "chown -Rf $owner_uid:$group_uid '$path'";
 	my $chmodCommand = "chmod -Rf ug+rwx '$path'";
 	my $groupCommand = "chmod -Rf g+s '$path'";
-	my $groupCommandScreenLogs = "chmod -Rf g+s '" . SCREEN_LOGS_DIR . "'";
 	sudo_exec_without_decrypt($chownCommand);
 	sudo_exec_without_decrypt($chmodCommand);
 	sudo_exec_without_decrypt($groupCommand);
-	sudo_exec_without_decrypt($groupCommandScreenLogs);
 	
 	# Remove perms for other users
 	$chmodCommand = "chmod -Rf o-rwx '$path'";
