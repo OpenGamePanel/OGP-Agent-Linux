@@ -38,8 +38,6 @@ start() {
 		RET=$(kill -s 0 $PID &> /dev/null; echo $?)
 		if [ $RET -eq 0 ]; then
 			echo -n "already running."
-			failure
-			echo
 			return 1
 		fi
 	fi
@@ -104,7 +102,6 @@ start() {
 	cd $agent_dir
 	su -c "screen -d -m -t ogp_agent -c ogp_screenrc -S ogp_agent ./ogp_agent_run -pidfile ogp_agent_run.pid" $agent_user &> $agent_dir/ogp_agent.svc &
 	echo -n "started successfully."
-	success
 	bold=`tput bold`
 	normal=`tput sgr0`
 	echo
@@ -122,14 +119,11 @@ stop() {
 		RET=$(kill $PID &> /dev/null; echo $?)
 		if [ $RET -ne 0 ]; then
 			echo -n "not running."
-			failure
 		else
 			echo -n "stopped successfully."
-			success
 		fi
 	else
 		echo -n "PID file not found ($agent_dir/ogp_agent_run.pid)"
-		failure
 	fi
 	echo
 	return 0
