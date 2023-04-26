@@ -194,13 +194,13 @@ if ( ! chmod 0777, SCREEN_LOGS_DIR ){
 	exit -1;
 }
 
-my $groupCommandScreenLogs = "chmod -Rf g-s " . SCREEN_LOGS_DIR;
+my $groupCommandScreenLogs = "chmod -Rf g-s '" . SCREEN_LOGS_DIR . "'";
 sudo_exec_without_decrypt($groupCommandScreenLogs);
 
-$groupCommandScreenLogs = "find " . SCREEN_LOGS_DIR  . " -type d | xargs chmod g+s";
+$groupCommandScreenLogs = "find '" . SCREEN_LOGS_DIR  . "' -type d | xargs chmod g+s";
 sudo_exec_without_decrypt($groupCommandScreenLogs);
 
-$groupCommandScreenLogs = "find " . SCREEN_LOGS_DIR  . " -type d | xargs setfacl -d -m u::rwX,g::rwX,o::-";
+$groupCommandScreenLogs = "find '" . SCREEN_LOGS_DIR  . "' -type d | xargs setfacl -d -m u::rwX,g::rwX,o::-";
 sudo_exec_without_decrypt($groupCommandScreenLogs);
 
 # Check the global shared games folder
