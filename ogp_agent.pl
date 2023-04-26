@@ -200,6 +200,9 @@ sudo_exec_without_decrypt($groupCommandScreenLogs);
 $groupCommandScreenLogs = "find " . SCREEN_LOGS_DIR  . " -type d | xargs chmod g+s";
 sudo_exec_without_decrypt($groupCommandScreenLogs);
 
+$groupCommandScreenLogs = "find " . SCREEN_LOGS_DIR  . " -type d | xargs setfacl -d -m u::rwX,g::rwX,o::-";
+sudo_exec_without_decrypt($groupCommandScreenLogs);
+
 # Check the global shared games folder
 if (!-d SHARED_GAME_TMP_DIR && !mkdir SHARED_GAME_TMP_DIR)
 {
@@ -2142,6 +2145,9 @@ sub set_path_ownership
 	sudo_exec_without_decrypt($groupCommand);
 	
 	$groupCommand = "find '$path' -type d | xargs chmod g+s";
+	sudo_exec_without_decrypt($groupCommand);
+	
+	$groupCommand = "find '$path' -type d | xargs setfacl -d -m u::rwX,g::rwX,o::-";
 	sudo_exec_without_decrypt($groupCommand);
 	
 	# Remove perms for other users
