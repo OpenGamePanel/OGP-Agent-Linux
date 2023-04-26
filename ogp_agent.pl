@@ -194,7 +194,7 @@ if ( ! chmod 0777, SCREEN_LOGS_DIR ){
 	exit -1;
 }
 
-my $groupCommandScreenLogs = "chmod -Rf g-s";
+my $groupCommandScreenLogs = "chmod -Rf g-s " . SCREEN_LOGS_DIR;
 sudo_exec_without_decrypt($groupCommandScreenLogs);
 
 $groupCommandScreenLogs = "find " . SCREEN_LOGS_DIR  . " -type d | xargs chmod g+s";
