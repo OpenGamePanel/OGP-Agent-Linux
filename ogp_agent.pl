@@ -194,7 +194,10 @@ if ( ! chmod 0777, SCREEN_LOGS_DIR ){
 	exit -1;
 }
 
-my $groupCommandScreenLogs = "find " . SCREEN_LOGS_DIR  . " -type d | xargs chmod g+s";
+my $groupCommandScreenLogs = "chmod -Rf g-s";
+sudo_exec_without_decrypt($groupCommandScreenLogs);
+
+$groupCommandScreenLogs = "find " . SCREEN_LOGS_DIR  . " -type d | xargs chmod g+s";
 sudo_exec_without_decrypt($groupCommandScreenLogs);
 
 # Check the global shared games folder
@@ -2133,9 +2136,12 @@ sub set_path_ownership
 	# Set owner and perms on it recursivelly as well
 	my $chownCommand = "chown -Rf $owner_uid:$group_uid '$path'";
 	my $chmodCommand = "chmod -Rf ug+rwx '$path'";
-	my $groupCommand = "find '$path' -type d | xargs chmod g+s";
+	my $groupCommand = "chmod -Rf g-s '$path'"; # Clean up the mess I made from previous version
 	sudo_exec_without_decrypt($chownCommand);
 	sudo_exec_without_decrypt($chmodCommand);
+	sudo_exec_without_decrypt($groupCommand);
+	
+	$groupCommand = "find '$path' -type d | xargs chmod g+s";
 	sudo_exec_without_decrypt($groupCommand);
 	
 	# Remove perms for other users
