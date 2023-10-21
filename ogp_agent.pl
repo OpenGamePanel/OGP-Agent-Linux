@@ -1228,6 +1228,10 @@ sub get_log
 	my $linecount = 0;
 	
 	foreach my $line (@modedlines) {
+		#Remove unwanted characters (https://superuser.com/questions/99128/removing-the-escape-characters-from-gnu-screens-screenlog-n)
+		$line =~ s/\x1b[[()=][;?0-9]*[0-9A-Za-z]?//g;
+		$line =~ s/\r//g;
+		$line =~ s/\007//g;
 		#Text replacements to remove the Steam user login from steamcmd logs for security reasons.
 		$line =~ s/login .*//g;
 		$line =~ s/Logging .*//g;
@@ -2387,6 +2391,8 @@ sub steam_cmd_without_decrypt
 		print FILE "set_download_throttle " . STEAM_DL_LIMIT . "\n";
 	}
 	
+	print FILE "force_install_dir \"$home_path\"\n";
+	
 	if($guard ne '')
 	{
 		print FILE "set_steam_guard_code $guard\n";
@@ -2400,8 +2406,6 @@ sub steam_cmd_without_decrypt
 		print FILE "login anonymous\n";
 	}
 	
-	print FILE "force_install_dir \"$home_path\"\n";
-
 	if($modname ne "")
 	{
 		print FILE "app_set_config $mod mod $modname\n";
