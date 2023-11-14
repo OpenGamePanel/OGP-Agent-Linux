@@ -160,6 +160,16 @@ class GameQ
         return true;
     }
 
+    public function getServers()
+    {
+        return $this->servers;
+    }
+
+    public function getOptions()
+    {
+        return $this->options;
+    }
+
     /**
      * Chainable call to __set, uses set as the actual setter
      *
@@ -273,10 +283,6 @@ class GameQ
      *
      * @return $this
      */
-    public function setFilter($filterName, $options = []){
-		return $this->addFilter($filterName, $options);
-	} 
-     
     public function addFilter($filterName, $options = [])
     {
         // Create the filter hash so we can run multiple versions of the same filter
@@ -331,11 +337,6 @@ class GameQ
      * @return array
      * @throws \Exception
      */
-     
-    public function requestData(){
-		return $this->process();
-	}
-     
     public function process()
     {
 
@@ -419,10 +420,10 @@ class GameQ
                         'server_id' => $server_id,
                         'socket'    => $socket,
                     ];
-                } catch (QueryException $e) {
+                } catch (QueryException $exception) {
                     // Check to see if we are in debug, if so bubble up the exception
                     if ($this->debug) {
-                        throw new \Exception($e->getMessage(), $e->getCode(), $e);
+                        throw new \Exception($exception->getMessage(), $exception->getCode(), $exception);
                     }
                 }
 
@@ -520,13 +521,13 @@ class GameQ
                     'server_id' => $server_id,
                     'socket'    => $socket,
                 ];
-            } catch (QueryException $e) {
+            } catch (QueryException $exception) {
                 // Check to see if we are in debug, if so bubble up the exception
                 if ($this->debug) {
-                    throw new \Exception($e->getMessage(), $e->getCode(), $e);
+                    throw new \Exception($exception->getMessage(), $exception->getCode(), $exception);
                 }
 
-                break;
+                continue;
             }
 
             // Clean up the sockets, if any left over
@@ -647,7 +648,7 @@ class GameQ
 
                 // Apply the filter to the data
                 $results = $filter->apply($results, $server);
-            } catch (\ReflectionException $e) {
+            } catch (\ReflectionException $exception) {
                 // Invalid, skip it
                 continue;
             }
