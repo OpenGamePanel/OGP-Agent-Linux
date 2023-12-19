@@ -2154,7 +2154,7 @@ sub set_path_ownership
 	sudo_exec_without_decrypt($chmodCommand);
 	sudo_exec_without_decrypt($chmodCommandDir);
 	
-	$groupCommand = "find '$path' -type d | xargs chmod g+s";
+	my $groupCommand = "find '$path' -type d | xargs chmod g+s";
 	sudo_exec_without_decrypt($groupCommand);
 	
 	$groupCommand = "find '$path' -type d | xargs setfacl -d -m u::rwX,g::rwX,o::rx";
