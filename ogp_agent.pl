@@ -597,6 +597,10 @@ sub create_screen_cmd_loop
 	print SERV_START_SCRIPT $respawn_server_command;
 	close (SERV_START_SCRIPT);
 	
+	# Make it not readable
+	my $readOnlyOwnerCmd = "chmod -Rf og-r '$server_start_bashfile'";
+	sudo_exec_without_decrypt($readOnlyOwnerCmd);
+	
 	# Secure file
 	secure_path_without_decrypt('chattr+i', $server_start_bashfile);
 	
@@ -1013,7 +1017,7 @@ sub universal_start_without_decrypt
 	  "Startup command [ $cli_bin ] will be executed in dir $game_binary_dir.";
 	
 	# Fix permissions one last time (for backup_home_log created folder / files / etc)
-	set_path_ownership($owner, $group, $home_path);
+	set_path_ownership($owner, $group, $home_path, 1);
 	
 	# Run before start script
 	$run_before_start = run_before_start_commands($home_id, $home_path, $preStart, $owner);
@@ -2130,7 +2134,7 @@ sub check_b4_chdir
 
 sub set_path_ownership
 {
-	my ($owner, $group, $path) = @_;
+	my ($owner, $group, $path, $skipChattr) = @_;
 	
 	my $owner_uid = `id -u $owner`;
 	chomp $owner_uid;
@@ -2138,7 +2142,9 @@ sub set_path_ownership
 	chomp $group_uid;
 		
 	# Remove immutable flag recursivelly
-	secure_path_without_decrypt('chattr-i', $path);
+	if(!$skipChattr){
+		secure_path_without_decrypt('chattr-i', $path);
+	}
 	
 	# Set owner and perms on it recursivelly as well
 	my $chownCommand = "chown -Rf $owner_uid:$group_uid '$path'";
