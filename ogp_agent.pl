@@ -865,7 +865,7 @@ sub universal_start_without_decrypt
 	}
 	
 	# Set ownership on the game home
-	set_path_ownership($owner, $group, $home_path);
+	set_path_ownership($owner, $group, $home_path, 1);
 	
 	# Fix perms on ogp_agent user's homedir so that other users can access their owned files within this dir
 	my $fixOGPHomeDirCommand = 'chmod -R ug+rwx $( getent passwd "' . $ogpAgentGroup . '" | cut -d: -f6 )';
@@ -2150,11 +2150,9 @@ sub set_path_ownership
 	my $chownCommand = "chown -Rf $owner_uid:$group_uid '$path'";
 	my $chmodCommand = "chmod -Rf ug+rwx '$path'";
 	my $chmodCommandDir = "chmod -Rf o+rx `find '$path' -type d`";
-	my $groupCommand = "chmod -Rf g-s '$path'"; # Clean up the mess I made from previous version
 	sudo_exec_without_decrypt($chownCommand);
 	sudo_exec_without_decrypt($chmodCommand);
 	sudo_exec_without_decrypt($chmodCommandDir);
-	sudo_exec_without_decrypt($groupCommand);
 	
 	$groupCommand = "find '$path' -type d | xargs chmod g+s";
 	sudo_exec_without_decrypt($groupCommand);
