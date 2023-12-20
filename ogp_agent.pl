@@ -845,6 +845,8 @@ sub universal_start_without_decrypt
 	my $owner = SERVER_RUNNER_USER;
 	my $group = SERVER_RUNNER_USER;
 	my $ogpAgentGroup = `whoami`;
+	
+	my $screen_id = create_screen_id(SCREEN_TYPE_HOME, $home_id);
 
 	chomp $ogpAgentGroup;
 	
@@ -920,6 +922,7 @@ sub universal_start_without_decrypt
 		$envVars = "";
 	}
 	
+	# Secure file
 	secure_path_without_decrypt('chattr+i', $server_exe);
 	
 	# Create startup file for the server.
@@ -952,7 +955,6 @@ sub universal_start_without_decrypt
 	}
 	
 	# Create the startup string.
-	my $screen_id = create_screen_id(SCREEN_TYPE_HOME, $home_id);
 	my $file_extension = substr $server_exe, -4;
 	my $cli_bin;
 	my $command;
@@ -1017,7 +1019,10 @@ sub universal_start_without_decrypt
 	  "Startup command [ $cli_bin ] will be executed in dir $game_binary_dir.";
 	
 	# Fix permissions one last time (for backup_home_log created folder / files / etc)
+	my $server_start_bashfile = $screen_id . "_startup_scr.sh";
+	secure_path_without_decrypt('chattr-i', $server_start_bashfile);
 	set_path_ownership($owner, $group, $home_path, 1);
+	secure_path_without_decrypt('chattr+i', $server_start_bashfile);
 	
 	# Run before start script
 	$run_before_start = run_before_start_commands($home_id, $home_path, $preStart, $owner);
