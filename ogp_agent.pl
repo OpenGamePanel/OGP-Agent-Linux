@@ -1022,6 +1022,8 @@ sub universal_start_without_decrypt
 	my $server_start_bashfile = $screen_id . "_startup_scr.sh";
 	secure_path_without_decrypt('chattr-i', $server_start_bashfile);
 	set_path_ownership($owner, $group, $home_path, 1);
+	my $readOnlyOwnerCmd = "chmod -Rf og-r '$server_start_bashfile'";
+	sudo_exec_without_decrypt($readOnlyOwnerCmd);
 	secure_path_without_decrypt('chattr+i', $server_start_bashfile);
 	
 	# Run before start script
