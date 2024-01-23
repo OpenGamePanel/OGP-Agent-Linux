@@ -834,8 +834,6 @@ sub universal_start_without_decrypt
 		return -14;
 	}
 	
-	secure_path_without_decrypt('chattr-i', $server_exe);
-	
 	if (!-e $home_path)
 	{
 		logger "Can't find server's install path [ $home_path ].";
@@ -866,16 +864,6 @@ sub universal_start_without_decrypt
 		}
 	}
 	
-	# Set ownership on the game home
-	set_path_ownership($owner, $group, $home_path, 1);
-	
-	# Fix perms on ogp_agent user's homedir so that other users can access their owned files within this dir
-	my $fixOGPHomeDirCommand = 'chmod -R ug+rwx $( getent passwd "' . $ogpAgentGroup . '" | cut -d: -f6 )';
-	sudo_exec_without_decrypt($fixOGPHomeDirCommand);
-
-	$fixOGPHomeDirCommand = 'find "$( getent passwd "' . $ogpAgentGroup . '" | cut -d: -f6 )" -type d -print0 | xargs -0 chmod o+x';
-	sudo_exec_without_decrypt($fixOGPHomeDirCommand);
-	
 	# Some game require that we are in the directory where the binary is.
 	my $game_binary_dir = Path::Class::Dir->new($home_path, $run_dir);
 	if ( -e $game_binary_dir && !chdir $game_binary_dir)
@@ -892,6 +880,18 @@ sub universal_start_without_decrypt
 			return -13;
 		}
 	}
+	
+	secure_path_without_decrypt('chattr-i', $server_exe);
+	
+	# Set ownership on the game home
+	set_path_ownership($owner, $group, $home_path, 1);
+	
+	# Fix perms on ogp_agent user's homedir so that other users can access their owned files within this dir
+	my $fixOGPHomeDirCommand = 'chmod -R ug+rwx $( getent passwd "' . $ogpAgentGroup . '" | cut -d: -f6 )';
+	sudo_exec_without_decrypt($fixOGPHomeDirCommand);
+
+	$fixOGPHomeDirCommand = 'find "$( getent passwd "' . $ogpAgentGroup . '" | cut -d: -f6 )" -type d -print0 | xargs -0 chmod o+x';
+	sudo_exec_without_decrypt($fixOGPHomeDirCommand);
 	
 	if(defined $preStart && $preStart ne ""){
 		# Get it in the format that the startup file can use
