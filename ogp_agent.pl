@@ -906,7 +906,7 @@ sub universal_start_without_decrypt
 		my @prestartenvvars = split /[\r\n]+/, $envVars;
 		my $envVarStr = "";
 		foreach my $line (@prestartenvvars) {
-			$line = replace_OGP_Env_Vars("", $home_id, $home_path, $line, $game_key);
+			$line = replace_OGP_Env_Vars($screen_id, $home_id, $home_path, $line, $game_key);
 			if($line ne ""){
 				logger "Configuring environment variable: $line";
 				$envVarStr .= "$line\n";
