@@ -112,6 +112,14 @@ else
 }
 
 $SIG{CHLD} = 'IGNORE';
+
+my $origPid = fork();
+
+open(my $old_stderr, '>&', \*STDERR) or die "Can't save STDERR: $!";
+
+my $null_device = (-e '/dev/null') ? '/dev/null' : 'NUL';
+open(STDERR, '>', $null_device) or die "Can't redirect STDERR to $null_device: $!";
+
 while (my $c = $fd->accept) {
 	my $pid = fork();
 	if (not defined $pid)
@@ -140,6 +148,9 @@ while (my $c = $fd->accept) {
 		exit(0);
 	}
 }
+
+open(STDERR, '>&', $old_stderr) or die "Can't restore STDERR: $!";
+close($old_stderr);
 
 sub process_client_request
 {
